@@ -41,9 +41,9 @@ declared route, and a scope mismatch must choose `ask`, `stage`, or `reject`; Pr
 the target domain automatically. Add loader, marker, context-resolution, and focused tests when the
 contract shape changes.
 
-## Keeping both READMEs in sync
+## Keeping the READMEs in sync
 
-`README.md` (English) and `README_TW.md` (Traditional Chinese) are **one documentation surface**. Keep headings, examples, links, and user-facing behavior structurally and semantically aligned.
+`README.md` (English), `README_ZH.md` (Simplified Chinese), and `README_TW.md` (Traditional Chinese) are **one documentation surface**. Keep headings, examples, links, and user-facing behavior structurally and semantically aligned.
 
 Syncing is advisory, not a merge gate — the `readme-translation-drift` CI job only reports when the translation falls behind. To catch up:
 
@@ -63,7 +63,7 @@ python tools/sync_workflow_skills.py --check
 Agent Skill Markdown 指令，不会把 YAML 原文交给 agent 运行时解释。不要手工编辑生成的同名
 `SKILL.md`；行为变更应先落在 workflow。
 
-It lists the commits that changed `README.md` without a later `README_TW.md` update, plus the pending English diff. Translate and backfill those into `README_TW.md`. Reviewers assess translation quality.
+For each translation, it lists the commits that changed `README.md` without a later update to that translation, plus the pending English diff. Translate and backfill those into each translation file. Reviewers assess translation quality.
 
 The `docs/` pages are English-only for now.
 

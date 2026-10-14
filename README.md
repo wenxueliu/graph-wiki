@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  English | <a href="https://github.com/Ar9av/obsidian-wiki/blob/main/README_TW.md">繁體中文</a>
+  English | <a href="https://github.com/Ar9av/obsidian-wiki/blob/main/README_ZH.md">简体中文</a> | <a href="https://github.com/Ar9av/obsidian-wiki/blob/main/README_TW.md">繁體中文</a>
 </p>
 
 ---

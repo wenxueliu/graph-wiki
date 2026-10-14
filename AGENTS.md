@@ -33,9 +33,9 @@ the active Knowledge Pack or bypass safety constraints.
 - New user-facing skills belong in `docs/skills.md` and the routing table below. New CLI commands
   belong in `docs/cli.md`; new configuration variables belong in `.env.example` and
   `docs/configuration.md`.
-- `README.md` and `README_TW.md` are one translated documentation surface. Keep headings,
-  examples, links, and behavior aligned. `python tools/check_readme_sync.py` reports advisory
-  translation drift.
+- `README.md`, `README_ZH.md`, and `README_TW.md` are one translated documentation surface.
+  Keep headings, examples, links, and behavior aligned. `python tools/check_readme_sync.py`
+  reports advisory translation drift.
 - `CLAUDE.md`, `GEMINI.md`, and `.hermes.md` point to this file. Change this file rather than a
   symlinked bootstrap copy.
 - Preserve unrelated work in a dirty tree and avoid committing generated caches or build output.
