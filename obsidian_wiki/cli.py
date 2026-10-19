@@ -222,6 +222,7 @@ SETUP_AGENTS: tuple[tuple[str, str, str], ...] = (
     ("trae-cn", "Trae CN", "project"),
     ("kiro", "Kiro", "project"),
     ("pi", "Pi", "project"),
+    ("codeagent", "CodeAgent", "project"),
     ("generic", "OpenCode / Aider / Droid / generic", "project"),
 )
 SETUP_AGENT_NAMES = tuple(record[0] for record in SETUP_AGENTS)
@@ -365,6 +366,7 @@ PROJECT_AGENT_DIRS = [
     ("trae-cn", ".agents/skills", "Trae CN"),
     ("generic", ".agents/skills", "OpenCode / generic"),
     ("pi", ".pi/skills", "Pi"),
+    ("codeagent", ".cac/skills", "CodeAgent"),
     ("kiro", ".kiro/skills", "Kiro"),
 ]
 

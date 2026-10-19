@@ -40,7 +40,7 @@ class ReadmeDriftTest(unittest.TestCase):
         )
 
     def test_in_sync_passes(self) -> None:
-        self.commit("initial docs", "README.md", "README_TW.md", "README_ZH.md")
+        self.commit("initial docs", "README.md", "README_ZH.md")
 
         result = self.run_checker()
 
@@ -48,7 +48,7 @@ class ReadmeDriftTest(unittest.TestCase):
         self.assertIn("up to date", result.stdout)
 
     def test_untracked_translation_is_skipped(self) -> None:
-        self.commit("initial docs", "README.md", "README_TW.md")
+        self.commit("initial docs", "README.md")
 
         result = self.run_checker()
 
@@ -56,7 +56,7 @@ class ReadmeDriftTest(unittest.TestCase):
         self.assertIn("README_ZH.md is not tracked yet", result.stdout)
 
     def test_english_only_commits_are_reported_with_diff(self) -> None:
-        self.commit("initial docs", "README.md", "README_TW.md", "README_ZH.md")
+        self.commit("initial docs", "README.md", "README_ZH.md")
         self.commit("add install section", "README.md")
 
         result = self.run_checker()
@@ -67,16 +67,16 @@ class ReadmeDriftTest(unittest.TestCase):
         self.assertIn("backfill", result.stdout)
 
     def test_later_translation_commit_clears_drift(self) -> None:
-        self.commit("initial docs", "README.md", "README_TW.md", "README_ZH.md")
+        self.commit("initial docs", "README.md", "README_ZH.md")
         self.commit("add install section", "README.md")
-        self.commit("translate install section", "README_TW.md", "README_ZH.md")
+        self.commit("translate install section", "README_ZH.md")
 
         result = self.run_checker()
 
         self.assertEqual(result.returncode, 0)
 
     def test_unrelated_commits_do_not_trigger_drift(self) -> None:
-        self.commit("initial docs", "README.md", "README_TW.md", "README_ZH.md")
+        self.commit("initial docs", "README.md", "README_ZH.md")
         self.commit("tweak cli", "cli.py")
 
         result = self.run_checker()

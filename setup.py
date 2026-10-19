@@ -246,6 +246,7 @@ def main():
         ".windsurf/skills",
         ".agents/skills",
         ".pi/skills",
+        ".cac/skills",
         ".kiro/skills",
     ]
 

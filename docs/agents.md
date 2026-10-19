@@ -1,3 +1,5 @@
+English | [简体中文](agents.zh-CN.md)
+
 # Agent Compatibility
 
 Works with **any AI coding agent that can read files**. `obsidian-wiki setup` offers explicit agent
@@ -19,7 +21,7 @@ project path for agents that previously had only global targets. It never writes
 | **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** | `GEMINI.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-query`, etc. |
 | **[Google Antigravity](https://antigravity.google)** | `.agent/rules/` + `.agent/workflows/` | `.agents/skills/` | ✅ via workflows registry |
 | **[Kiro IDE/CLI](https://kiro.dev)** | `.kiro/steering/obsidian-wiki.md` | `.kiro/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
-| **[Hermes](https://hermes-agent.nousresearch.com)** | `.hermes.md` | `.agents/skills/` | ✅ `/wiki-history-ingest hermes`, etc. |
+| **[Hermes](https://hermes-agent.nousresearch.com)** | `.hermes.md` | `.agents/skills/` | ✅ `/wiki-hermes <topic>`, etc. |
 | **[OpenClaw](https://openclaw.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-history-ingest openclaw`, etc. |
 | **[OpenCode](https://opencode.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-query`, etc. |
 | **[Aider](https://aider.chat)** | `AGENTS.md` | `.agents/skills/` | Describe intent in chat |
@@ -29,6 +31,7 @@ project path for agents that previously had only global targets. It never writes
 | **GitHub Copilot (CLI)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-query`, etc. |
 | **[Kilocode](https://kilo.ai/)** | `AGENTS.md` / `CLAUDE.md` | `.agents/skills/` + `.claude/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
 | **[Pi](https://pi.dev)** | `AGENTS.md` | `.pi/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-history-ingest pi`, etc. |
+| **CodeAgent** | `AGENTS.md` | `.cac/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
 
 > Slash commands work in Claude Code, Cursor, Windsurf, and most CLI agents. Everywhere else, just describe what you want — the agent matches your intent against the skill descriptions.
 
@@ -101,13 +104,19 @@ All read `AGENTS.md` at the repo root. `python3 setup.py` symlinks skills into `
 <details>
 <summary><b>Hermes</b></summary>
 
-Reads `.hermes.md` first, then falls back to `AGENTS.md`. Skills discovered from `~/.hermes/skills/`. Run `python3 setup.py` or manually symlink `.skills/*` there.
+Reads `.hermes.md` first, then falls back to `AGENTS.md`. Project-local skills live in
+`.agents/skills/`. The legacy global installer adds `~/.hermes/skills/` for the default profile,
+`$HERMES_HOME/skills/` for the active named profile, and `~/.hermes/profiles/*/skills/` for every
+named profile.
 
 ```bash
 cd /path/to/obsidian-wiki && hermes "set up my wiki"
-# Mine Hermes history into the wiki:
-/wiki-history-ingest hermes
+# Pull Hermes knowledge on one topic into the vault:
+/wiki-hermes <topic>
 ```
+
+Hermes has no dedicated bulk history-ingest skill in `.skills/`; `/wiki-hermes` is the supported
+path and performs topic-targeted ingest through `wiki-agent`.
 </details>
 
 <details>
@@ -140,4 +149,10 @@ cd /path/to/obsidian-wiki && pi "set up my wiki"
 # Mine Pi session history:
 /wiki-history-ingest pi
 ```
+</details>
+
+<details>
+<summary><b>CodeAgent</b></summary>
+
+Reads `AGENTS.md` for project context. Discovers skills from `.cac/skills/`. Run `obsidian-wiki setup --agent codeagent` or manually symlink `.skills/*` to `.cac/skills/`.
 </details>

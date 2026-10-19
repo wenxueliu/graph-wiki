@@ -1,3 +1,5 @@
+English | [简体中文](installation.zh-CN.md)
+
 # Installation
 
 Four ways in. Pick one — they all end at the same place: your vault path in `~/.obsidian-wiki/config` and the skills discoverable by your agent.
@@ -80,7 +82,7 @@ Run `obsidian-wiki info` to see the resolved paths and `obsidian-wiki doctor` to
 The fastest path — no commands required. Give your agent this repo and say:
 
 ```text
-https://github.com/Ar9av/obsidian-wiki — set up my wiki
+https://github.com/wenxueliu/obsidian-wiki — set up my wiki
 ```
 
 The agent reads [`.skills/wiki-setup/SKILL.md`](../.skills/wiki-setup/SKILL.md) from the repo, asks where you want your vault to live, and initializes the full structure: directories, index, log, Obsidian config, and an optional auto-capture hook. The skill *is* the setup guide.
@@ -90,7 +92,7 @@ This works in any agent that can read files (Claude Code, Cursor, Windsurf, Code
 ## Install via git clone
 
 ```bash
-git clone https://github.com/Ar9av/obsidian-wiki.git
+git clone https://github.com/wenxueliu/obsidian-wiki.git
 cd obsidian-wiki
 python3 setup.py
 ```
@@ -109,14 +111,14 @@ For local-only config, copy `.env.example` to `.env` and set `OBSIDIAN_VAULT_PAT
    - `~/.gemini/skills/` — Gemini CLI (canonical)
    - `~/.gemini/antigravity/skills/` — Google Antigravity (legacy)
    - `~/.codex/skills/` — Codex
-   - `~/.hermes/skills/` — Hermes
+   - `~/.hermes/skills/` — Hermes (default profile), plus `$HERMES_HOME/skills/` for the active named profile and `~/.hermes/profiles/*/skills/` for every named profile
    - `~/.openclaw/skills/` — OpenClaw (managed)
    - `~/.copilot/skills/` — GitHub Copilot CLI
    - `~/.trae/skills/` + `~/.trae-cn/skills/` — Trae / Trae CN
    - `~/.kiro/skills/` — Kiro CLI
    - `~/.pi/agent/skills/` — Pi
    - `~/.agents/skills/` — OpenCode, Aider, Factory Droid, and other `AGENTS.md`-aware agents
-4. **Project-local symlinks** — `.claude/skills/`, `.cursor/skills/`, `.windsurf/skills/`, `.agents/skills/`, `.pi/skills/`, `.kiro/skills/`
+4. **Project-local symlinks** — `.claude/skills/`, `.cursor/skills/`, `.windsurf/skills/`, `.agents/skills/`, `.pi/skills/`, `.cac/skills/`, `.kiro/skills/`
 5. **Always-on rule files** — `CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `.hermes.md`, `.cursor/rules/…`, `.windsurf/rules/…`, `.kiro/steering/…`, `.agent/rules/…`, `.agent/workflows/…`, `.github/copilot-instructions.md`
 6. **GitHub sync** (optional) — see [Configuration → Syncing your vault to GitHub](configuration.md#syncing-your-vault-to-github)
 
@@ -127,14 +129,14 @@ differs: `obsidian-wiki setup` installs only explicitly selected agents, while t
 ## Install via Skills CLI (deprecated)
 
 ```bash
-npx skills add Ar9av/obsidian-wiki
+npx skills add wenxueliu/obsidian-wiki
 ```
 
 This only installs the markdown skills into the current agent. It does **not** write `~/.obsidian-wiki/config`, configure GitHub sync, or wire the project bootstrap that `obsidian-wiki setup` performs. The legacy `python3 setup.py` source installer additionally wires global agent directories.
 
 Use this path only if you intentionally want a partial, agent-local install and are prepared to manage config yourself. For a complete setup, use pip or git clone instead.
 
-Browse the full skill list at [skills.sh/ar9av/obsidian-wiki](https://skills.sh/ar9av/obsidian-wiki).
+Browse the full skill list at [skills.sh/wenxueliu/obsidian-wiki](https://skills.sh/wenxueliu/obsidian-wiki).
 
 ## Open in Obsidian
 

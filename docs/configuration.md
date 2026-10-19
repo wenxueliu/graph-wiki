@@ -1,3 +1,5 @@
+English | [简体中文](configuration.zh-CN.md)
+
 # Configuration
 
 ## How config is resolved

@@ -63,7 +63,7 @@ class WikiSetupSkillTest(unittest.TestCase):
 
     def test_skill_offers_github_fallback(self) -> None:
         self.assertIn(
-            "raw.githubusercontent.com/Ar9av/obsidian-wiki/main/.claude/hooks/wiki-stop-capture.sh",
+            "raw.githubusercontent.com/wenxueliu/obsidian-wiki/main/.claude/hooks/wiki-stop-capture.sh",
             self.integrations,
         )
 

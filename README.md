@@ -9,8 +9,8 @@
 
 <p align="center">
   <a href="https://pypi.org/project/obsidian-wiki/"><img src="https://img.shields.io/pypi/v/obsidian-wiki?color=blue" alt="PyPI" /></a>
-  <a href="https://deepwiki.com/Ar9av/obsidian-wiki"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
-  <a href="https://github.com/ar9av/obsidian-wiki/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
+  <a href="https://deepwiki.com/wenxueliu/obsidian-wiki"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  <a href="https://github.com/wenxueliu/obsidian-wiki/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
   <a href="https://x.com/_ar9av"><img src="https://img.shields.io/badge/@__ar9av-black?logo=x&logoColor=white" alt="X" /></a>
 </p>
 
@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  English | <a href="https://github.com/Ar9av/obsidian-wiki/blob/main/README_ZH.md">简体中文</a> | <a href="https://github.com/Ar9av/obsidian-wiki/blob/main/README_TW.md">繁體中文</a>
+  English | <a href="https://github.com/wenxueliu/obsidian-wiki/blob/main/README_ZH.md">简体中文</a>
 </p>
 
 ---
@@ -30,7 +30,7 @@ This fixes that. Point it at a folder, tell your agent what to remember, and it 
 
 **Your second brain. Your AI agent is how you grow it.**
 
-Every skill here is a markdown file that any agent — Claude Code, Cursor, Codex, Windsurf, Gemini CLI, and [a dozen more](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/agents.md) — reads and runs. Deterministic local helpers handle hashing and bounded text ranges; there is no hosted runtime, API key, or vendor lock-in.
+Every skill here is a markdown file that any agent — Claude Code, Cursor, Codex, Windsurf, Gemini CLI, and [many more](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/agents.md) — reads and runs. Deterministic local helpers handle hashing and bounded text ranges; there is no hosted runtime, API key, or vendor lock-in.
 
 ## 60 seconds
 
@@ -45,10 +45,10 @@ Setup installs skills only in the current project. Open that project in your age
 Prefer not to touch a terminal? Give your agent this and it'll do the whole thing:
 
 ```text
-https://github.com/Ar9av/obsidian-wiki — set up my wiki
+https://github.com/wenxueliu/obsidian-wiki — set up my wiki
 ```
 
-Other paths — `git clone`, Skills CLI, multiple vaults → **[Installation](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/installation.md)**
+Other paths — `git clone`, Skills CLI, multiple vaults → **[Installation](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/installation.md)**
 
 ## What you actually do
 
@@ -86,7 +86,7 @@ obsidian-wiki sessions-query "the auth bug with the weird retry loop"
 /wiki-status          # what's ingested, what's pending, where the hubs are
 ```
 
-All 42 skills → **[Skills Reference](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/skills.md)**
+All 49 skills → **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)**
 
 ## See it
 
@@ -107,25 +107,27 @@ Or export the whole graph to `graph.json`, GraphML (Gephi/yEd), Neo4j Cypher, or
 - **It's yours.** Plain markdown in a folder. Push it to a private repo, open it in Obsidian, grep it, delete it. No service, no lock-in, nothing leaves your machine.
 - **Works where you already work.** One bundled `.skills/` directory, linked into each selected agent under your project.
 
-More → **[Architecture](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/architecture.md)**
+More → **[Architecture](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/architecture.md)**
 
 ## Documentation
 
+These docs are available in English and Simplified Chinese.
+
 | | |
 |---|---|
-| **[Installation](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/installation.md)** | pip, clone, agent-driven setup, multiple vaults |
-| **[Skills Reference](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/skills.md)** | All 42 skills and their slash commands |
-| **[Agent Compatibility](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/agents.md)** | The full matrix + per-agent manual setup |
-| **[CLI Reference](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/cli.md)** | Every `obsidian-wiki` subcommand |
-| **[Configuration](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/configuration.md)** | Config vars, QMD semantic search, `_raw/` staging, GitHub sync |
-| **[Architecture](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/architecture.md)** | The four ingest stages, vault structure, what we added to Karpathy's pattern |
-| **[Session Brain](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/session-brain.md)** | Topic graph over your agent session history |
-| **[Contributing](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/contributing.md)** | Adding skills, keeping the READMEs in sync |
+| **[Installation](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/installation.md)** | pip, clone, agent-driven setup, multiple vaults |
+| **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)** | All 49 skills and their slash commands |
+| **[Agent Compatibility](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/agents.md)** | The full matrix + per-agent manual setup |
+| **[CLI Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/cli.md)** | Every `obsidian-wiki` subcommand |
+| **[Configuration](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/configuration.md)** | Config vars, QMD semantic search, `_raw/` staging, GitHub sync |
+| **[Architecture](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/architecture.md)** | The four ingest stages, vault structure, what we added to Karpathy's pattern |
+| **[Session Brain](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/session-brain.md)** | Topic graph over your agent session history |
+| **[Contributing](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/contributing.md)** | Adding skills, keeping the English and Chinese docs in sync |
 
 ## Contributing
 
-This is early. The skills work, but there's room to make the brain smarter — better cross-referencing, sharper deduplication, bigger vaults, new ingest sources. If you have a workflow that could be a skill, [PRs are welcome](https://github.com/Ar9av/obsidian-wiki/blob/main/docs/contributing.md).
+This is early. The skills work, but there's room to make the brain smarter — better cross-referencing, sharper deduplication, bigger vaults, new ingest sources. If you have a workflow that could be a skill, [PRs are welcome](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/contributing.md).
 
 ## License
 
-[MIT](https://github.com/Ar9av/obsidian-wiki/blob/main/LICENSE)
+[MIT](https://github.com/wenxueliu/obsidian-wiki/blob/main/LICENSE)

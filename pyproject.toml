@@ -40,9 +40,9 @@ ast = ["tree-sitter>=0.21", "tree-sitter-languages>=1.10"]
 graph = ["leidenalg>=0.10", "igraph>=0.11", "networkx>=3.0"]
 
 [project.urls]
-Homepage = "https://github.com/Ar9av/obsidian-wiki"
-Repository = "https://github.com/Ar9av/obsidian-wiki"
-Issues = "https://github.com/Ar9av/obsidian-wiki/issues"
+Homepage = "https://github.com/wenxueliu/obsidian-wiki"
+Repository = "https://github.com/wenxueliu/obsidian-wiki"
+Issues = "https://github.com/wenxueliu/obsidian-wiki/issues"
 
 [project.scripts]
 obsidian-wiki = "obsidian_wiki.cli:main"
@@ -95,6 +95,7 @@ exclude = [
   "/.windsurf/skills",
   "/.agents/skills",
   "/.pi/skills",
+  "/.cac/skills",
   "/.kiro/skills",
   "/dist",
   "/build",

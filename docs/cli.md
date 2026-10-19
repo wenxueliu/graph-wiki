@@ -1,3 +1,5 @@
+English | [简体中文](cli.zh-CN.md)
+
 # CLI Reference
 
 The `obsidian-wiki` Python package ships a CLI for setup, inspection, and the deterministic parts of the workflow — the things that don't need an LLM. Everything else is a [skill](skills.md) your agent runs.
@@ -26,6 +28,7 @@ obsidian-wiki setup --list-agents          # list selectable agent skill targets
 obsidian-wiki setup --vault ~/brain --knowledge-pack default --agent claude --agent codex
 obsidian-wiki setup --vault ~/brain --knowledge-pack software-knowledge --agent claude,codex,pi
 obsidian-wiki setup --vault ~/brain --knowledge-pack default --agent all  # all local agent targets
+obsidian-wiki setup --agent none       # configure a vault without installing agent skills
 obsidian-wiki setup --list-knowledge-packs         # list Knowledge Packs (Profile + Layout)
 obsidian-wiki setup --vault ~/brain --knowledge-pack software-knowledge
 obsidian-wiki setup --project /work/app  # override the command-directory install target
@@ -51,7 +54,7 @@ Setup compiles stable Wiki context once into the path configured by
 resolution links that snapshot into the invocation artifacts directory. Use setup/repair after
 changing the Knowledge Pack, owner rules, Writing Profile, taxonomy, or stable metadata paths.
 
-Commands other than `setup`, `info`, and `doctor` warn you when the command-directory install has gone stale (the package upgraded but skills weren't re-linked). Re-run `obsidian-wiki setup` in that directory to fix.
+Commands other than `setup` and `info` warn you when the command-directory install has gone stale (the package upgraded but skills weren't re-linked). Re-run `obsidian-wiki setup` in that directory to fix.
 
 When setup runs in a terminal without `--agent`, it displays a numbered agent menu with no default
 selection. Non-interactive setup requires one or more `--agent NAME` flags, a comma-separated list,
@@ -105,6 +108,23 @@ obsidian-wiki lint --allow-lifecycle active --allow-relationship-type synthesize
 ```
 
 Lint resolves its vault and schema together: explicit path (no config inheritance), positional `@name`, nearest CWD `.env`, then global config. CLI schema flags extend/replace that resolved vault's settings and are recorded in the JSON `schema` block.
+
+## Validating pages and sources
+
+| Command | What it does |
+|---|---|
+| `validate [vault] --pages PATH...` | Check that specific vault-relative pages satisfy the active page contract |
+| `verify [vault] --sources PATH...` | Check that an ingest batch's sources are represented in the vault and the manifest |
+| `verify-sections <structure.json>` | Compare a PageIndex `_structure.json` against the pages it planned to cover |
+
+```bash
+obsidian-wiki validate --pages concepts/rate-limiting.md entities/nginx.md --json
+obsidian-wiki validate --from-stdin --pretty < changed-pages.txt
+obsidian-wiki verify --sources ~/research/a.md ~/research/b.md
+obsidian-wiki verify-sections /tmp/pageindex/_structure.json --pages concepts/example.md
+```
+
+All three accept `--json` and `--pretty`, and resolve their vault the same way `lint` does. `validate` and `verify` accept `--from-stdin`; `verify-sections` takes `--pages` only as a coverage hint.
 
 ## Context packs
 
@@ -205,7 +225,8 @@ Available for automation, scripting, and debugging. Skills call some of these in
 | Command | What it does |
 |---|---|
 | `graph-query <vault> <question>` | Answer from the wikilink index without reading page bodies |
-| `graph-analyse <vault>` | God nodes, communities, surprising connections |
+| `graph-analyse <vault>` | God nodes, communities, surprising connections — pure Python, no extra dependencies |
+| `graph <vault> <subcommand>` | NetworkX graph queries: `paths`, `neighbors`, `centrality`, `tag-subgraph`, `communities`, `stats` (needs `pip install obsidian-wiki[graph]`) |
 | `batch-plan <vault> <source_dir>` | Split a source directory into parallel-ingest batches, skipping unchanged files |
 | `cache-check <vault> <sources...>` | Which sources are new / modified / unchanged vs. `.manifest.json` |
 | `cache-update <vault> <source>` | Record a source's SHA-256 in `.manifest.json` after ingest |
@@ -233,6 +254,10 @@ Available for automation, scripting, and debugging. Skills call some of these in
 ```bash
 obsidian-wiki graph-query /path/to/vault "transformer architecture" --pretty
 obsidian-wiki graph-analyse /path/to/vault --top 30 --pretty
+obsidian-wiki graph /path/to/vault centrality --method pagerank --top 20 --pretty
+obsidian-wiki graph /path/to/vault paths --from concepts/rate-limiting --to entities/nginx --max-len 4
+obsidian-wiki graph /path/to/vault neighbors concepts/rate-limiting --radius 2 --pretty
+obsidian-wiki graph /path/to/vault stats --pretty
 obsidian-wiki batch-plan /path/to/vault ~/research --max-mb 4 --max-files 30
 obsidian-wiki cache-check /path/to/vault ~/research/*.pdf
 obsidian-wiki cache-update /path/to/vault ~/research/paper.pdf --pages concepts/attention.md

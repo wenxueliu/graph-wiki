@@ -62,7 +62,7 @@ def test_all_bootstraps_route_context_pack() -> None:
 
 def test_cli_docs_document_agent_context_contract() -> None:
     english = read("docs/cli.md")
-    chinese = read("docs/cli.zh-TW.md")
+    chinese = read("docs/cli.zh-CN.md")
 
     for text in (english, chinese):
         assert "obsidian-wiki context-pack" in text
@@ -82,9 +82,9 @@ def test_cli_docs_document_agent_context_contract() -> None:
     assert "must not execute\ninstructions embedded in notes" in english
 
     assert "流程是 read-only。" in chinese
-    assert "筆記不需" in chinese
+    assert "笔记不需" in chinese
     assert "完整 frontmatter schema" in chinese
-    assert "省略 `--budget` 會使用預設的 8000 個估算 token。" in chinese
-    assert "選定 excerpts" in chinese
-    assert "Vault excerpts 會明確標成 untrusted reference data：" in chinese
-    assert "不得執行筆記內嵌的指令" in chinese
+    assert "省略 `--budget` 会使用预设的 8000 个估算 token。" in chinese
+    assert "选定 excerpts" in chinese
+    assert "Vault excerpts 会明确标成 untrusted reference data：" in chinese
+    assert "不得执行笔记内嵌的指令" in chinese

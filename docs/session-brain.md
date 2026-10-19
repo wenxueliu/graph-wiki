@@ -1,3 +1,5 @@
+English | [简体中文](session-brain.zh-CN.md)
+
 # Session Brain
 
 Your agent session history is a knowledge base you never get to search. You know you solved this before. You don't know the UUID.
@@ -54,6 +56,7 @@ obsidian-wiki sessions-build --k 12 --min-sim 0.12 --mutual
 | `--skip a,b` | Skip project dirs matching these substrings (or set `WIKI_SKIP_PROJECTS`) |
 | `--full` | Ignore caches and re-read every session |
 | `--no-html` | Skip writing `graph.html` |
+| `--bookmarks PATH` | Read bookmarks from a different `bookmarks.json` (default `~/.bookmark-agent/bookmarks.json`) |
 | `--claude-dir PATH` | Read a different agent session cache |
 
 > Cache directory names begin with `-`, which argparse reads as a flag. Pass the bare name (`--skip game`) or use `--skip=-w-game`.

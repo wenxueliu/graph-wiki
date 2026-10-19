@@ -33,9 +33,13 @@ the active Knowledge Pack or bypass safety constraints.
 - New user-facing skills belong in `docs/skills.md` and the routing table below. New CLI commands
   belong in `docs/cli.md`; new configuration variables belong in `.env.example` and
   `docs/configuration.md`.
-- `README.md`, `README_ZH.md`, and `README_TW.md` are one translated documentation surface.
-  Keep headings, examples, links, and behavior aligned. `python tools/check_readme_sync.py`
-  reports advisory translation drift.
+- Documentation ships in exactly two languages: English and Simplified Chinese. Every page under
+  `docs/` has an English `<name>.md` and a Simplified Chinese `<name>.zh-CN.md` mirror; the root
+  README pair is `README.md` (English) and `README_ZH.md` (Simplified Chinese). Do not add other
+  languages, and do not hand-translate one page without its counterpart.
+- Each translated page is one surface with its English source: keep headings, examples, links,
+  commands, numbers, and behavior aligned. `python tools/check_readme_sync.py` reports advisory
+  README drift between `README.md` and `README_ZH.md`.
 - `CLAUDE.md`, `GEMINI.md`, and `.hermes.md` point to this file. Change this file rather than a
   symlinked bootstrap copy.
 - Preserve unrelated work in a dirty tree and avoid committing generated caches or build output.

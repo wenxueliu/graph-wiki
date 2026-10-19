@@ -1,6 +1,6 @@
 """Report README translation drift.
 
-For each translation (README_TW.md, README_ZH.md), lists commits that changed
+For each translation (README_ZH.md), lists commits that changed
 README.md after the last commit that touched that translation, plus the
 combined English diff that still needs to be translated and backfilled.
 Translations not yet tracked in HEAD are skipped, so adding a new one does
@@ -13,7 +13,7 @@ import subprocess
 
 
 ENGLISH = "README.md"
-TRANSLATIONS = ("README_TW.md", "README_ZH.md")
+TRANSLATIONS = ("README_ZH.md",)
 
 
 def git(*args: str) -> str:

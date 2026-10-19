@@ -1,3 +1,5 @@
+English | [简体中文](architecture.zh-CN.md)
+
 # Architecture
 
 The wiki is the artifact. The agent is the maintainer. Obsidian is the viewer.
@@ -137,7 +139,10 @@ Knowledge that's project-specific goes under `projects/`. Knowledge that's gener
 
 Every page carries required frontmatter: `title`, `category`, `tags`, `sources`, `created`, `updated`.
 
-Typed relationships use the Penfield 24-type vocabulary. One directional edge is normalized by
+Typed relationships use the 24 Penfield standard types (`part_of`, `causes`, `implements`,
+`contradicts`, `supersedes`, and so on). Five legacy aliases — `uses`, `related_to`, `derived_from`,
+`extends`, `replaces` — remain accepted for existing vaults, so the effective allowlist is 29 types;
+owners can extend it further from the resolved vault config. One directional edge is normalized by
 `(source, target, type)` and may be read from the framework's nested `relationships:` block, a
 Wikilink Types top-level key such as `supports:`, or an inline alias such as
 `[[Target|Target @supports]]`. New ingest/update writes keep all three projections synchronized;
@@ -207,11 +212,19 @@ The OKF round-trip is lossless. The `graph.json` round-trip is not — it carrie
 ```
 obsidian-wiki/
 ├── .skills/                             # ← Canonical skill definitions (source of truth)
-│   └── <skill-name>/SKILL.md            #   42 skills — see docs/skills.md
+│   └── <skill-name>/SKILL.md            #   49 skills — see docs/skills.md
 │
+├── knowledge-packs/                     # Bundled Profile + Layout packs (default, book-knowledge, software-knowledge)
+├── workflows/                           # Behavioural source of truth for workflow-backed skills
+│   ├── <name>.yaml                      #   22 workflows
+│   ├── scripts/                         # Deterministic helpers the workflows call
+│   └── templates/wiki-setup/            # Vault scaffold templates (index, log, hot, manifest, WRITING)
 ├── obsidian_wiki/                       # Python package — CLI, setup, sync, session brain
+├── scripts/                             # Standalone helpers (daily-update, manifest, wiki-notify)
+├── tools/                               # sync_workflow_skills.py, check_readme_sync.py
+├── tests/                               # pytest suite
+├── example/                             # Sample project (design, book) consuming a Knowledge Pack
 ├── extensions/brain-capture/            # Zero-build Chrome capture extension
-├── tools/check_readme_sync.py           # Translation drift reporter
 │
 ├── CLAUDE.md                            # Bootstrap → Claude Code / Kilocode (→ AGENTS.md)
 ├── GEMINI.md                            # Bootstrap → Gemini CLI (→ AGENTS.md)
@@ -229,6 +242,7 @@ obsidian-wiki/
 ├── .windsurf/skills/ → symlinks to .skills/*
 ├── .agents/skills/   → symlinks to .skills/*
 ├── .pi/skills/       → symlinks to .skills/*
+├── .cac/skills/      → symlinks to .skills/*   (CodeAgent)
 ├── .kiro/skills/     → symlinks to .skills/*
 │
 ├── setup.py                             # One-command agent setup (cross-platform)
@@ -236,6 +250,6 @@ obsidian-wiki/
 └── docs/                                # You are here
 ```
 
-Global symlink targets created by setup are listed in [Installation](installation.md#what-setupsh-wires-up).
+Global symlink targets created by setup are listed in [Installation → What `python3 setup.py` wires up](installation.md#what-python3-setuppy-wires-up).
 
 For the full pattern — three-layer architecture, page templates, project organization — read [`.skills/llm-wiki/SKILL.md`](../.skills/llm-wiki/SKILL.md).

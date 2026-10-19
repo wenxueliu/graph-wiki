@@ -313,6 +313,7 @@ def test_project_skill_install_supports_all_agents_and_deduplicates_shared_dir(
         tmp_path / ".windsurf/skills",
         tmp_path / ".agents/skills",
         tmp_path / ".pi/skills",
+        tmp_path / ".cac/skills",
         tmp_path / ".kiro/skills",
     ]
 
