@@ -155,6 +155,11 @@ npx skills add wenxueliu/obsidian-wiki
 在 `~/.obsidian-wiki/config` 中保持一个默认生效的 vault，或者用 `/wiki-switch new work` 创建命名配置，
 例如 `~/.obsidian-wiki/config.work`。
 
+每个 profile 指向一个独立的 vault 目录，Obsidian 会把它们视为彼此独立的 vault：一次打开一个（或每个
+窗口一个）。Obsidian 没有跨 vault 链接，没有合并后的图谱，也没有共享索引，因此 `@work` 下的内容不会
+链接到 `@personal`，也无法从 `@personal` 检索到；一次 `wiki-query` 调用只读取一个 vault。除非知识确实
+服务于不同的目的，否则请保持单一 vault。
+
 在任意目录下，都可以用 `@name` 把单个请求路由到一个命名 vault：
 
 ```text

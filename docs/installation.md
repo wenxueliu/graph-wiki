@@ -146,6 +146,12 @@ Open your vault directory in Obsidian (File → Open Vault). The wiki pages, wik
 
 Keep a default vault active in `~/.obsidian-wiki/config`, or create named configs like `~/.obsidian-wiki/config.work` with `/wiki-switch new work`.
 
+Each profile points at a separate vault directory, and Obsidian treats those as independent vaults:
+open one at a time (or one per window). Obsidian has no cross-vault links, no merged graph, and no
+shared index, so nothing under `@work` links to or is retrievable from `@personal`, and one
+`wiki-query` call reads one vault. Keep a single vault unless the knowledge genuinely serves a
+different purpose.
+
 From any directory, route one request to a named vault with `@name`:
 
 ```text
