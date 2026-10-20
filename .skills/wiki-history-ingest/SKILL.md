@@ -20,23 +20,26 @@ If the user invokes `/wiki-history-ingest <target>` (or equivalent text command)
 | `claude` | `claude-history-ingest` |
 | `copilot` | `copilot-history-ingest` |
 | `codex` | `codex-history-ingest` |
-| `hermes` | `hermes-history-ingest` |
 | `openclaw` | `openclaw-history-ingest` |
 | `pi` | `pi-history-ingest` |
 | `auto` | infer from context using rules below |
 
 ## Routing Rules
 
-1. If the user explicitly says `claude`, `copilot`, `codex`, `hermes`, `openclaw`, or `pi`, route directly.
+1. If the user explicitly says `claude`, `copilot`, `codex`, `openclaw`, or `pi`, route directly.
 2. If the user provides a path/source:
    - `~/.claude` or Claude memory/session JSONL artifacts -> `claude-history-ingest`
    - `~/.copilot`, `session-store.db`, VS Code copilot-chat transcripts -> `copilot-history-ingest`
    - `~/.codex` or rollout/session index artifacts -> `codex-history-ingest`
-   - `~/.hermes` or Hermes memories/session artifacts -> `hermes-history-ingest`
    - `~/.openclaw` or OpenClaw MEMORY.md/session JSONL artifacts -> `openclaw-history-ingest`
    - `~/.pi/agent/sessions` or Pi session JSONL artifacts -> `pi-history-ingest`
 3. If ambiguous, ask one short clarification:
-   - "Should I ingest `claude`, `copilot`, `codex`, `hermes`, `openclaw`, or `pi` history?"
+   - "Should I ingest `claude`, `copilot`, `codex`, `openclaw`, or `pi` history?"
+
+## Hermes
+
+Hermes has no bulk history ingest. Send `/wiki-hermes <topic>` to `wiki-agent` instead; it reads
+`~/.hermes/memories/` (or `$HERMES_HOME`) and ingests only the sessions relevant to that topic.
 
 ## Execution Contract
 
@@ -54,7 +57,6 @@ Examples:
 - `/wiki-history-ingest claude`
 - `/wiki-history-ingest copilot`
 - `/wiki-history-ingest codex`
-- `/wiki-history-ingest hermes`
 - `/wiki-history-ingest openclaw`
 - `/wiki-history-ingest pi`
 - `$wiki-history-ingest claude` (agents that use `$skill` invocation)

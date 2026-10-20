@@ -154,7 +154,7 @@ Local git repo clones work in `OBSIDIAN_SOURCES_DIR` (public or private, any hos
 |---|---|---|
 | `CLAUDE_HISTORY_PATH` | Where to find Claude data | *auto-discovers from `~/.claude`* |
 | `CODEX_HISTORY_PATH` | Where to find Codex data | `~/.codex` |
-| `HERMES_HISTORY_PATH` | Where to find Hermes data | `~/.hermes` |
+| `HERMES_HOME` | Hermes home used by `/wiki-hermes` topic-targeted ingest | `~/.hermes` |
 | `OPENCLAW_HISTORY_PATH` | Where to find OpenClaw data | `~/.openclaw` |
 | `COPILOT_HISTORY_PATH` | Where to find Copilot CLI data | `~/.copilot/session-state` |
 | `PI_HISTORY_PATH` | Where to find Pi sessions | `~/.pi/agent/sessions` |

@@ -21,3 +21,6 @@ extensions/brain-capture/*.zip
 # Agent skill symlinks (created by setup.py) — these are just pointers to .skills/
 # We track them so cloners get the symlinks too, but if your git doesn't
 # preserve symlinks, run `python3 setup.py` after cloning.
+
+# Local agent memory/log scratch (not framework source)
+.remember/

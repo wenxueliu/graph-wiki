@@ -150,7 +150,7 @@ manifest、index、hot cache、logs、ingest Job、当前 CWD 与内联覆盖仍
 |---|---|---|
 | `CLAUDE_HISTORY_PATH` | Claude 数据的位置 | *从 `~/.claude` 自动发现* |
 | `CODEX_HISTORY_PATH` | Codex 数据的位置 | `~/.codex` |
-| `HERMES_HISTORY_PATH` | Hermes 数据的位置 | `~/.hermes` |
+| `HERMES_HOME` | `/wiki-hermes` 定向摄取使用的 Hermes 主目录 | `~/.hermes` |
 | `OPENCLAW_HISTORY_PATH` | OpenClaw 数据的位置 | `~/.openclaw` |
 | `COPILOT_HISTORY_PATH` | Copilot CLI 数据的位置 | `~/.copilot/session-state` |
 | `PI_HISTORY_PATH` | Pi 会话的位置 | `~/.pi/agent/sessions` |
