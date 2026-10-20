@@ -86,7 +86,7 @@ obsidian-wiki sessions-query "the auth bug with the weird retry loop"
 /wiki-status          # 已导入什么、还有什么待处理、枢纽页面在哪
 ```
 
-全部 49 个 skill 请见 **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)**（英文）
+全部 50 个 skill 请见 **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)**（英文）
 
 ## 看见它
 
@@ -116,7 +116,7 @@ obsidian-wiki sessions-query "the auth bug with the weird retry loop"
 | | |
 |---|---|
 | **[Installation](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/installation.md)** | pip、clone、由 agent 设置、多个 vault |
-| **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)** | 全部 49 个 skill 与其 slash command |
+| **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)** | 全部 50 个 skill 与其 slash command |
 | **[Agent Compatibility](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/agents.md)** | 完整兼容性表格与各 agent 手动设置 |
 | **[CLI Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/cli.md)** | 每一个 `obsidian-wiki` 子命令 |
 | **[Configuration](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/configuration.md)** | 设置变量、QMD 语义搜索、`_raw/` 暂存区、GitHub 同步 |

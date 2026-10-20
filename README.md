@@ -86,7 +86,7 @@ obsidian-wiki sessions-query "the auth bug with the weird retry loop"
 /wiki-status          # what's ingested, what's pending, where the hubs are
 ```
 
-All 49 skills → **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)**
+All 50 skills → **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)**
 
 ## See it
 
@@ -116,7 +116,7 @@ These docs are available in English and Simplified Chinese.
 | | |
 |---|---|
 | **[Installation](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/installation.md)** | pip, clone, agent-driven setup, multiple vaults |
-| **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)** | All 49 skills and their slash commands |
+| **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)** | All 50 skills and their slash commands |
 | **[Agent Compatibility](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/agents.md)** | The full matrix + per-agent manual setup |
 | **[CLI Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/cli.md)** | Every `obsidian-wiki` subcommand |
 | **[Configuration](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/configuration.md)** | Config vars, QMD semantic search, `_raw/` staging, GitHub sync |

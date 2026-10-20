@@ -24,9 +24,10 @@ This project is a **skill-based framework** for building and maintaining an Obsi
 | Setup | `.skills/wiki-setup/` | Initialize vault structure |
 | Text ingest | `.skills/wiki-folder-ingest/` | Public entry for supported local text files and folders |
 | Packet integration | `.skills/wiki-packet-integrate/` | Internal worker for one validated text Packet |
-| History Router | `.skills/wiki-history-ingest/` | Route `/wiki-history-ingest <claude|codex>` to the right history skill |
+| History Router | `.skills/wiki-history-ingest/` | Route `/wiki-history-ingest <claude/codex/hermes/openclaw/pi>` to the right history skill |
 | Claude History | `.skills/claude-history-ingest/` | Mine `~/.claude` conversations |
 | Codex History | `.skills/codex-history-ingest/` | Mine `~/.codex` sessions and rollout logs |
+| Hermes History | `.skills/hermes-history-ingest/` | Mine `~/.hermes` memories and session logs |
 | Status | `.skills/wiki-status/` | Audit ingestion state and delta |
 | Query | `.skills/wiki-query/` | Answer questions from wiki |
 | Context Pack | `.skills/wiki-context-pack/` | Compile bounded vault context for another agent |

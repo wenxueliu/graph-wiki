@@ -2,7 +2,7 @@ English | [简体中文](skills.zh-CN.md)
 
 # Skills Reference
 
-Everything lives in [`.skills/`](../.skills/) — **49 skills**, each a folder with a `SKILL.md` the
+Everything lives in [`.skills/`](../.skills/) — **50 skills**, each a folder with a `SKILL.md` the
 agent reads when your request matches its description. There is no runtime, no plugin system, and no
 registration step.
 
@@ -40,14 +40,15 @@ call them directly.
 | `wiki-history-ingest` | Router for bulk agent-history ingest | `/wiki-history-ingest <agent>` |
 | `claude-history-ingest` | Mine Claude CLI and Desktop sessions into traceable wiki knowledge | `/claude-history-ingest` |
 | `codex-history-ingest` | Mine `~/.codex` sessions and rollout logs | `/codex-history-ingest` |
+| `hermes-history-ingest` | Mine `~/.hermes` memories and session transcripts | `/hermes-history-ingest` |
 | `copilot-history-ingest` | Mine GitHub Copilot CLI sessions (`~/.copilot/session-state`) | `/copilot-history-ingest` |
 | `openclaw-history-ingest` | Mine `~/.openclaw` `MEMORY.md` and sessions | `/openclaw-history-ingest` |
 | `pi-history-ingest` | Mine `~/.pi/agent/sessions` JSONL history | `/pi-history-ingest` |
 | `wiki-agent` | Topic-first ingest from one agent's raw history, returning a synthesized answer for the current session | `/wiki-claude`, `/wiki-codex`, `/wiki-hermes`, `/wiki-openclaw`, `/wiki-copilot`, `/wiki-pi` |
 
-`wiki-history-ingest` routes `claude`, `copilot`, `codex`, `openclaw`, and `pi`. There is currently no
-dedicated Hermes history skill in `.skills/`; use `/wiki-hermes <topic>`, which performs targeted
-Hermes ingest through `wiki-agent`.
+`wiki-history-ingest` routes `claude`, `copilot`, `codex`, `hermes`, `openclaw`, and `pi` for bulk
+history. `/wiki-hermes <topic>` remains the topic-targeted alternative: it ingests only the Hermes
+sessions relevant to one question and returns a synthesized answer through `wiki-agent`.
 
 Text ingest V1 accepts UTF-8 `.md`, `.markdown`, `.mdx`, `.txt`, and `.rst` only. PDFs, Office
 documents, structured data, logs/transcripts, HTML/URLs, media, archives, and source code are

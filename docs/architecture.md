@@ -212,7 +212,7 @@ The OKF round-trip is lossless. The `graph.json` round-trip is not — it carrie
 ```
 obsidian-wiki/
 ├── .skills/                             # ← Canonical skill definitions (source of truth)
-│   └── <skill-name>/SKILL.md            #   49 skills — see docs/skills.md
+│   └── <skill-name>/SKILL.md            #   50 skills — see docs/skills.md
 │
 ├── knowledge-packs/                     # Bundled Profile + Layout packs (default, book-knowledge, software-knowledge)
 ├── workflows/                           # Behavioural source of truth for workflow-backed skills

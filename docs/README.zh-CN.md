@@ -8,7 +8,7 @@
 |---|---|
 | [安装](installation.zh-CN.md) | pip、git clone、agent 驱动设置、Skills CLI、多个 vault |
 | [Agent 兼容性](agents.zh-CN.md) | 完整的 agent 对照表与每个 agent 的手动设置 |
-| [Skills 参考](skills.zh-CN.md) | 全部 49 个 skill、各自作用与 slash command |
+| [Skills 参考](skills.zh-CN.md) | 全部 50 个 skill、各自作用与 slash command |
 | [CLI 参考](cli.zh-CN.md) | 每个 `obsidian-wiki` 子命令（[English](cli.md)） |
 | [Configuration](configuration.zh-CN.md) | 每个配置变量、QMD 语义搜索、`_raw/` 暂存、GitHub 同步 |
 | [架构](architecture.zh-CN.md) | 四个摄取阶段、vault 结构、我们在 Karpathy 模式之上加的东西 |

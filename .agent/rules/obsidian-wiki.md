@@ -21,7 +21,7 @@ This project is a **skill-based framework** for building and maintaining an Obsi
 | "ingest this folder" / "process these text docs" / a local `.md`, `.markdown`, `.mdx`, `.txt`, or `.rst` source | `wiki-folder-ingest` |
 | "import my Claude history" | `claude-history-ingest` |
 | "import my Codex history" | `codex-history-ingest` |
-| "import my Hermes history" | `wiki-agent` (`/wiki-hermes <topic>`) |
+| "import my Hermes history" | `hermes-history-ingest` |
 | "import my OpenClaw history" | `openclaw-history-ingest` |
 | "import my Pi history" | `pi-history-ingest` |
 | "what's the status" / "show the delta" | `wiki-status` |

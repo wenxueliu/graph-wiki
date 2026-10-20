@@ -2,7 +2,7 @@
 
 # Skills 参考
 
-全部内容都在 [`.skills/`](../.skills/) 下，共 **49 个 skill**。每个 skill 是一个包含 `SKILL.md`
+全部内容都在 [`.skills/`](../.skills/) 下，共 **50 个 skill**。每个 skill 是一个包含 `SKILL.md`
 的目录，当你的请求匹配其 description 时，agent 就会读取它。没有 runtime，没有插件系统，也不需要
 注册步骤。
 
@@ -39,14 +39,15 @@ agent 中，直接描述你的需求即可。
 | `wiki-history-ingest` | 批量 agent 历史摄取的路由器 | `/wiki-history-ingest <agent>` |
 | `claude-history-ingest` | 挖掘 Claude CLI 与 Desktop 会话，蒸馏为可追溯的 wiki 知识 | `/claude-history-ingest` |
 | `codex-history-ingest` | 挖掘 `~/.codex` 会话与 rollout 日志 | `/codex-history-ingest` |
+| `hermes-history-ingest` | 挖掘 `~/.hermes` 的记忆与会话记录 | `/hermes-history-ingest` |
 | `copilot-history-ingest` | 挖掘 GitHub Copilot CLI 会话（`~/.copilot/session-state`） | `/copilot-history-ingest` |
 | `openclaw-history-ingest` | 挖掘 `~/.openclaw` 的 `MEMORY.md` 与会话 | `/openclaw-history-ingest` |
 | `pi-history-ingest` | 挖掘 `~/.pi/agent/sessions` 的 JSONL 历史 | `/pi-history-ingest` |
 | `wiki-agent` | 针对某个 agent 原始历史的主题优先摄取，并返回可直接用于当前会话的综合答案 | `/wiki-claude`、`/wiki-codex`、`/wiki-hermes`、`/wiki-openclaw`、`/wiki-copilot`、`/wiki-pi` |
 
-`wiki-history-ingest` 可路由 `claude`、`copilot`、`codex`、`openclaw` 与 `pi`。目前 `.skills/` 中
-没有专用的 Hermes 历史 skill；请使用 `/wiki-hermes <topic>`，它通过 `wiki-agent` 执行定向的 Hermes
-摄取。
+`wiki-history-ingest` 可对 `claude`、`copilot`、`codex`、`hermes`、`openclaw` 与 `pi` 做批量历史摄取。
+`/wiki-hermes <topic>` 仍是主题定向的替代方案：它只摄取与该问题相关的 Hermes 会话，并通过
+`wiki-agent` 返回综合答案。
 
 Text ingest V1 只接受 UTF-8 的 `.md`、`.markdown`、`.mdx`、`.txt` 与 `.rst`。PDF、Office 文档、
 结构化数据、日志/对话记录、HTML/URL、媒体、压缩包与源代码都会被显式报告，而不会被当作通用文本处理。

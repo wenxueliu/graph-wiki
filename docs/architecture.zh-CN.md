@@ -221,7 +221,7 @@ OKF 往返是无损的。`graph.json` 往返则不是——它携带结构，而
 ```
 obsidian-wiki/
 ├── .skills/                             # ← 规范 skill 定义（事实来源）
-│   └── <skill-name>/SKILL.md            #   49 个 skill——见 docs/skills.md
+│   └── <skill-name>/SKILL.md            #   50 个 skill——见 docs/skills.md
 │
 ├── knowledge-packs/                     # 内置 Profile + Layout pack（default、book-knowledge、software-knowledge）
 ├── workflows/                           # workflow-backed skill 的行为事实来源
