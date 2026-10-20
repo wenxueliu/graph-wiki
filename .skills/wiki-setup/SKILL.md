@@ -187,11 +187,11 @@ config + config-report.md
 
 - 最多连续失败 `4` 次；达到上限后停止并报告阻塞。
 
-### 6. 生成缺失的全局 Writing Profile (`initialize_writing_profile`)
+### 6. 生成缺失的配置目录 Writing Profile (`initialize_writing_profile`)
 
 #### 执行
 
-根据 approved binding 和冻结的 `WRITING.md` 模板，在目标缺失时创建全局 Writing Profile；目标已存在时保持原文并记录 preserved。
+根据 approved binding 和冻结的 `WRITING.md` 模板，在目标缺失时创建配置目录内的 Writing Profile（默认 `~/.obsidian-wiki`，可由 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移）；目标已存在时保持原文并记录 preserved。
 
 写 `writing-profile-report.md`，记录 target 与 created/preserved 状态。
 

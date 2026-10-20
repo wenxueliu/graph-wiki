@@ -44,7 +44,7 @@ description: "按配置解析 Wiki vault，并用确定性脚本生成共享运�
 
 - invocation 含 `@name` 时，移除该路由 token，写 `{"mode":"config","profile":"name","overrides":{...}}`；这里的 `profile` 是 Named Vault Profile，只选择 config/vault，不是 Knowledge Profile；
 - 用户明确给出 vault 绝对路径时，写 `{"mode":"interactive","vault_path":"<expanded absolute path>","overrides":{...}}`；
-- 其他情况写 `{"mode":"config","overrides":{...}}`，不向用户重复询问 vault。resolver 会按最近 `.env` 再到全局 `~/.obsidian-wiki/config` 的顺序读取 wiki-setup 已写入的设置。
+- 其他情况写 `{"mode":"config","overrides":{...}}`，不向用户重复询问 vault。resolver 会按最近 `.env` 再到全局 `~/.obsidian-wiki/config` 的顺序读取 wiki-setup 已写入的设置。配置目录默认为 `~/.obsidian-wiki`，可用 `OBSIDIAN_WIKI_CONFIG_DIR`（进程环境变量或最近的 `.env`）整体迁移，`config`、`config.<name>` 与 `WRITING.md` 随之移动。
 
 准备好后输出 `<promise>done</promise>`。
 
@@ -84,7 +84,7 @@ obsidian-wiki wiki-context-resolve \
   --output-dir "{{artifacts_dir}}"
 ```
 
-console script 不在 PATH 时使用等价的 `python3 -m obsidian_wiki wiki-context-resolve ...`。config mode 严格按 `@name` 指定 config、从 source CWD 向上找第一个含 `OBSIDIAN_VAULT_PATH` 的 `.env`、再到全局 `~/.obsidian-wiki/config` 的顺序解析；都缺失时要求运行 wiki-setup。
+console script 不在 PATH 时使用等价的 `python3 -m obsidian_wiki wiki-context-resolve ...`。config mode 严格按 `@name` 指定 config、从 source CWD 向上找第一个含 `OBSIDIAN_VAULT_PATH` 的 `.env`、再到全局 `~/.obsidian-wiki/config` 的顺序解析；都缺失时要求运行 wiki-setup。这里的“全局”是配置目录，默认为 `~/.obsidian-wiki`，可用 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移到项目仓库内。
 
 若 resolved config 的 `OBSIDIAN_CONTEXT_SNAPSHOT`（空值时默认 `<vault>/_meta/context/wiki-context.json`）存在且有效，resolver 直接把该 compiled context 作为本次三个 artifacts 的只读链接，不重新读取或展开 owner rules、Writing Profile、Knowledge Profile、Layout、routing 与低频 vault metadata。snapshot 缺失时保留兼容解析，但提示通过 wiki-setup/repair 编译。inline override、setup mode 或显式 overrides 不复用 snapshot。
 

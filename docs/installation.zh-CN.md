@@ -2,8 +2,8 @@
 
 # 安装
 
-四条路径。选一条——它们最终都到达同一个地方：`~/.obsidian-wiki/config` 里的 vault 路径，以及你的
-agent 能发现的 skill。
+四条路径。选一条——它们最终都到达同一个地方：配置文件（默认 `~/.obsidian-wiki/config`）里的 vault
+路径，以及你的 agent 能发现的 skill。
 
 | 路径 | 适合谁 | 写入全局配置 | Agent skill 目标 |
 |---|---|---|---|
@@ -19,7 +19,8 @@ pip install obsidian-wiki
 obsidian-wiki setup --vault /path/to/your/digital/brain
 ```
 
-`obsidian-wiki setup` 会把配置写入 `~/.obsidian-wiki/config`，并询问要安装哪些 agent skill 目标。
+`obsidian-wiki setup` 会把配置写入 `~/.obsidian-wiki/config`（可用 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移），
+并询问要安装哪些 agent skill 目标。
 它没有隐含的「安装全部 agent」行为，也从不把 skill 装到全局。skill 与 bootstrap 文件只会写在命令运行
 所在的目录下（或显式 `--project DIR` 覆盖的目录）。skill 以符号链接指向已安装的包，因此
 `pip install -U obsidian-wiki` 之后再次运行 setup 即可升级所选目标。
@@ -66,7 +67,7 @@ Knowledge Pack、owner/Writing Profile 路径、vault 元数据与 taxonomy 路�
 
 `OBSIDIAN_VAULT_PATH` 只是你希望数字大脑存放的任意目录——一个新建的空文件夹或一个已有的 Obsidian
 vault 都行。在交互式终端中省略 `--vault` 即可进入输入；显示的默认值是当前目录，按 Enter 接受。在
-非交互式运行中，请显式传 `--vault`，或使用 `~/.obsidian-wiki/config` 中的既有值。
+非交互式运行中，请显式传 `--vault`，或使用配置文件（默认 `~/.obsidian-wiki/config`）中的既有值。
 
 Agent 选择也会过滤生成的项目规则与入口文件。例如只选 Claude，会创建共享的 `AGENTS.md`、`CLAUDE.md`
 与 `.claude/skills/`，而不会生成其他 agent 的文件。选择多个 agent 会生成它们文件的并集。
@@ -97,19 +98,24 @@ cd obsidian-wiki
 python3 setup.py
 ```
 
-`python3 setup.py` 会询问你的 vault 路径，把配置写入 `~/.obsidian-wiki/config`，把 skill 安装进你所有
-的 agent（Windows 用复制模式，Unix 用符号链接），并把 `wiki-update`、`wiki-query` 与
-`wiki-context-pack` 装到全局，让你在任意项目中都能使用。
+`python3 setup.py` 会询问你的 vault 路径，默认把配置写入 `~/.obsidian-wiki/config`（可用
+`OBSIDIAN_WIKI_CONFIG_DIR` 迁移），把 skill 安装进你所有的 agent（Windows 用复制模式，Unix 用
+符号链接），并把 `wiki-update`、`wiki-query` 与 `wiki-context-pack` 装到全局，让你在任意项目中都能
+使用。
 
 在 agent 中打开该项目，说 **「set up my wiki」**。
 
-若要仅本地配置，把 `.env.example` 复制为 `.env` 并设置 `OBSIDIAN_VAULT_PATH`——工作目录（或其到
-`$HOME` 为止的任意父目录）中的 `.env` 优先于全局配置。见 [Configuration](configuration.zh-CN.md)。
+若要仅本地配置，把 `.env.example` 复制为 `.env` 并设置 `OBSIDIAN_VAULT_PATH`。工作目录（或其到
+`$HOME` 为止的任意父目录）中的 `.env` 优先于配置文件。若要把整个配置留在项目内而不是
+`~/.obsidian-wiki`，再设置 `OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki`。此后所有与 vault 相关的命令
+（`query`、`context-pack`、`lint`、`trust-*`、`validate`、`verify`、`doctor`、`sync`）都读取项目的
+`.env`，`@name` profile 也从 `<project>/.obsidian-wiki/config.<name>` 解析。见
+[Configuration](configuration.zh-CN.md#把配置留在项目内)。
 
 ### What `python3 setup.py` wires up
 
-1. **全局配置**，位于 `~/.obsidian-wiki/config`，包含你的 vault 路径与 repo 位置。skill 正是借此知道
-   该从哪里读写。
+1. **配置**，默认位于 `~/.obsidian-wiki/config`（可用 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移），包含你的
+   vault 路径与 repo 位置。skill 正是借此知道该从哪里读写。
 2. **可移植 skill**——`wiki-update`、`wiki-query` 与 `wiki-context-pack` 会以符号链接装进
    `~/.claude/skills/`，因此在 Claude Code 里任意项目都能使用。
 3. **全局符号链接**，覆盖每个 agent 的发现路径（旧版 `python3 setup.py` 行为）：
@@ -152,8 +158,12 @@ npx skills add wenxueliu/obsidian-wiki
 
 ## 多个 vault
 
-在 `~/.obsidian-wiki/config` 中保持一个默认生效的 vault，或者用 `/wiki-switch new work` 创建命名配置，
-例如 `~/.obsidian-wiki/config.work`。
+在配置文件（默认 `~/.obsidian-wiki/config`）中保持一个默认生效的 vault，或者用 `/wiki-switch new work`
+创建命名配置，例如 `~/.obsidian-wiki/config.work`。
+
+Profile 也可以放在项目内：在项目 `.env` 设置 `OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki`，把 `config`、
+`config.<name>` 与 `WRITING.md` 留在该目录——不会读写 `~/.obsidian-wiki`。当一个仓库拥有一个 vault、
+且多个仓库必须彼此独立时，这是推荐布局。`@name` 与普通默认值都在该目录内解析。
 
 每个 profile 指向一个独立的 vault 目录，Obsidian 会把它们视为彼此独立的 vault：一次打开一个（或每个
 窗口一个）。Obsidian 没有跨 vault 链接，没有合并后的图谱，也没有共享索引，因此 `@work` 下的内容不会

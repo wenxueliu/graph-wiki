@@ -402,6 +402,55 @@ def test_context_resolver_reads_vault_from_global_setup_config(tmp_path: Path) -
     assert context["config_source"] == str(config)
 
 
+def test_context_resolver_honors_project_config_dir_override(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    project = home / "project"
+    vault = tmp_path / "work-vault"
+    project.mkdir(parents=True)
+    vault.mkdir()
+    (project / ".env").write_text(
+        "OBSIDIAN_WIKI_CONFIG_DIR=.wiki-config\n", encoding="utf-8"
+    )
+    config = project / ".wiki-config" / "config.work"
+    config.parent.mkdir()
+    config.write_text(f"OBSIDIAN_VAULT_PATH={vault}\n", encoding="utf-8")
+
+    result = run_context_resolver(
+        project, None, setup_mode="false", mode="config", profile="work",
+        requested_keys="OBSIDIAN_VAULT_PATH", home=home,
+    )
+
+    assert result.returncode == 0, result.stderr
+    context = json.loads((project / "artifacts-false" / "wiki-context.json").read_text())
+    assert context["vault_path"] == str(vault)
+    assert context["config_source"] == str(config)
+
+
+def test_context_resolver_honors_config_dir_env_var(
+    tmp_path: Path, monkeypatch
+) -> None:
+    home = tmp_path / "home"
+    project = home / "project"
+    vault = tmp_path / "work-vault"
+    project.mkdir(parents=True)
+    vault.mkdir()
+    config_root = tmp_path / "relocated"
+    config_root.mkdir()
+    config = config_root / "config.work"
+    config.write_text(f"OBSIDIAN_VAULT_PATH={vault}\n", encoding="utf-8")
+    monkeypatch.setenv("OBSIDIAN_WIKI_CONFIG_DIR", str(config_root))
+
+    result = run_context_resolver(
+        project, None, setup_mode="false", mode="config", profile="work",
+        requested_keys="OBSIDIAN_VAULT_PATH", home=home,
+    )
+
+    assert result.returncode == 0, result.stderr
+    context = json.loads((project / "artifacts-false" / "wiki-context.json").read_text())
+    assert context["vault_path"] == str(vault)
+    assert context["config_source"] == str(config)
+
+
 def test_context_resolver_honors_named_vault_profile(tmp_path: Path) -> None:
     home = tmp_path / "home"
     project = home / "project"

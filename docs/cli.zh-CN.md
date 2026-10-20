@@ -17,7 +17,7 @@ obsidian-wiki --version
 
 | 命令 | 作用 |
 |---|---|
-| `setup` | 在命令所在目录安装所选 agent 的 skill，并写入 `~/.obsidian-wiki/config` |
+| `setup` | 在命令所在目录安装所选 agent 的 skill，并写入配置文件（默认 `~/.obsidian-wiki/config`） |
 | `info` | 显示安装路径、版本与解析后的配置 |
 | `list` | 列出内置 skill |
 | `doctor` | 健康检查配置、vault 形态、bootstrap 资源与已安装 skill |
@@ -73,7 +73,7 @@ Antigravity、Copilot、Gemini 或 Hermes 的 bootstrap 文件。未选中 agent
 显示。按 Enter 即接受该默认值。在非交互式运行中，setup 会保留已配置 vault 的回退；显式传
 `--vault PATH` 可以覆盖它。
 
-`--skills-only` 会把 setup 限制为命令目录内的 skill 与 bootstrap 安装。它不会读写全局配置、Writing
+`--skills-only` 会把 setup 限制为命令目录内的 skill 与 bootstrap 安装。它不会读写配置目录、Writing
 Profile、vault、Knowledge Pack 标记或 Git 集成。由于该模式没有其他 setup 工作，它要求显式指定
 agent 选择。
 
@@ -98,14 +98,14 @@ obsidian-wiki query "rate limiting" --top 12 --max-read 5 --json
 
 obsidian-wiki lint                     # 使用已配置的 vault
 obsidian-wiki lint /path/to/vault --strict
-obsidian-wiki lint @research --json    # 只用 ~/.obsidian-wiki/config.research
+obsidian-wiki lint @research --json    # 只用 <配置目录>/config.research
 obsidian-wiki lint --strict-trust      # trust ledger 出问题时直接失败，而不只是警告
 obsidian-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
   --required-trust-field updated --schema-source /path/to/vault/AGENTS.md
 ```
 
 Lint 会同时解析 vault 与 schema：显式路径（不继承配置）、位置参数 `@name`、最近的 CWD `.env`，最后
-是全局配置。CLI 的 schema 参数会扩展/替换该 vault 的解析结果，并记录在 JSON 的 `schema` 块中。
+是配置文件。CLI 的 schema 参数会扩展/替换该 vault 的解析结果，并记录在 JSON 的 `schema` 块中。
 
 ## 校验页面与来源
 
@@ -377,7 +377,8 @@ def pack_sections(
 `wiki-route-resolve` 会在已安装的包或源码检出中定位各自的辅助脚本与内置资源。因此 workflow 不依赖
 `.cac/...` 路径，也不依赖调用者的当前工作目录。带有 `{"mode":"config"}` 的 `vault-input.json` 会让
 `wiki-context-resolve` 加载 wiki-setup 配置的 vault：优先一个可选的 Named Vault Profile（`profile`），
-否则取包含 `OBSIDIAN_VAULT_PATH` 的最近 `.env`，再否则取 `~/.obsidian-wiki/config`。显式批准的 vault
+否则取包含 `OBSIDIAN_VAULT_PATH` 的最近 `.env`，再否则取配置文件。配置目录默认为 `~/.obsidian-wiki`，
+可用 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移。显式批准的 vault
 路径使用 `{"mode":"interactive","vault_path":"/absolute/path"}`。
 
 大多数命令都接受 `--json` 与/或 `--pretty`，以输出机器可读结果。

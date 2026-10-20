@@ -79,12 +79,39 @@ def parse_config(path: Path) -> dict[str, str]:
     return values
 
 
-def config_home() -> Path:
-    return Path.home().resolve()
+def config_home(source_cwd: Path | None = None) -> Path:
+    """Resolve the config directory.
+
+    ``OBSIDIAN_WIKI_CONFIG_DIR`` may relocate it, either from the process
+    environment or from the nearest ``.env`` above ``source_cwd``. A relative
+    value resolves against that ``.env``'s directory. Defaults to
+    ``~/.obsidian-wiki``.
+    """
+    override = os.environ.get("OBSIDIAN_WIKI_CONFIG_DIR", "").strip()
+    if override:
+        expanded = Path(override).expanduser()
+        if not expanded.is_absolute():
+            expanded = Path.cwd() / expanded
+        return expanded.resolve()
+
+    current = (source_cwd or Path.cwd()).resolve()
+    home = Path.home().resolve()
+    while True:
+        candidate = current / ".env"
+        if candidate.is_file():
+            raw = parse_config(candidate).get("OBSIDIAN_WIKI_CONFIG_DIR", "").strip()
+            if raw:
+                expanded = Path(raw).expanduser()
+                if not expanded.is_absolute():
+                    expanded = candidate.parent / expanded
+                return expanded.resolve()
+        if current == current.parent or current == home:
+            break
+        current = current.parent
+    return (home / ".obsidian-wiki").resolve()
 
 
-def available_profiles(base: Path) -> list[str]:
-    config_dir = base / ".obsidian-wiki"
+def available_profiles(config_dir: Path) -> list[str]:
     if not config_dir.is_dir():
         return []
     return sorted(
@@ -95,11 +122,11 @@ def available_profiles(base: Path) -> list[str]:
 
 
 def resolve_config(source_cwd: Path, profile: str | None = None) -> tuple[Path | None, dict[str, str]]:
-    base = config_home()
+    base = config_home(source_cwd)
     if profile is not None:
         if not profile or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for character in profile):
             raise ValueError(f"invalid vault profile name: {profile!r}")
-        named_config = base / ".obsidian-wiki" / f"config.{profile}"
+        named_config = base / f"config.{profile}"
         if named_config.is_file():
             return named_config, parse_config(named_config)
         profiles = available_profiles(base)
@@ -118,7 +145,7 @@ def resolve_config(source_cwd: Path, profile: str | None = None) -> tuple[Path |
             break
         current = current.parent
 
-    global_config = base / ".obsidian-wiki" / "config"
+    global_config = base / "config"
     if global_config.is_file():
         return global_config, parse_config(global_config)
     return None, {}
@@ -285,7 +312,7 @@ def main() -> int:
         writing_path = configured_path(
             binding_config,
             "OBSIDIAN_WRITING_PROFILE_PATH",
-            Path.home() / ".obsidian-wiki" / "WRITING.md",
+            config_home(args.source_cwd) / "WRITING.md",
         )
         taxonomy_path = configured_path(
             binding_config, "OBSIDIAN_TAXONOMY_PATH", metadata_dir / "taxonomy.md"

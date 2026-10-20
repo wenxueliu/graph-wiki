@@ -95,7 +95,7 @@ retains durable Jobs and Packets for interruption-safe resume and staged review.
 
 ## The loop
 
-1. Agent resolves the vault path (`@name` → `.env` → `~/.obsidian-wiki/config`)
+1. Agent resolves the vault path (`@name` → `.env` → `config` in the config directory, default `~/.obsidian-wiki`)
 2. Agent reads `.manifest.json` to know what's already been done
 3. Agent loads the active Knowledge Profile and Vault Layout from the bound Knowledge Pack
 4. Agent reads the relevant skill for instructions

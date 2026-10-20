@@ -158,9 +158,16 @@ def build_core(templates_dir: Path, knowledge_packs_dir: Path, output_dir: Path)
             "WIKI_TEXT_CHUNK_STRATEGY": "adaptive_sections",
             "WIKI_TEXT_CHUNK_OPTIONS": {},
         },
+        "config_dir": {
+            "default": "~/.obsidian-wiki",
+            "override_env": "OBSIDIAN_WIKI_CONFIG_DIR",
+            "resolution": "process environment first, then the nearest .env walking up to $HOME; a relative value resolves against that .env's directory",
+            "contents": ["config", "config.<name>", "WRITING.md"],
+        },
         "writing_profile": {
             "unix_path": "~/.obsidian-wiki/WRITING.md",
             "windows_path": "~/.obsidian-wiki/WRITING.md",
+            "relative_to_config_dir": True,
             "create_only_when_missing": True,
             "template": "WRITING.md",
         },

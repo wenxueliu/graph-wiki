@@ -81,7 +81,7 @@ review。
 
 ## 循环
 
-1. Agent 解析 vault 路径（`@name` → `.env` → `~/.obsidian-wiki/config`）
+1. Agent 解析 vault 路径（`@name` → `.env` → 配置目录中的 `config`，默认 `~/.obsidian-wiki`）
 2. Agent 读取 `.manifest.json`，知道哪些已经做过
 3. Agent 从绑定的 Knowledge Pack 加载当前生效的 Knowledge Profile 与 Vault Layout
 4. Agent 读取相关 skill 获取指令

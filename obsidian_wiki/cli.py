@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import TypedDict
 
 from obsidian_wiki import __version__
+from obsidian_wiki import config_paths
 from obsidian_wiki.knowledge_pack import (
     KNOWLEDGE_PACK_MARKER,
     KnowledgePackContractError,
@@ -39,11 +40,28 @@ from obsidian_wiki.verify import (
 
 HOME = Path.home()
 _IS_WINDOWS = os.name == "nt"
-# Keep the global wiki state in the user's home directory on every platform.
-# In particular, do not use %LOCALAPPDATA% on Windows: the documented config
-# and the workflow resolver both use ~/.obsidian-wiki.
+# Default location of the wiki state. `OBSIDIAN_WIKI_CONFIG_DIR` (set in the
+# environment or in the nearest `.env`) relocates it, so a project can keep
+# `config`, `config.<name>`, and `WRITING.md` inside its own repository instead
+# of the user's home directory.
 GLOBAL_CONFIG_DIR = HOME / ".obsidian-wiki"
+# Legacy alias for the default config file path. Runtime reads use
+# `global_config_path()`, which honors `OBSIDIAN_WIKI_CONFIG_DIR`.
 GLOBAL_CONFIG = GLOBAL_CONFIG_DIR / "config"
+
+
+def config_dir(start: Path | None = None) -> Path:
+    """Resolve the config directory, walking up from `start` (default: CWD)."""
+    return config_paths.resolve_config_dir(start, default=GLOBAL_CONFIG_DIR)
+
+
+def config_file_path(name: str | None = None, start: Path | None = None) -> Path:
+    """Path to `config` or `config.<name>` inside the resolved config directory."""
+    return config_paths.config_file(name, default=GLOBAL_CONFIG_DIR, start=start)
+
+
+def global_config_path(start: Path | None = None) -> Path:
+    return config_file_path(start=start)
 
 OBSOLETE_MANAGED_SKILLS = ("wiki-ingest",)
 
@@ -559,19 +577,21 @@ def ensure_project_context_bindings(
 
 # ── Config ───────────────────────────────────────────────────────────────────
 def _read_config_value(key: str) -> str:
-    if not GLOBAL_CONFIG.is_file():
+    config = global_config_path()
+    if not config.is_file():
         return ""
-    for line in GLOBAL_CONFIG.read_text().splitlines():
+    for line in config.read_text().splitlines():
         if line.startswith(f"{key}="):
             return line.split("=", 1)[1].strip().strip('"')
     return ""
 
 
 def _read_config() -> dict[str, str]:
-    if not GLOBAL_CONFIG.is_file():
+    config = global_config_path()
+    if not config.is_file():
         return {}
     values: dict[str, str] = {}
-    for raw in GLOBAL_CONFIG.read_text().splitlines():
+    for raw in config.read_text().splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -580,12 +600,62 @@ def _read_config() -> dict[str, str]:
     return values
 
 
-def resolve_vault_path(cli_vault: str | None) -> str:
-    if cli_vault:
-        return str(Path(cli_vault).expanduser().resolve())
-    existing = _read_config_value("OBSIDIAN_VAULT_PATH")
-    if existing and existing != "/path/to/your/vault":
-        return existing
+def _nearest_env_config(
+    start: Path | None = None,
+) -> tuple[Path | None, dict[str, str] | None]:
+    """Nearest `.env` from `start` up to `$HOME` that sets OBSIDIAN_VAULT_PATH."""
+    for directory in config_paths.iter_parents(start or Path.cwd(), HOME):
+        candidate = directory / ".env"
+        if not candidate.is_file():
+            continue
+        config = _read_config_file(candidate)
+        if "OBSIDIAN_VAULT_PATH" in config:
+            return candidate, config
+    return None, None
+
+
+def _vault_from_config(config: dict[str, str]) -> Path | None:
+    raw = config.get("OBSIDIAN_VAULT_PATH", "").strip()
+    if not raw or raw == "/path/to/your/vault":
+        return None
+    return Path(raw).expanduser().resolve()
+
+
+def resolve_vault_binding(
+    vault_arg: str | None,
+    *,
+    start: Path | None = None,
+) -> tuple[Path | None, dict[str, str], str]:
+    """Resolve one vault for any command.
+
+    Order: `@name` named profile -> explicit path -> nearest `.env` ->
+    config-directory `config`. Returns `(vault, config_values, config_source)`;
+    `vault` is `None` when nothing resolves. An empty explicit value is invalid
+    and never falls through to the environment or the config directory.
+    """
+    if vault_arg and vault_arg.startswith("@"):
+        name = vault_arg[1:]
+        if not name or re.fullmatch(r"[A-Za-z0-9_-]+", name) is None:
+            return None, {}, f"@{name}"
+        path = config_file_path(name, start=start)
+        config = _read_config_file(path)
+        return _vault_from_config(config), config, str(path)
+    if vault_arg is not None:
+        if not vault_arg.strip():
+            return None, {}, "explicit-vault"
+        return Path(vault_arg).expanduser().resolve(), {}, "explicit-vault"
+    env_file, config = _nearest_env_config(start)
+    if config is not None:
+        return _vault_from_config(config), config, str(env_file)
+    config_file = global_config_path(start)
+    config = _read_config_file(config_file)
+    return _vault_from_config(config), config, str(config_file)
+
+
+def resolve_vault_path(cli_vault: str | None, *, start: Path | None = None) -> str:
+    vault, _, _ = resolve_vault_binding(cli_vault if cli_vault else None, start=start)
+    if vault is not None:
+        return str(vault)
     if sys.stdin.isatty():
         try:
             entered = input("  Where is your Obsidian vault? (absolute path): ").strip()
@@ -593,17 +663,17 @@ def resolve_vault_path(cli_vault: str | None) -> str:
             entered = ""
         if entered:
             return str(Path(entered).expanduser().resolve())
-    return existing
+    return ""
 
 
-def _select_setup_vault(cli_vault: str | None) -> str:
-    """Resolve setup's vault, prompting with the current directory as default."""
+def _select_setup_vault(cli_vault: str | None, *, start: Path | None = None) -> str:
+    """Resolve setup's vault, prompting with the project directory as default."""
     if cli_vault is not None:
-        return resolve_vault_path(cli_vault)
+        return resolve_vault_path(cli_vault, start=start)
     if not sys.stdin.isatty():
-        return resolve_vault_path(None)
+        return resolve_vault_path(None, start=start)
 
-    default = Path.cwd().resolve()
+    default = (start or Path.cwd()).resolve()
     try:
         entered = input(f"  Vault directory [{default}]: ").strip()
     except EOFError:
@@ -611,40 +681,50 @@ def _select_setup_vault(cli_vault: str | None) -> str:
     return str(Path(entered).expanduser().resolve()) if entered else str(default)
 
 
-def _stable_context_config(vault_path: str, knowledge_pack: str) -> dict[str, str]:
+def _stable_context_config(
+    vault_path: str, knowledge_pack: str, *, start: Path | None = None
+) -> dict[str, str]:
     vault = Path(vault_path).expanduser().resolve()
     metadata = vault / "_meta"
     return {
         "OBSIDIAN_KNOWLEDGE_PACK": knowledge_pack,
         "OBSIDIAN_OWNER_RULES_PATH": str(vault / "AGENTS.md"),
-        "OBSIDIAN_WRITING_PROFILE_PATH": str(GLOBAL_CONFIG_DIR / "WRITING.md"),
+        "OBSIDIAN_WRITING_PROFILE_PATH": str(
+            config_paths.writing_profile_file(default=GLOBAL_CONFIG_DIR, start=start)
+        ),
         "OBSIDIAN_VAULT_METADATA_DIR": str(metadata),
         "OBSIDIAN_TAXONOMY_PATH": str(metadata / "taxonomy.md"),
         "OBSIDIAN_CONTEXT_SNAPSHOT": str(metadata / "context" / "wiki-context.json"),
     }
 
 
-def write_config(vault_path: str, knowledge_pack: str) -> None:
-    GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+def write_config(
+    vault_path: str, knowledge_pack: str, *, start: Path | None = None
+) -> Path:
+    directory = config_dir(start)
+    directory.mkdir(parents=True, exist_ok=True)
+    target = config_file_path(start=start)
     # OBSIDIAN_WIKI_REPO points at the bundled data root so skills that reference
     # framework assets (templates, references) can find them post-install.
     repo_root = skills_dir().parent
     values = {
         "OBSIDIAN_VAULT_PATH": vault_path,
-        **_stable_context_config(vault_path, knowledge_pack),
+        **_stable_context_config(vault_path, knowledge_pack, start=start),
         "OBSIDIAN_WIKI_REPO": str(repo_root),
         "OBSIDIAN_WIKI_VERSION": __version__,
     }
-    GLOBAL_CONFIG.write_text(
+    target.write_text(
         "".join(f'{key}="{value}"\n' for key, value in values.items())
     )
-    print(f"✅  Global config written to {GLOBAL_CONFIG}")
+    print(f"✅  Config written to {target}")
+    return target
 
 
-def ensure_global_writing_profile() -> Path:
-    """Create the editable global writing profile without replacing user preferences."""
-    GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    target = GLOBAL_CONFIG_DIR / "WRITING.md"
+def ensure_global_writing_profile(*, start: Path | None = None) -> Path:
+    """Create the editable writing profile without replacing user preferences."""
+    directory = config_dir(start)
+    directory.mkdir(parents=True, exist_ok=True)
+    target = directory / "WRITING.md"
     if target.exists():
         return target
     template = skills_dir() / "llm-wiki" / "references" / "WRITING.md"
@@ -863,7 +943,11 @@ def _resolve_setup_knowledge_pack(
 
 def _check_stale() -> None:
     """Warn if the installed version doesn't match when setup last ran, or if skills are missing."""
-    if not GLOBAL_CONFIG.is_file():
+    if not global_config_path().is_file():
+        _, env_config = _nearest_env_config()
+        if env_config is not None and _vault_from_config(env_config) is not None:
+            # A project `.env` configures the vault without setup's version marker.
+            return
         print(
             f"⚠️  obsidian-wiki {__version__} is installed but setup has never been run.\n"
             f"   Run: obsidian-wiki setup --vault /path/to/your/vault",
@@ -1029,22 +1113,27 @@ def run_doctor(*, vault_override: str | None = None, project_dir: str | None = N
     )
 
     config = _read_config()
-    config_present = GLOBAL_CONFIG.is_file()
+    config_path = global_config_path()
+    config_present = config_path.is_file()
+    if vault_override:
+        vault = Path(vault_override).expanduser().resolve()
+        config_source = "explicit-vault"
+    else:
+        vault, _, config_source = resolve_vault_binding(None)
+    configured = config_present or vault is not None
     _doctor_add(
         checks,
         name="global-config",
-        status="pass" if config_present else "fail",
-        detail=str(GLOBAL_CONFIG) if config_present else "global config not written",
-        hint="" if config_present else "run: obsidian-wiki setup --vault /path/to/your/vault",
+        status="pass" if configured else "fail",
+        detail=(
+            str(config_path)
+            if config_present
+            else (config_source if configured else "global config not written")
+        ),
+        hint="" if configured else "run: obsidian-wiki setup --vault /path/to/your/vault",
     )
 
-    vault_path = ""
-    if vault_override:
-        vault_path = os.path.expanduser(vault_override)
-    elif config_present:
-        vault_path = config.get("OBSIDIAN_VAULT_PATH", "")
-
-    if not vault_path:
+    if vault is None:
         _doctor_add(
             checks,
             name="vault-config",
@@ -1052,9 +1141,7 @@ def run_doctor(*, vault_override: str | None = None, project_dir: str | None = N
             detail="OBSIDIAN_VAULT_PATH is not set",
             hint="run: obsidian-wiki setup --vault /path/to/your/vault",
         )
-        vault = None
     else:
-        vault = Path(vault_path).expanduser().resolve()
         _doctor_add(
             checks,
             name="vault-config",
@@ -1306,17 +1393,17 @@ def cmd_setup(args: argparse.Namespace) -> int:
     print("║         obsidian-wiki — Agent Setup              ║")
     print("╚══════════════════════════════════════════════════╝\n")
 
-    vault_path = _select_setup_vault(args.vault)
+    vault_path = _select_setup_vault(args.vault, start=project_dir)
     try:
         knowledge_pack = _resolve_setup_knowledge_pack(vault_path, selected_knowledge_pack)
     except KnowledgePackContractError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
-    write_config(vault_path, knowledge_pack.name)
-    writing_profile = ensure_global_writing_profile()
+    write_config(vault_path, knowledge_pack.name, start=project_dir)
+    writing_profile = ensure_global_writing_profile(start=project_dir)
     if not vault_path:
         print("    → Vault path not set yet. Re-run with `--vault /path/to/vault`")
-        print("      or edit OBSIDIAN_VAULT_PATH in ~/.obsidian-wiki/config.")
+        print(f"      or edit OBSIDIAN_VAULT_PATH in {global_config_path(project_dir)}.")
     else:
         vault_dir = Path(vault_path).expanduser()
         try:
@@ -2317,42 +2404,15 @@ def _read_config_file(path: Path) -> dict[str, str]:
 def _resolve_schema_command_context(
     vault_arg: str | None,
 ) -> tuple[Path, dict[str, str], str] | None:
-    config: dict[str, str]
-    config_source: str
     if vault_arg and vault_arg.startswith("@"):
         name = vault_arg[1:]
         if not name or re.fullmatch(r"[A-Za-z0-9_-]+", name) is None:
             print("error: named vault must use @ followed by letters, digits, _ or -", file=sys.stderr)
             return None
-        path = GLOBAL_CONFIG_DIR / f"config.{name}"
-        config = _read_config_file(path)
-        config_source = str(path)
-        resolved = config.get("OBSIDIAN_VAULT_PATH", "")
-    elif vault_arg is not None:
-        config = {}
-        config_source = "explicit-vault"
-        resolved = vault_arg
-    else:
-        current = Path.cwd().resolve()
-        config = {}
-        config_source = str(GLOBAL_CONFIG)
-        while True:
-            candidate = current / ".env"
-            local = _read_config_file(candidate)
-            if "OBSIDIAN_VAULT_PATH" in local:
-                config = local
-                config_source = str(candidate)
-                break
-            if current == HOME or current.parent == current:
-                break
-            current = current.parent
-        if not config:
-            config = _read_config_file(GLOBAL_CONFIG)
-        resolved = config.get("OBSIDIAN_VAULT_PATH", "")
-    if not resolved:
+    vault, config, config_source = resolve_vault_binding(vault_arg)
+    if vault is None:
         print("error: vault not configured; pass a path, @name, or run obsidian-wiki setup", file=sys.stderr)
         return None
-    vault = Path(resolved).expanduser().resolve()
     if not vault.is_dir():
         print(f"error: vault not found: {vault}", file=sys.stderr)
         return None
@@ -2473,54 +2533,18 @@ def cmd_lint(args: argparse.Namespace) -> int:
 
 
 def _resolve_command_vault(vault_arg: str | None) -> Path | None:
-    resolved = (
-        vault_arg
-        if vault_arg is not None
-        else _read_config_value("OBSIDIAN_VAULT_PATH")
-    )
-    if not resolved:
+    vault, _, _ = resolve_vault_binding(vault_arg)
+    if vault is None:
         print("error: vault not configured; pass a path or run obsidian-wiki setup", file=sys.stderr)
         return None
-    vault = Path(resolved).expanduser().resolve()
     if not vault.is_dir():
         print(f"error: vault not found: {vault}", file=sys.stderr)
         return None
     return vault
 
 
-def _read_env_value(path: Path, key: str) -> tuple[bool, str]:
-    if not path.is_file():
-        return False, ""
-    for raw in path.read_text(encoding="utf-8").splitlines():
-        line = raw.strip()
-        if line.startswith(f"{key}="):
-            return True, line.split("=", 1)[1].strip().strip('"')
-    return False, ""
-
-
 def _resolve_context_pack_vault(vault_arg: str | None) -> Path | None:
-    if vault_arg is not None:
-        return _resolve_command_vault(vault_arg)
-
-    current = Path.cwd().resolve()
-    home = HOME.resolve()
-    while True:
-        found, local_vault = _read_env_value(
-            current / ".env",
-            "OBSIDIAN_VAULT_PATH",
-        )
-        if found:
-            if not local_vault:
-                print(
-                    "error: vault not configured; pass a path or run obsidian-wiki setup",
-                    file=sys.stderr,
-                )
-                return None
-            return _resolve_command_vault(local_vault)
-        if current == home or current.parent == current:
-            break
-        current = current.parent
-    return _resolve_command_vault(None)
+    return _resolve_command_vault(vault_arg)
 
 
 def cmd_trust_record(args: argparse.Namespace) -> int:
@@ -2692,14 +2716,8 @@ def _print_query(result: dict[str, object]) -> None:
 def cmd_query(args: argparse.Namespace) -> int:
     from obsidian_wiki.graphrag import query
 
-    vault_arg = args.vault or _read_config_value("OBSIDIAN_VAULT_PATH")
-    if not vault_arg:
-        print("error: vault not configured; pass --vault or run obsidian-wiki setup", file=sys.stderr)
-        return 1
-
-    vault = Path(vault_arg).expanduser().resolve()
-    if not vault.is_dir():
-        print(f"error: vault not found: {vault}", file=sys.stderr)
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
         return 1
 
     result = query(vault, args.question, top_n=args.top, max_should_read=args.max_read)
@@ -2750,8 +2768,12 @@ def cmd_info(args: argparse.Namespace) -> int:
     print(f"skills:    {skills_dir()}")
     boot = bootstrap_dir()
     print(f"bootstrap: {boot if boot else '(not found)'}")
-    print(f"config:    {GLOBAL_CONFIG}{'' if GLOBAL_CONFIG.exists() else ' (not written yet)'}")
-    if GLOBAL_CONFIG.exists():
+    config_path = global_config_path()
+    print(
+        f"config:    {config_path}"
+        f"{'' if config_path.exists() else ' (not written yet)'}"
+    )
+    if config_path.exists():
         vp = _read_config_value("OBSIDIAN_VAULT_PATH")
         setup_ver = _read_config_value("OBSIDIAN_WIKI_VERSION")
         print(f"vault:     {vp or '(unset)'}")

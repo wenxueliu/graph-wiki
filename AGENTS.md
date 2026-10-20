@@ -52,12 +52,18 @@ context downstream.
 
 The resolver applies this precedence:
 
-0. **Inline vault override (`@name`)** — resolve `~/.obsidian-wiki/config.<name>` directly. This
+0. **Inline vault override (`@name`)** — resolve `<config-dir>/config.<name>` directly. This
    overrides local and global defaults for the current invocation only. If it does not exist, list
    the available named profiles and do **not** silently fall back to the default.
 1. **Walk up from the source CWD** — use the first `.env` containing `OBSIDIAN_VAULT_PATH`.
-2. **Global config** — use `~/.obsidian-wiki/config` when no qualifying local `.env` exists.
+2. **Config directory** — use `<config-dir>/config` when no qualifying local `.env` exists.
 3. **Setup required** — if none exists, tell the user to run `wiki-setup`.
+
+The config directory is `~/.obsidian-wiki` by default. Setting `OBSIDIAN_WIKI_CONFIG_DIR` — in the
+process environment or in the nearest `.env` — relocates it, so `config`, `config.<name>`, and
+`WRITING.md` can live inside a project instead of the home directory. All vault-aware CLI commands
+use this same order: `query`, `context-pack`, `lint`, `trust-*`, `validate`, `verify`, `doctor`, and
+`sync`.
 
 Strip the routing token from user content after resolving an inline override. Always apply the
 resolved vault's `AGENTS.md` when present. Apply `WRITING.md` as a Writing Profile only; it does not

@@ -27,9 +27,11 @@ def setup_args(**overrides) -> Namespace:
 
 
 def isolate_setup_side_effects(monkeypatch, vault: Path, tmp_path: Path) -> None:
-    monkeypatch.setattr(cli, "resolve_vault_path", lambda _vault: str(vault))
-    monkeypatch.setattr(cli, "write_config", lambda _vault, _pack: None)
-    monkeypatch.setattr(cli, "ensure_global_writing_profile", lambda: tmp_path / "WRITING.md")
+    monkeypatch.setattr(cli, "resolve_vault_path", lambda _vault, **_kwargs: str(vault))
+    monkeypatch.setattr(cli, "write_config", lambda _vault, _pack, **_kwargs: None)
+    monkeypatch.setattr(
+        cli, "ensure_global_writing_profile", lambda **_kwargs: tmp_path / "WRITING.md"
+    )
     monkeypatch.setattr(cli, "_maybe_configure_sync", lambda _vault, _remote: False)
     monkeypatch.setattr(
         cli,
@@ -44,7 +46,7 @@ def test_setup_skills_only_project_install_does_not_resolve_vault(
 ) -> None:
     installed: list[tuple[Path, str]] = []
 
-    def fail_resolve(_vault: str | None) -> str:
+    def fail_resolve(_vault: str | None, **_kwargs: object) -> str:
         raise AssertionError("skills-only setup must not resolve a vault")
 
     monkeypatch.setattr(cli, "resolve_vault_path", fail_resolve)

@@ -2,7 +2,7 @@ English | [简体中文](installation.zh-CN.md)
 
 # Installation
 
-Four ways in. Pick one — they all end at the same place: your vault path in `~/.obsidian-wiki/config` and the skills discoverable by your agent.
+Four ways in. Pick one — they all end at the same place: your vault path in the config file (`~/.obsidian-wiki/config` by default) and the skills discoverable by your agent.
 
 | Path | Best for | Writes global config | Agent skill targets |
 |---|---|---|---|
@@ -18,8 +18,8 @@ pip install obsidian-wiki
 obsidian-wiki setup --vault /path/to/your/digital/brain
 ```
 
-`obsidian-wiki setup` writes the config to `~/.obsidian-wiki/config` and asks which agent skill
-targets to install. It has no implicit all-agent selection and never installs skills globally.
+`obsidian-wiki setup` writes the config to `~/.obsidian-wiki/config` (relocatable with
+`OBSIDIAN_WIKI_CONFIG_DIR`) and asks which agent skill targets to install. It has no implicit all-agent selection and never installs skills globally.
 Skills and bootstrap files are written only under the directory where the command runs (or the
 explicit `--project DIR` override). Skills are symlinked to the installed package, so
 `pip install -U obsidian-wiki` upgrades the selected targets when setup is run again.
@@ -69,7 +69,7 @@ taxonomy paths, and the persistent compiled-context snapshot path. Existing `.en
 preserved except that setup fills missing or blank stable-binding keys; non-empty custom values,
 unknown fields, and comments are retained. Run setup/repair after changing these bindings.
 
-`OBSIDIAN_VAULT_PATH` is just any directory where you want your digital brain to live — a new empty folder or an existing Obsidian vault. In an interactive terminal, omit `--vault` to enter the folder; the displayed default is the current directory, accepted by pressing Enter. In a non-interactive run, pass `--vault` explicitly or use the existing value in `~/.obsidian-wiki/config`.
+`OBSIDIAN_VAULT_PATH` is just any directory where you want your digital brain to live — a new empty folder or an existing Obsidian vault. In an interactive terminal, omit `--vault` to enter the folder; the displayed default is the current directory, accepted by pressing Enter. In a non-interactive run, pass `--vault` explicitly or use the existing value in the config file (default `~/.obsidian-wiki/config`).
 
 The agent selection also filters generated project rules and entry files. Selecting only Claude,
 for example, creates shared `AGENTS.md`, `CLAUDE.md`, and `.claude/skills/`, without generating
@@ -97,15 +97,21 @@ cd obsidian-wiki
 python3 setup.py
 ```
 
-`python3 setup.py` asks for your vault path, writes the config to `~/.obsidian-wiki/config`, installs skills into all your agents (copy mode on Windows, symlinks on Unix), and installs `wiki-update`, `wiki-query`, and `wiki-context-pack` globally so you can use them from any project.
+`python3 setup.py` asks for your vault path, writes the config to `~/.obsidian-wiki/config` by default, installs skills into all your agents (copy mode on Windows, symlinks on Unix), and installs `wiki-update`, `wiki-query`, and `wiki-context-pack` globally so you can use them from any project.
 
 Open the project in your agent and say **"set up my wiki"**.
 
-For local-only config, copy `.env.example` to `.env` and set `OBSIDIAN_VAULT_PATH` — a `.env` in the working directory (or any parent up to `$HOME`) takes precedence over the global config. See [Configuration](configuration.md).
+For local-only config, copy `.env.example` to `.env` and set `OBSIDIAN_VAULT_PATH`. A `.env` in the
+working directory (or any parent up to `$HOME`) takes precedence over the config file. To keep the
+entire configuration inside the project instead of `~/.obsidian-wiki`, also set
+`OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki`. Every vault-aware command (`query`, `context-pack`,
+`lint`, `trust-*`, `validate`, `verify`, `doctor`, `sync`) then reads the project's `.env`, and
+`@name` profiles resolve from `<project>/.obsidian-wiki/config.<name>`. See
+[Configuration](configuration.md#keeping-configuration-inside-a-project).
 
 ### What `python3 setup.py` wires up
 
-1. **Global config** at `~/.obsidian-wiki/config` with your vault path and the repo location. This is how skills know where to read and write.
+1. **Config** at `~/.obsidian-wiki/config` by default — `OBSIDIAN_WIKI_CONFIG_DIR` relocates it — with your vault path and the repo location. This is how skills know where to read and write.
 2. **Portable skills** — `wiki-update`, `wiki-query`, and `wiki-context-pack` symlinked into `~/.claude/skills/` so they're available from any project in Claude Code.
 3. **Global symlinks** for every agent's discovery path (legacy `python3 setup.py` behavior):
    - `~/.gemini/skills/` — Gemini CLI (canonical)
@@ -144,7 +150,12 @@ Open your vault directory in Obsidian (File → Open Vault). The wiki pages, wik
 
 ## Multiple vaults
 
-Keep a default vault active in `~/.obsidian-wiki/config`, or create named configs like `~/.obsidian-wiki/config.work` with `/wiki-switch new work`.
+Keep a default vault in the config file (default `~/.obsidian-wiki/config`), or create named configs like `~/.obsidian-wiki/config.work` with `/wiki-switch new work`.
+
+Profiles can also live inside a project. Set `OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki` in the
+project `.env` and keep `config`, `config.<name>`, and `WRITING.md` there — nothing is read from or
+written to `~/.obsidian-wiki`. Use this when one repository owns one vault and several repositories
+must stay independent. `@name` and the plain default both resolve inside that directory.
 
 Each profile points at a separate vault directory, and Obsidian treats those as independent vaults:
 open one at a time (or one per window). Obsidian has no cross-vault links, no merged graph, and no

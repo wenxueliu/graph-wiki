@@ -21,15 +21,26 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILLS_DIR = SCRIPT_DIR / ".skills"
 _IS_WINDOWS = os.name == "nt"
-GLOBAL_CONFIG_DIR = Path.home() / ".obsidian-wiki"
-GLOBAL_CONFIG = GLOBAL_CONFIG_DIR / "config"
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from obsidian_wiki.config_paths import resolve_config_dir  # noqa: E402
 OBSOLETE_MANAGED_SKILLS = ("wiki-ingest",)
+
+
+def config_dir() -> Path:
+    """Resolve the config directory, honoring `OBSIDIAN_WIKI_CONFIG_DIR`."""
+    return resolve_config_dir(default=Path.home() / ".obsidian-wiki")
+
+
+def config_file() -> Path:
+    return config_dir() / "config"
 
 
 def ensure_global_writing_profile():
     """Create the shared writing profile once and preserve user edits."""
-    GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    target = GLOBAL_CONFIG_DIR / "WRITING.md"
+    directory = config_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    target = directory / "WRITING.md"
     if not target.exists():
         template = SKILLS_DIR / "llm-wiki" / "references" / "WRITING.md"
         shutil.copyfile(template, target)
@@ -186,8 +197,8 @@ def main():
     else:
         print("✅  .env already exists")
 
-    # ── Step 1b: ~/.obsidian-wiki/config ─────────────────────────
-    GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    # ── Step 1b: config (default: ~/.obsidian-wiki/config) ───────
+    config_dir().mkdir(parents=True, exist_ok=True)
 
     vault_path = ""
     if env_file.exists():
@@ -214,11 +225,11 @@ def main():
             )
             env_file.write_text(content)
 
-    GLOBAL_CONFIG.write_text(
+    config_file().write_text(
         f'OBSIDIAN_VAULT_PATH="{vault_path}"\n'
         f'OBSIDIAN_WIKI_REPO="{SCRIPT_DIR}"\n'
     )
-    print("✅  Global config written to ~/.obsidian-wiki/config")
+    print(f"✅  Global config written to {config_file()}")
     writing_profile = ensure_global_writing_profile()
 
     # ── Scaffold vault with selected Knowledge Pack ──────────────
@@ -379,7 +390,7 @@ def main():
 
                     if _IS_WINDOWS:
                         # Windows Task Scheduler
-                        log_path = GLOBAL_CONFIG_DIR / "sync.log"
+                        log_path = config_dir() / "sync.log"
                         task_name = "ObsidianWikiHourlySync"
                         result = subprocess.run(
                             [
@@ -397,7 +408,7 @@ def main():
                             print(f"⚠️  Failed to create scheduled task. Run manually or use Task Scheduler GUI.")
                             print(f"    Command: {sync_cmd}")
                     else:
-                        cron_line = f"0 * * * * {sync_cmd} >> {GLOBAL_CONFIG_DIR}/sync.log 2>&1"
+                        cron_line = f"0 * * * * {sync_cmd} >> {config_dir()}/sync.log 2>&1"
                         try:
                             existing = subprocess.run(
                                 ["crontab", "-l"], capture_output=True, text=True

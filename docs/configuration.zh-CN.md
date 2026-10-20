@@ -4,20 +4,43 @@
 
 ## 配置如何解析
 
+**配置目录**存放 `config`（当前 vault）、命名 profile（`config.<name>`）与 `WRITING.md`。默认是
+`~/.obsidian-wiki`，除非用 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移。该覆盖先读进程环境变量，再从最近的
+`.env` 向上找到 `$HOME`；相对值以该 `.env` 所在目录为基准。迁移配置目录会同时移动这三个文件。
+
 Skill 按以下顺序解析 vault 路径：
 
 0. **内联 vault 覆盖（`@name`）** —— 请求中任意位置的 `@<name>` token 会直接解析
-   `~/.obsidian-wiki/config.<name>`，覆盖以下所有层级，**但仅对该请求生效**。
+   `<配置目录>/config.<name>`，覆盖以下所有层级，**但仅对该请求生效**。
 1. **从 CWD 向上查找** —— 先在当前目录找 `.env`，再逐级向上到 `$HOME`。在第一个包含
-   `OBSIDIAN_VAULT_PATH` 的文件处停止。
-2. **全局配置** —— `~/.obsidian-wiki/config`。
+   `OBSIDIAN_VAULT_PATH` 的文件处停止。该值为空时停止解析并按未配置处理，绝不会落到配置目录。
+2. **配置文件** —— `<配置目录>/config`。
 3. **提示 setup** —— 两者都不存在时，你会被告知去运行 setup。
 
 解析之后，skill 还会读取 `$OBSIDIAN_VAULT_PATH/AGENTS.md`（如果存在）。这里是放 owner 专属约定的地方
 ——领域词汇、摄取偏好、写作风格、项目范围——它们会覆盖框架默认值，对所有 skill 生效。
 
-`~/.obsidian-wiki/config` 与 `.env` 使用相同的 `KEY=value` 格式。可从 [`.env.example`](../.env.example)
-开始。
+配置文件与 `.env` 使用相同的 `KEY=value` 格式。可从 [`.env.example`](../.env.example) 开始。
+
+### 把配置留在项目内
+
+项目可以完全自包含：在项目的 `.env` 中写入 vault 路径与相对配置目录，就不会读写你的 home 目录。
+
+```bash
+# <project>/.env
+OBSIDIAN_VAULT_PATH=/absolute/path/to/vault
+OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki
+```
+
+```bash
+cd /path/to/project
+obsidian-wiki setup --vault /absolute/path/to/vault   # 写入 <project>/.obsidian-wiki/config
+obsidian-wiki context-pack authentication            # 读取同一个项目 .env
+```
+
+所有与 vault 相关的命令都使用同一顺序：`query`、`context-pack`、`lint`、`trust-record`、
+`trust-check`、`validate`、`verify`、`doctor` 与 `sync`。`@name` profile 也在迁移后的目录内解析，
+因此 `--vault @work` 读取的是项目 `.env` 旁边的 `config.work`。
 
 ## Knowledge Pack 与 vault 布局
 
@@ -61,7 +84,7 @@ setup/repair。
 
 ## 全局 wiki 写作 profile
 
-Setup 在每个平台上都会创建 `~/.obsidian-wiki/WRITING.md`。它从不覆盖已有的 profile。用它表达跨项目
+Setup 在每个平台上都会在配置目录（默认 `~/.obsidian-wiki`）创建 `WRITING.md`。它从不覆盖已有的 profile。用它表达跨项目
 共享的写作偏好，例如：
 
 ```markdown
@@ -83,7 +106,7 @@ Setup 在每个平台上都会创建 `~/.obsidian-wiki/WRITING.md`。它从不�
 patch 或直通来源文本。缺失、空或不可读的 profile 不会阻塞操作。
 
 确定性的 `lint`、`trust-record` 与 `trust-check` 命令使用相同的 vault 范围解析：显式路径不继承任何
-无关配置，`@name` 只读取 `~/.obsidian-wiki/config.<name>`，否则在全局配置之前由最近的 CWD `.env`
+无关配置，`@name` 只读取 `<配置目录>/config.<name>`，否则在配置文件之前由最近的 CWD `.env`
 优先。Schema 设置只从同一个解析后的配置读取，因此一个 vault 的 lifecycle 扩展不会泄漏到另一个 vault。
 
 ## 核心
@@ -91,6 +114,7 @@ patch 或直通来源文本。缺失、空或不可读的 profile 不会阻塞�
 | 变量 | 作用 | 默认值 |
 |---|---|---|
 | `OBSIDIAN_VAULT_PATH` | **必填。** 你的 vault 的绝对路径 | — |
+| `OBSIDIAN_WIKI_CONFIG_DIR` | 迁移 `config`、`config.<name>` 与 `WRITING.md` 的位置。读环境变量或最近的 `.env`；相对值以该 `.env` 为基准 | `~/.obsidian-wiki` |
 | `OBSIDIAN_WIKI_REPO` | 本 repo 克隆的位置（由 setup 设置；用于查找 skill/资源） | *自动* |
 | `OBSIDIAN_SOURCES_DIR` | 逗号分隔的来源目录，用于摄取文档 | *（空）* |
 | `OBSIDIAN_MAX_PAGES_PER_INGEST` | 每次摄取最多创建或更新多少个页面 | `15` |
@@ -107,7 +131,7 @@ patch 或直通来源文本。缺失、空或不可读的 profile 不会阻塞�
 |---|---|---|
 | `OBSIDIAN_KNOWLEDGE_PACK` | 当前生效的原子 Profile/Layout/Routing pack | `_meta/knowledge-pack.json` 中的名称 |
 | `OBSIDIAN_OWNER_RULES_PATH` | 编译进 context 的 owner rules | `<vault>/AGENTS.md` |
-| `OBSIDIAN_WRITING_PROFILE_PATH` | 编译进 context 的 Writing Profile | `~/.obsidian-wiki/WRITING.md` |
+| `OBSIDIAN_WRITING_PROFILE_PATH` | 编译进 context 的 Writing Profile | `<配置目录>/WRITING.md`（默认 `~/.obsidian-wiki/WRITING.md`） |
 | `OBSIDIAN_VAULT_METADATA_DIR` | 稳定的 vault 元数据与 Knowledge Pack 标记根目录 | `<vault>/_meta` |
 | `OBSIDIAN_TAXONOMY_PATH` | 受控 taxonomy 来源 | `<metadata-dir>/taxonomy.md` |
 | `OBSIDIAN_CONTEXT_SNAPSHOT` | 持久化的已编译 context JSON | `<metadata-dir>/context/wiki-context.json` |

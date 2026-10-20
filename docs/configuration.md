@@ -4,16 +4,44 @@ English | [简体中文](configuration.zh-CN.md)
 
 ## How config is resolved
 
+The **config directory** holds `config` (the active vault), named profiles (`config.<name>`), and
+`WRITING.md`. It is `~/.obsidian-wiki` unless `OBSIDIAN_WIKI_CONFIG_DIR` relocates it. That override
+is read from the process environment first, then from the nearest `.env` walking up to `$HOME`; a
+relative value resolves against the directory containing that `.env`. Relocating the directory moves
+all three files together.
+
 Skills resolve the vault path in this order:
 
-0. **Inline vault override (`@name`)** — an `@<name>` token anywhere in a request resolves `~/.obsidian-wiki/config.<name>` directly, overriding everything below, **for that request only**.
-1. **Walk up from CWD** — look for a `.env` in the current directory, then each parent, up to `$HOME`. Stop at the first one containing `OBSIDIAN_VAULT_PATH`.
-2. **Global config** — `~/.obsidian-wiki/config`.
+0. **Inline vault override (`@name`)** — an `@<name>` token anywhere in a request resolves `<config-dir>/config.<name>` directly, overriding everything below, **for that request only**.
+1. **Walk up from CWD** — look for a `.env` in the current directory, then each parent, up to `$HOME`. Stop at the first one containing `OBSIDIAN_VAULT_PATH`. An empty value there stops resolution and is treated as unconfigured; it never falls through to the config directory.
+2. **Config file** — `<config-dir>/config`.
 3. **Prompt setup** — if neither exists, you'll be told to run setup.
 
 After resolving, skills also read `$OBSIDIAN_VAULT_PATH/AGENTS.md` if it exists. That's where you put owner-specific conventions — domain vocabulary, ingest preferences, writing style, project scoping — which override framework defaults for every skill.
 
-Both `~/.obsidian-wiki/config` and `.env` use the same `KEY=value` format. Start from [`.env.example`](../.env.example).
+Both the config file and `.env` use the same `KEY=value` format. Start from [`.env.example`](../.env.example).
+
+### Keeping configuration inside a project
+
+A project can be fully self-contained: put the vault path and a relative config directory in its
+`.env`, and nothing is read from or written to your home directory.
+
+```bash
+# <project>/.env
+OBSIDIAN_VAULT_PATH=/absolute/path/to/vault
+OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki
+```
+
+```bash
+cd /path/to/project
+obsidian-wiki setup --vault /absolute/path/to/vault   # writes <project>/.obsidian-wiki/config
+obsidian-wiki context-pack authentication            # finds the same project .env
+```
+
+Every vault-aware command uses the same order: `query`, `context-pack`, `lint`, `trust-record`,
+`trust-check`, `validate`, `verify`, `doctor`, and `sync`. `@name` profiles resolve inside the
+relocated directory too, so `config.work` next to the project `.env` is what
+`--vault @work` reads.
 
 ## Knowledge Packs and vault layouts
 
@@ -63,7 +91,7 @@ Neither changes what the active Knowledge Profile considers durable or authorita
 
 ## Global wiki writing profile
 
-Setup creates `~/.obsidian-wiki/WRITING.md` on every platform. It never overwrites an existing
+Setup creates `WRITING.md` in the config directory (`~/.obsidian-wiki` by default) on every platform. It never overwrites an existing
 profile.
 Use it for writing preferences shared across projects, for example:
 
@@ -86,13 +114,14 @@ Precedence is framework invariants and task requirements, then project `AGENTS.m
 natural-language wiki content. It cannot change schema, provenance, JSON, structured logs, patches,
 or pass-through source text. Missing, empty, or unreadable profiles do not block an operation.
 
-The deterministic `lint`, `trust-record`, and `trust-check` commands use the same vault-scoped resolution: an explicit path uses no unrelated config, `@name` reads only `~/.obsidian-wiki/config.<name>`, otherwise the nearest CWD `.env` wins before global config. Schema settings are read from that same resolved config only, so one vault's lifecycle extensions cannot leak into another vault.
+The deterministic `lint`, `trust-record`, and `trust-check` commands use the same vault-scoped resolution: an explicit path uses no unrelated config, `@name` reads only `<config-dir>/config.<name>`, otherwise the nearest CWD `.env` wins before the config file. Schema settings are read from that same resolved config only, so one vault's lifecycle extensions cannot leak into another vault.
 
 ## Core
 
 | Variable | What it does | Default |
 |---|---|---|
 | `OBSIDIAN_VAULT_PATH` | **Required.** Absolute path to your vault | — |
+| `OBSIDIAN_WIKI_CONFIG_DIR` | Relocates `config`, `config.<name>`, and `WRITING.md`. Environment or nearest `.env`; relative values resolve against that `.env` | `~/.obsidian-wiki` |
 | `OBSIDIAN_WIKI_REPO` | Where this repo is cloned (set by setup; used for skill/asset lookups) | *auto* |
 | `OBSIDIAN_SOURCES_DIR` | Comma-separated source directories to ingest documents from | *(empty)* |
 | `OBSIDIAN_MAX_PAGES_PER_INGEST` | Max pages created or updated per ingest | `15` |
@@ -109,7 +138,7 @@ routing content.
 |---|---|---|
 | `OBSIDIAN_KNOWLEDGE_PACK` | Active atomic Profile/Layout/Routing pack | Name in `_meta/knowledge-pack.json` |
 | `OBSIDIAN_OWNER_RULES_PATH` | Owner rules compiled into context | `<vault>/AGENTS.md` |
-| `OBSIDIAN_WRITING_PROFILE_PATH` | Writing Profile compiled into context | `~/.obsidian-wiki/WRITING.md` |
+| `OBSIDIAN_WRITING_PROFILE_PATH` | Writing Profile compiled into context | `<config-dir>/WRITING.md` (`~/.obsidian-wiki/WRITING.md` by default) |
 | `OBSIDIAN_VAULT_METADATA_DIR` | Stable vault metadata and Knowledge Pack marker root | `<vault>/_meta` |
 | `OBSIDIAN_TAXONOMY_PATH` | Controlled taxonomy source | `<metadata-dir>/taxonomy.md` |
 | `OBSIDIAN_CONTEXT_SNAPSHOT` | Persistent compiled context JSON | `<metadata-dir>/context/wiki-context.json` |

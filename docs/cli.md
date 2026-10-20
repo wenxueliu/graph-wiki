@@ -16,7 +16,7 @@ Running `obsidian-wiki` with no subcommand defaults to `setup`.
 
 | Command | What it does |
 |---|---|
-| `setup` | Install selected agent skills in the command directory and write `~/.obsidian-wiki/config` |
+| `setup` | Install selected agent skills in the command directory and write the config file (`~/.obsidian-wiki/config` by default) |
 | `info` | Show install paths, version, and resolved config |
 | `list` | List the bundled skills |
 | `doctor` | Health-check config, vault shape, bootstrap assets, and installed skills |
@@ -76,7 +76,7 @@ non-interactive run, setup retains the configured-vault fallback; pass `--vault 
 it explicitly.
 
 `--skills-only` limits setup to command-directory skill and bootstrap installation. It does not read or write
-the global config, Writing Profile, vault, Knowledge Pack marker, or Git integration. Because this
+the config directory, Writing Profile, vault, Knowledge Pack marker, or Git integration. Because this
 mode has no other setup work, it requires an explicit agent selection.
 
 For an initialized vault, select the same Knowledge Pack recorded in `_meta/knowledge-pack.json`. Choosing
@@ -101,13 +101,13 @@ obsidian-wiki query "rate limiting" --top 12 --max-read 5 --json
 
 obsidian-wiki lint                     # uses the configured vault
 obsidian-wiki lint /path/to/vault --strict
-obsidian-wiki lint @research --json    # uses ~/.obsidian-wiki/config.research only
+obsidian-wiki lint @research --json    # uses <config-dir>/config.research only
 obsidian-wiki lint --strict-trust      # fail on trust-ledger problems, not just warn
 obsidian-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
   --required-trust-field updated --schema-source /path/to/vault/AGENTS.md
 ```
 
-Lint resolves its vault and schema together: explicit path (no config inheritance), positional `@name`, nearest CWD `.env`, then global config. CLI schema flags extend/replace that resolved vault's settings and are recorded in the JSON `schema` block.
+Lint resolves its vault and schema together: explicit path (no config inheritance), positional `@name`, nearest CWD `.env`, then the config file. CLI schema flags extend/replace that resolved vault's settings and are recorded in the JSON `schema` block.
 
 ## Validating pages and sources
 
@@ -378,7 +378,8 @@ calling `plan_text_chunks()`.
 or source checkout. Workflows therefore do not depend on a `.cac/...` path or the caller's current
 working directory. A `vault-input.json` with `{"mode":"config"}` makes `wiki-context-resolve`
 load the vault configured by wiki-setup: an optional Named Vault Profile (`profile`) first, otherwise the nearest
-`.env` containing `OBSIDIAN_VAULT_PATH`, then `~/.obsidian-wiki/config`. An explicit approved vault
+`.env` containing `OBSIDIAN_VAULT_PATH`, then the config file. All of these live in the config directory,
+which is `~/.obsidian-wiki` unless `OBSIDIAN_WIKI_CONFIG_DIR` relocates it. An explicit approved vault
 path uses `{"mode":"interactive","vault_path":"/absolute/path"}`.
 
 Most commands accept `--json` and/or `--pretty` for machine-readable output.
