@@ -8,14 +8,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from obsidian_wiki.cli import list_skills
+from graph_wiki.cli import list_skills
 
 
 def _run(home: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["HOME"] = str(home)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True,
         text=True,
         env=env,
@@ -23,11 +23,11 @@ def _run(home: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 def _write_config(home: Path, vault: Path, *, version: str | None = None) -> None:
-    config_dir = home / ".obsidian-wiki"
+    config_dir = home / ".graph-wiki"
     config_dir.mkdir(parents=True, exist_ok=True)
     lines = [f'OBSIDIAN_VAULT_PATH="{vault}"']
     if version is not None:
-        lines.append(f'OBSIDIAN_WIKI_VERSION="{version}"')
+        lines.append(f'GRAPH_WIKI_VERSION="{version}"')
     (config_dir / "config").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

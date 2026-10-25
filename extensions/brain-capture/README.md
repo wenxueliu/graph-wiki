@@ -1,6 +1,6 @@
 # Brain Vault Capture
 
-A zero-build Chrome extension that captures the active page URL and readable text into an Obsidian Wiki `_raw` folder.
+A zero-build Chrome extension that captures the active page URL and readable text into an Graph Wiki `_raw` folder.
 
 ## Install
 

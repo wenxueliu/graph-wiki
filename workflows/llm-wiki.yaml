@@ -57,7 +57,7 @@ steps:
     do: |
       写 operations-design.md：
 
-      1. Config Resolution：交互式确认 vault 绝对路径，其他 requested keys 按 user overrides → CWD .env walk-up → config directory（默认 `~/.obsidian-wiki`，可由 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移）；vault-scoped runtime state 与 Writing Profile precedence。
+      1. Config Resolution：交互式确认 vault 绝对路径，其他 requested keys 按 user overrides → CWD .env walk-up → config directory（默认 `~/.graph-wiki`，可由 `GRAPH_WIKI_CONFIG_DIR` 迁移）；vault-scoped runtime state 与 Writing Profile precedence。
       2. Retrieval Primitives：index/frontmatter → summary → anchored grep context → whole page last；说明 QMD 是可选 index、Markdown 是 source of truth。
       3. 写入事务：direct/staged 边界、validation、index/log/hot、manifest-last、QMD 仅在 live commit 后刷新。
       4. ingest append/rebuild/restore 路由，canonical sources、delta、idempotency、cross-links、contradictions 与 trust review。

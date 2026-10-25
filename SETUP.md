@@ -5,8 +5,8 @@ Setup documentation has moved to **[docs/installation.md](docs/installation.md)*
 Quick version:
 
 ```bash
-pip install obsidian-wiki
-obsidian-wiki setup --vault /path/to/your/vault
+pip install graph-wiki-skills
+graph-wiki setup --vault /path/to/your/vault
 ```
 
 Then open a project in your agent and say **"set up my wiki"**.

@@ -1,7 +1,7 @@
 ---
 name: hermes-history-ingest
 description: >
-  Ingest Hermes agent history into the Obsidian wiki. Use this skill when the user wants to mine
+  Ingest Hermes agent history into the Graph Wiki. Use this skill when the user wants to mine
   their past Hermes sessions for knowledge, import their ~/.hermes folder, extract insights from
   previous Hermes conversations, or says things like "process my Hermes history", "add my Hermes
   memories to the wiki", "ingest ~/.hermes", or "what have I worked on in Hermes". Also triggers
@@ -10,13 +10,13 @@ description: >
 
 # Hermes History Ingest — Conversation & Memory Mining
 
-You are extracting knowledge from the user's Hermes agent history and distilling it into the Obsidian wiki. Hermes stores both free-form memories and structured session transcripts — focus on durable knowledge, not operational telemetry.
+You are extracting knowledge from the user's Hermes agent history and distilling it into the Graph Wiki. Hermes stores both free-form memories and structured session transcripts — focus on durable knowledge, not operational telemetry.
 
 This skill can be invoked directly or via the `wiki-history-ingest` router (`/wiki-history-ingest hermes`).
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `HERMES_HOME` (defaults to `~/.hermes`; the legacy `HERMES_HISTORY_PATH` is honored as a fallback)
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `HERMES_HOME` (defaults to `~/.hermes`; the legacy `HERMES_HISTORY_PATH` is honored as a fallback)
 2. Read `.manifest.json` at the vault root to check what has already been ingested
 3. Read `index.md` at the vault root to understand what the wiki already contains
 

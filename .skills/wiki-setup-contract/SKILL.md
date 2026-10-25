@@ -17,7 +17,7 @@ description: "从 workflow-local 模板生成带 hash 的 Wiki 核心初始化�
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow wiki-setup-contract`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow wiki-setup-contract`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -39,11 +39,11 @@ description: "从 workflow-local 模板生成带 hash 的 Wiki 核心初始化�
 运行 workflow-local builder 的 `core` phase：
 
 ```bash
-obsidian-wiki wiki-setup-contract-build core \
+graph-wiki wiki-setup-contract-build core \
   --output-dir "{{artifacts_dir}}"
 ```
 
-console script 不在 PATH 时使用等价的 `python3 -m obsidian_wiki wiki-setup-contract-build core ...`。
+console script 不在 PATH 时使用等价的 `python3 -m graph_wiki wiki-setup-contract-build core ...`。
 
 builder 从随包发布的 `workflows/templates/wiki-setup/` 收集 `WRITING.md`、`index.md`、`log.md`、`hot.md`、`manifest.json`、`app.json`、`appearance.json`，将 source path、完整正文、allowed placeholders 和 SHA-256 写入 core artifacts。
 
@@ -78,11 +78,11 @@ setup-core-contract.json + setup-core-contract.md
 使用已通过上一 step check 的 core contract 生成 final contract：
 
 ```bash
-obsidian-wiki wiki-setup-contract-build finalize \
+graph-wiki wiki-setup-contract-build finalize \
   --output-dir "{{artifacts_dir}}"
 ```
 
-console script 不在 PATH 时使用等价的 `python3 -m obsidian_wiki wiki-setup-contract-build finalize ...`。
+console script 不在 PATH 时使用等价的 `python3 -m graph_wiki wiki-setup-contract-build finalize ...`。
 
 builder 将 `integrations.json` 中的 QMD、Stop hook、Git sync、required checks、manual plugins 和 next steps 合并进 core contract，先形成唯一 canonical final contract result；`setup-contract.json` 完整承载该 result，Markdown 只从同一 result 渲染、不得独立推导或补充事实，并在同一批 artifact 写入中提交二者。
 

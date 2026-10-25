@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.graphrag import (
+from graph_wiki.graphrag import (
     build_index,
     classify_query,
     find_path,
     query,
     rank_candidates,
 )
-from obsidian_wiki.index import find_index_path
+from graph_wiki.index import find_index_path
 
 
 # ---------------------------------------------------------------------------
@@ -328,7 +328,7 @@ class TestQuery:
 class TestGraphQueryCLI:
     def _run(self, *args):
         return subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", *args],
+            [sys.executable, "-m", "graph_wiki.cli", *args],
             capture_output=True, text=True,
         )
 

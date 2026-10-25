@@ -1,6 +1,6 @@
 ---
 name: wiki-lint
-description: "只读审计 Obsidian wiki 的结构、schema、链接、来源与知识图谱健康度，并记录可复核报告"
+description: "只读审计 Graph Wiki 的结构、schema、链接、来源与知识图谱健康度，并记录可复核报告"
 ---
 
 # wiki-lint
@@ -17,7 +17,7 @@ description: "只读审计 Obsidian wiki 的结构、schema、链接、来源与
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow wiki-lint`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow wiki-lint`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -112,7 +112,7 @@ lint-context.md + lint-context.json（vault、effective schema、active routing�
 1. 解析 wikilink 的 path、heading、alias，并以 live vault inventory 校验；index.md/log.md 不算 orphan。
 2. frontmatter 检查必须锚定文件头；summary 缺失/超过 200 字符是 soft finding。
 3. tag cohesion 仅检查 n>=5 且阈值 <0.15；visibility/ 为 system tags，不应出现在 taxonomy。
-4. 用 effective schema 的显式 CLI flags/env 运行 deterministic validator；执行 `obsidian-wiki trust-check "$OBSIDIAN_VAULT_PATH" --strict --json --pretty`。保存真实退出码和 JSON。不得运行 trust-record，不得从 source 字符串自动重算 base_confidence。
+4. 用 effective schema 的显式 CLI flags/env 运行 deterministic validator；执行 `graph-wiki trust-check "$OBSIDIAN_VAULT_PATH" --strict --json --pretty`。保存真实退出码和 JSON。不得运行 trust-record，不得从 source 字符串自动重算 base_confidence。
 5. 校验 lifecycle、base_confidence、computed stale overlay、supersession cycle/target/state、trust ledger reviewed/stale/unreviewed/mismatch/errors，以及 typed relationship type/target/self-reference。
 6. 每条 finding 记录稳定 id、类别、severity、vault-relative path、locator、evidence、effective rule；不得修复 vault。
 7. 在产出目录写 structural-findings.json 和 structural-audit.md，包含逐类计数、命令、退出码、schema block 与 warnings。

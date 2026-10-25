@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.cache import (
+from graph_wiki.cache import (
     check_sources,
     compute_hash,
     hash_file,
@@ -211,7 +211,7 @@ class TestUpdateSource:
 class TestCacheCLI:
     def _run(self, *args):
         return subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", *args],
+            [sys.executable, "-m", "graph_wiki.cli", *args],
             capture_output=True, text=True,
         )
 

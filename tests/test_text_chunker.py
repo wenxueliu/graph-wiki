@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.text_chunker import (
+from graph_wiki.text_chunker import (
     DEFAULT_CHUNK_STRATEGY,
     ChunkStrategyContext,
     ChunkPlan,
@@ -140,11 +140,11 @@ def test_installed_entry_point_chunk_strategy_is_discovered(tmp_path, monkeypatc
 
     class FakeEntryPoints(list):
         def select(self, *, group: str):
-            assert group == "obsidian_wiki.text_chunk_strategies"
+            assert group == "graph_wiki.text_chunk_strategies"
             return self
 
     monkeypatch.setattr(
-        "obsidian_wiki.text_chunker.metadata.entry_points",
+        "graph_wiki.text_chunker.metadata.entry_points",
         lambda: FakeEntryPoints([FakeEntryPoint()]),
     )
 
@@ -253,7 +253,7 @@ def test_cli_plan_and_exact_read(tmp_path):
     source = tmp_path / "cli.md"
     source.write_text("# CLI\n\nhello 世界\n", encoding="utf-8")
     plan_result = subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki", "text-chunk-plan", str(source),
+        [sys.executable, "-m", "graph_wiki", "text-chunk-plan", str(source),
          "--target-budget", "20", "--hard-budget", "24"],
         capture_output=True, text=True,
     )
@@ -261,7 +261,7 @@ def test_cli_plan_and_exact_read(tmp_path):
     plan = json.loads(plan_result.stdout)
     unit = plan["units"][0]
     read_result = subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki", "text-chunk-read", str(source),
+        [sys.executable, "-m", "graph_wiki", "text-chunk-read", str(source),
          "--start-byte", str(unit["start_byte"]), "--end-byte", str(unit["end_byte"]),
          "--expect-hash", plan["source"]["content_hash"]],
         capture_output=True,
@@ -277,12 +277,12 @@ def test_cli_lists_strategies_and_reads_options_file(tmp_path):
     options.write_text('{"owner":"cli"}', encoding="utf-8")
 
     listed = subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki", "text-chunk-strategies"],
+        [sys.executable, "-m", "graph_wiki", "text-chunk-strategies"],
         capture_output=True, text=True,
     )
     planned = subprocess.run(
         [
-            sys.executable, "-m", "obsidian_wiki", "text-chunk-plan", str(source),
+            sys.executable, "-m", "graph_wiki", "text-chunk-plan", str(source),
             "--strategy-options-file", str(options),
         ],
         capture_output=True, text=True,

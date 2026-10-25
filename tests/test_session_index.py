@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from obsidian_wiki import session_index as si
+from graph_wiki import session_index as si
 
 
 class FakeDoc:

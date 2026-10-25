@@ -9,7 +9,7 @@ vault、新的摄取来源。如果你一直在琢磨这个问题，或者有某
 
 1. 在 `.skills/your-skill-name/` 创建一个文件夹
 2. 添加带 YAML frontmatter（`name`、`description`）与 markdown 指令的 `SKILL.md`
-3. 在项目中运行 `obsidian-wiki setup`，把它链接进所选的 agent 目录
+3. 在项目中运行 `graph-wiki setup`，把它链接进所选的 agent 目录
 4. 向你的 agent 说一句与 description 匹配的话来测试
 
 `description` 是关键——它是 agent 在判断你的 skill 是否相关时唯一能看到的东西。请把它写成一串用户实际
@@ -85,8 +85,9 @@ python tools/check_readme_sync.py
 
 ## 仓库约定
 
-- `.skills/` 是事实来源。`.claude/skills/`、`.agents/skills/` 等项目目标是 `obsidian-wiki setup` 创建
-  的链接；`~/.codex/skills/` 等旧版全局目标可能由 `python3 setup.py` 创建。绝不要编辑链接副本。
+- `.skills/` 是事实来源。`graph-wiki setup` 会为 `.claude/skills/` 等项目目标创建链接，而共享的
+  `.agents/skills/` 始终是真实副本；`python3 setup.py` 会以 `--agent all` 委托给同一个安装器，因此
+  只会写入 checkout 内部。绝不要编辑链接或副本形式的 skill。
 - `CLAUDE.md`、`GEMINI.md` 与 `.hermes.md` 是指向 `AGENTS.md` 的符号链接。请编辑 `AGENTS.md`。
 - 新的配置变量属于三个地方：`.env.example`、[`docs/configuration.md`](configuration.zh-CN.md)，以及读取
   它的那个 skill。

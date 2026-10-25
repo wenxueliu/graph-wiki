@@ -1,4 +1,4 @@
-# Obsidian Wiki
+# Graph Wiki
 
 The project compiles source material into a persistent, interconnected knowledge graph represented as Obsidian-compatible Markdown.
 

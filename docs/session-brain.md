@@ -7,10 +7,10 @@ Your agent session history is a knowledge base you never get to search. You know
 The session brain builds a topic graph over that history — every Claude transcript plus the pruned sessions that survive only as prompts in `history.jsonl` — so you can find the session where something happened.
 
 ```bash
-obsidian-wiki sessions-build                      # ~3s cold, under a second incrementally
-obsidian-wiki sessions-query "prismor telemetry"  # ranked by relevance x recency
-obsidian-wiki sessions-show <session-id>          # one session and its nearest neighbours
-obsidian-wiki sessions-clusters                   # the discovered topics
+graph-wiki sessions-build                      # ~3s cold, under a second incrementally
+graph-wiki sessions-query "prismor telemetry"  # ranked by relevance x recency
+graph-wiki sessions-show <session-id>          # one session and its nearest neighbours
+graph-wiki sessions-clusters                   # the discovered topics
 open ~/.claude/session-brain/graph.html           # interactive graph, time slider, search
 ```
 
@@ -43,7 +43,7 @@ Cluster names assigned via `/session-brain` are durable — they survive rebuild
 ## Tuning the build
 
 ```bash
-obsidian-wiki sessions-build --k 12 --min-sim 0.12 --mutual
+graph-wiki sessions-build --k 12 --min-sim 0.12 --mutual
 ```
 
 | Flag | Effect |
@@ -66,8 +66,8 @@ Rebuilds are incremental by default — only sessions whose mtime changed get re
 ## Querying
 
 ```bash
-obsidian-wiki sessions-query "auth bug" --project my-app --top 20
-obsidian-wiki sessions-query "telemetry" --cluster 3 --since 2026-01-01 --json
+graph-wiki sessions-query "auth bug" --project my-app --top 20
+graph-wiki sessions-query "telemetry" --cluster 3 --since 2026-01-01 --json
 ```
 
 | Flag | Effect |

@@ -82,12 +82,12 @@ def parse_config(path: Path) -> dict[str, str]:
 def config_home(source_cwd: Path | None = None) -> Path:
     """Resolve the config directory.
 
-    ``OBSIDIAN_WIKI_CONFIG_DIR`` may relocate it, either from the process
+    ``GRAPH_WIKI_CONFIG_DIR`` may relocate it, either from the process
     environment or from the nearest ``.env`` above ``source_cwd``. A relative
     value resolves against that ``.env``'s directory. Defaults to
-    ``~/.obsidian-wiki``.
+    ``~/.graph-wiki``.
     """
-    override = os.environ.get("OBSIDIAN_WIKI_CONFIG_DIR", "").strip()
+    override = os.environ.get("GRAPH_WIKI_CONFIG_DIR", "").strip()
     if override:
         expanded = Path(override).expanduser()
         if not expanded.is_absolute():
@@ -99,7 +99,7 @@ def config_home(source_cwd: Path | None = None) -> Path:
     while True:
         candidate = current / ".env"
         if candidate.is_file():
-            raw = parse_config(candidate).get("OBSIDIAN_WIKI_CONFIG_DIR", "").strip()
+            raw = parse_config(candidate).get("GRAPH_WIKI_CONFIG_DIR", "").strip()
             if raw:
                 expanded = Path(raw).expanduser()
                 if not expanded.is_absolute():
@@ -108,7 +108,7 @@ def config_home(source_cwd: Path | None = None) -> Path:
         if current == current.parent or current == home:
             break
         current = current.parent
-    return (home / ".obsidian-wiki").resolve()
+    return (home / ".graph-wiki").resolve()
 
 
 def available_profiles(config_dir: Path) -> list[str]:

@@ -15,7 +15,7 @@ def run_cli(
     env = os.environ.copy()
     env["HOME"] = str(home)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True,
         text=True,
         env=env,
@@ -36,7 +36,7 @@ def make_vault(tmp_path: Path) -> Path:
 def test_context_pack_uses_configured_vault(tmp_path: Path) -> None:
     home = tmp_path / "home"
     vault = make_vault(tmp_path)
-    config = home / ".obsidian-wiki" / "config"
+    config = home / ".graph-wiki" / "config"
     config.parent.mkdir(parents=True)
     config.write_text(f'OBSIDIAN_VAULT_PATH="{vault}"\n', encoding="utf-8")
 
@@ -55,7 +55,7 @@ def test_context_pack_prefers_nearest_local_env_vault(tmp_path: Path) -> None:
     local_vault.mkdir()
     (global_vault / "global.md").write_text("# Authentication\n\nGlobal token policy.\n", encoding="utf-8")
     (local_vault / "local.md").write_text("# Authentication\n\nLocal token policy.\n", encoding="utf-8")
-    config = home / ".obsidian-wiki" / "config"
+    config = home / ".graph-wiki" / "config"
     config.parent.mkdir(parents=True)
     config.write_text(f'OBSIDIAN_VAULT_PATH="{global_vault}"\n', encoding="utf-8")
     project = home / "project"
@@ -80,7 +80,7 @@ def test_context_pack_stops_at_empty_nearest_local_vault_config(
         "# Authentication\n\nGlobal token policy.\n",
         encoding="utf-8",
     )
-    config = home / ".obsidian-wiki" / "config"
+    config = home / ".graph-wiki" / "config"
     config.parent.mkdir(parents=True)
     config.write_text(
         f'OBSIDIAN_VAULT_PATH="{global_vault}"\n',
@@ -118,7 +118,7 @@ def test_context_pack_explicit_vault_wins_over_local_and_global_config(
             f"# Authentication\n\n{detail}\n",
             encoding="utf-8",
         )
-    config = home / ".obsidian-wiki" / "config"
+    config = home / ".graph-wiki" / "config"
     config.parent.mkdir(parents=True)
     config.write_text(
         f'OBSIDIAN_VAULT_PATH="{global_vault}"\n',
@@ -161,7 +161,7 @@ def test_context_pack_empty_explicit_vault_never_falls_through_to_config(
             "# Authentication\n\nConfigured token policy.\n",
             encoding="utf-8",
         )
-    config = home / ".obsidian-wiki" / "config"
+    config = home / ".graph-wiki" / "config"
     config.parent.mkdir(parents=True)
     config.write_text(
         f'OBSIDIAN_VAULT_PATH="{global_vault}"\n',

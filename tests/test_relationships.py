@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from obsidian_wiki.graphrag import build_index, query
-from obsidian_wiki.lint import lint_vault
-from obsidian_wiki.relationships import (
+from graph_wiki.graphrag import build_index, query
+from graph_wiki.lint import lint_vault
+from graph_wiki.relationships import (
     collect_typed_relationships,
     parse_flat_relationships,
     parse_inline_relationships,

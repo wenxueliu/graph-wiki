@@ -1,4 +1,4 @@
-description: 可恢复地发现和规划本地文本来源；小文档 inline 提取，大文档隔离生成 Packet，并按 source/unit 顺序串行归并到 Obsidian wiki
+description: 可恢复地发现和规划本地文本来源；小文档 inline 提取，大文档隔离生成 Packet，并按 source/unit 顺序串行归并到 Graph Wiki
 
 auto_reset: true
 artifacts_dir: invocation
@@ -29,7 +29,7 @@ steps:
       读取 `wiki-context.json` 中已确认的 vault、write mode 和 text-ingest 配置，然后只运行 package CLI：
 
       ```bash
-      obsidian-wiki text-ingest-plan "<source-root>" \
+      graph-wiki text-ingest-plan "<source-root>" \
         --vault "<wiki-context.json vault_path>" \
         --write-mode "<direct-or-staged>" \
         --target-budget "<text_chunking.target_bytes>" \
@@ -42,7 +42,7 @@ steps:
         --pretty
       ```
 
-      CLI 独占 discovery、hash、UTF-8 validation、chunk planning、resume/replan、transport 选择和 Job 原子写入规则；coordinator 不手工复现。Coordinator 只读取 `job-plan.json` 与 Job metadata，不读取 source body。active Knowledge Profile/Layout 必须 matched 且 hashes 完整；URL、缺失或未授权 source 直接失败，unsupported 文件保留在 Job 中。若 console script 不在 PATH，使用 `python3 -m obsidian_wiki text-ingest-plan ...`。
+      CLI 独占 discovery、hash、UTF-8 validation、chunk planning、resume/replan、transport 选择和 Job 原子写入规则；coordinator 不手工复现。Coordinator 只读取 `job-plan.json` 与 Job metadata，不读取 source body。active Knowledge Profile/Layout 必须 matched 且 hashes 完整；URL、缺失或未授权 source 直接失败，unsupported 文件保留在 Job 中。若 console script 不在 PATH，使用 `python3 -m graph_wiki text-ingest-plan ...`。
     input: wiki-context.json + 用户给定的本地文本文件或文件夹
     output: 原子 job.json + job-plan.json
     check: 核对 CLI exit status、job-plan.json 指向 vault 内 `_meta/ingest-jobs/<job-id>/job.json`，且 Job 不含 source body；不要重复 hash 或重跑 chunk plan
@@ -68,14 +68,14 @@ steps:
       Coordinator 永远不读取 source body。读取 `wiki-context.json` 的 `text_ingest.max_extraction_workers`（默认 4），把它作为当前 Job 的 Packet extraction 并发硬上限；宿主资源更少时使用较小值。使用确定性 scheduler 执行当前全部 eligible packet units：
 
       ```bash
-      obsidian-wiki text-ingest-extract "<job-dir>" \
+      graph-wiki text-ingest-extract "<job-dir>" \
         --max-workers "<text_ingest.max_extraction_workers>" \
         --worker-timeout-seconds 3600 \
         --output "{{artifacts_dir}}/packet-extraction-report.json" \
         --pretty
       ```
 
-      若 console script 不在 PATH，使用 `python3 -m obsidian_wiki text-ingest-extract ...`。Scheduler 先对账陈旧 `extracting` units，再按稳定 source/unit 顺序动态补满 worker pool；同一文档的多个 packet unit 也可并行，每个 unit 每次 invocation 最多运行一次。它原子 claim/completion Job 状态，为每个 attempt 创建独立 worker directory 并映射 package 自带的当前 `wiki-source-text` skill，再以固定 argv（不用 shell）启动 `claude -p --dangerously-skip-permissions --no-session-persistence --disallowed-tools Agent,Task --output-format json`，直接调用 `/wiki-source-text`。危险权限只允许用于已验证 Job 边界内的该 worker；Agent/Task tools 被禁用，worker 不得再派生 subagent。
+      若 console script 不在 PATH，使用 `python3 -m graph_wiki text-ingest-extract ...`。Scheduler 先对账陈旧 `extracting` units，再按稳定 source/unit 顺序动态补满 worker pool；同一文档的多个 packet unit 也可并行，每个 unit 每次 invocation 最多运行一次。它原子 claim/completion Job 状态，为每个 attempt 创建独立 worker directory 并映射 package 自带的当前 `wiki-source-text` skill，再以固定 argv（不用 shell）启动 `claude -p --dangerously-skip-permissions --no-session-persistence --disallowed-tools Agent,Task --output-format json`，直接调用 `/wiki-source-text`。危险权限只允许用于已验证 Job 边界内的该 worker；Agent/Task tools 被禁用，worker 不得再派生 subagent。
 
       每个 Claude process 只收到 Job directory、一个 source_id 和当前 unit_id；不传 source body、Packet body、wiki context、页面内容或相邻 unit metadata。Scheduler 只依据磁盘上的 planned Packet 及其 contract validation 标记 `packet_ready`/failed，不把 worker stdout、完整 source body 或 extracted items 带回 coordinator context。无 Claude executable、skill 不可用、timeout 或 Packet validation 失败时记录该 unit 为 failed；下次 invocation 可恢复重试，不得在 coordinator 中降级提取。
 
@@ -107,13 +107,13 @@ steps:
       用只读的确定性 CLI 从最新 Job 与 permanent manifest 同时生成 JSON 和 Markdown 报告，不由 agent 手工统计或改写事实：
 
       ```bash
-      obsidian-wiki text-ingest-report "<job-dir>" \
+      graph-wiki text-ingest-report "<job-dir>" \
         --output "{{artifacts_dir}}/job-completion.json" \
         --markdown-output "{{artifacts_dir}}/folder-ingest-completion.md" \
         --pretty
       ```
 
-      报告包含 source/unit 状态、精确恢复点、exact-hash manifest entries、失败信息和 `live_complete`。`cross-linker` 仅作为 live-complete 后可单独调用的可选后处理，当前 workflow 不调用它，也不把它的结果纳入 Job 完成定义。若 console script 不在 PATH，使用 `python3 -m obsidian_wiki text-ingest-report ...`。事实一致后输出 <promise>done</promise>。
+      报告包含 source/unit 状态、精确恢复点、exact-hash manifest entries、失败信息和 `live_complete`。`cross-linker` 仅作为 live-complete 后可单独调用的可选后处理，当前 workflow 不调用它，也不把它的结果纳入 Job 完成定义。若 console script 不在 PATH，使用 `python3 -m graph_wiki text-ingest-report ...`。事实一致后输出 <promise>done</promise>。
     input: 最新 job.json + permanent manifest + source-finalization-report.json
     output: job-completion.json + folder-ingest-completion.md
     check: 解析两份报告并对照 Job、manifest 与 finalization report，确认 counts/paths/failures/next action 一致，只有 complete/unchanged/unsupported 且所需 exact-hash manifest entries 完整时 live_complete=true；确认本步骤和整个 ingest workflow 均未调用 cross-linker

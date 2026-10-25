@@ -1,4 +1,4 @@
-description: 从任意项目增量蒸馏架构决策与可复用知识，并幂等同步到 Obsidian wiki
+description: 从任意项目增量蒸馏架构决策与可复用知识，并幂等同步到 Graph Wiki
 
 auto_reset: true
 artifacts_dir: invocation
@@ -16,7 +16,7 @@ steps:
     input: wiki-update invocation 与 source CWD
     output: wiki-context.json + wiki-context.md
     inputs:
-      requested_keys: OBSIDIAN_VAULT_PATH,OBSIDIAN_WIKI_REPO,OBSIDIAN_LINK_FORMAT,QMD_TRANSPORT,QMD_WIKI_COLLECTION,QMD_CLI_SEARCH_MODE
+      requested_keys: OBSIDIAN_VAULT_PATH,GRAPH_WIKI_REPO,OBSIDIAN_LINK_FORMAT,QMD_TRANSPORT,QMD_WIKI_COLLECTION,QMD_CLI_SEARCH_MODE
       optional_reads: owner AGENTS,taxonomy,index,manifest,active knowledge pack,writing profile
       setup_mode: "false"
     on_pass: resolve_project

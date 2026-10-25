@@ -12,7 +12,7 @@ steps:
   - id: dispatch_skill_worker
     desc: 将唯一 source unit 交给隔离 claude -p process 的 wiki-source-text skill
     do: |
-      此 workflow 只保留单 unit 兼容入口；批量执行由 `obsidian-wiki text-ingest-extract` 的有界 worker pool 负责。实际 binding、range extraction、Packet write 与 validation 的唯一运行时契约位于 `wiki-source-text` skill。
+      此 workflow 只保留单 unit 兼容入口；批量执行由 `graph-wiki text-ingest-extract` 的有界 worker pool 负责。实际 binding、range extraction、Packet write 与 validation 的唯一运行时契约位于 `wiki-source-text` skill。
 
       1. 从调用方取得 canonical Job directory、source_id 和 unit_id；缺一即失败，不自行选择其他 unit。
       2. 在该 unit 独立的 worker directory 中，以固定 argv（不用 shell）启动 `claude -p --dangerously-skip-permissions --no-session-persistence --disallowed-tools Agent,Task --output-format json`，prompt 直接调用 `/wiki-source-text` 且只包含 Job directory、source_id 和 unit_id。危险权限只用于已验证 Job 边界内的 worker；Agent/Task tools 被禁用，worker 不得再派生 subagent。

@@ -5,7 +5,8 @@
 ## 配置如何解析
 
 **配置目录**存放 `config`（当前 vault）、命名 profile（`config.<name>`）与 `WRITING.md`。默认是
-`~/.obsidian-wiki`，除非用 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移。该覆盖先读进程环境变量，再从最近的
+`~/.graph-wiki`，但随附的 `.env.example` 设置了 `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`，因此由 setup
+创建的项目会把配置留在项目内。该覆盖先读进程环境变量，再从最近的
 `.env` 向上找到 `$HOME`；相对值以该 `.env` 所在目录为基准。迁移配置目录会同时移动这三个文件。
 
 Skill 按以下顺序解析 vault 路径：
@@ -25,17 +26,19 @@ Skill 按以下顺序解析 vault 路径：
 ### 把配置留在项目内
 
 项目可以完全自包含：在项目的 `.env` 中写入 vault 路径与相对配置目录，就不会读写你的 home 目录。
+这是 setup 创建的 `.env` 的默认行为，因为随附的 `.env.example` 设置了
+`GRAPH_WIKI_CONFIG_DIR=.graph-wiki`。
 
 ```bash
 # <project>/.env
 OBSIDIAN_VAULT_PATH=/absolute/path/to/vault
-OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki
+GRAPH_WIKI_CONFIG_DIR=.graph-wiki
 ```
 
 ```bash
 cd /path/to/project
-obsidian-wiki setup --vault /absolute/path/to/vault   # 写入 <project>/.obsidian-wiki/config
-obsidian-wiki context-pack authentication            # 读取同一个项目 .env
+graph-wiki setup --vault /absolute/path/to/vault   # 写入 <project>/.graph-wiki/config
+graph-wiki context-pack authentication            # 读取同一个项目 .env
 ```
 
 所有与 vault 相关的命令都使用同一顺序：`query`、`context-pack`、`lint`、`trust-record`、
@@ -63,7 +66,7 @@ Setup 还会把低频 context 编译到 `$OBSIDIAN_VAULT_PATH/_meta/context/wiki
 rules、Writing Profile、Profile、Layout、routing 与稳定元数据。有意更改上述任何输入后，请运行
 setup/repair。
 
-使用 `obsidian-wiki setup --list-knowledge-packs` 查看可用的 Knowledge Pack，并在 setup 时用
+使用 `graph-wiki setup --list-knowledge-packs` 查看可用的 Knowledge Pack，并在 setup 时用
 `--knowledge-pack` 选择一个。我们假定一个 vault 服务于一种知识目的，因此摄取会对照固定的 Profile 检查
 来源兼容性，而不是自动侦测并切换领域。把既有 vault 换成另一个 Pack 需要内容感知的迁移；编辑 `.env`、
 重命名目录或手工修改标记都不是受支持的切换机制。
@@ -84,7 +87,7 @@ setup/repair。
 
 ## 全局 wiki 写作 profile
 
-Setup 在每个平台上都会在配置目录（默认 `~/.obsidian-wiki`）创建 `WRITING.md`。它从不覆盖已有的 profile。用它表达跨项目
+Setup 在每个平台上都会在配置目录（由 setup 创建的项目为 `<project>/.graph-wiki`；未设置时为 `~/.graph-wiki`）创建 `WRITING.md`。它从不覆盖已有的 profile。用它表达跨项目
 共享的写作偏好，例如：
 
 ```markdown
@@ -114,8 +117,8 @@ patch 或直通来源文本。缺失、空或不可读的 profile 不会阻塞�
 | 变量 | 作用 | 默认值 |
 |---|---|---|
 | `OBSIDIAN_VAULT_PATH` | **必填。** 你的 vault 的绝对路径 | — |
-| `OBSIDIAN_WIKI_CONFIG_DIR` | 迁移 `config`、`config.<name>` 与 `WRITING.md` 的位置。读环境变量或最近的 `.env`；相对值以该 `.env` 为基准 | `~/.obsidian-wiki` |
-| `OBSIDIAN_WIKI_REPO` | 本 repo 克隆的位置（由 setup 设置；用于查找 skill/资源） | *自动* |
+| `GRAPH_WIKI_CONFIG_DIR` | 迁移 `config`、`config.<name>` 与 `WRITING.md` 的位置。读环境变量或最近的 `.env`；相对值以该 `.env` 为基准 | `~/.graph-wiki`；随附 `.env.example` 设为 `.graph-wiki` |
+| `GRAPH_WIKI_REPO` | 本 repo 克隆的位置（由 setup 设置；用于查找 skill/资源） | *自动* |
 | `OBSIDIAN_SOURCES_DIR` | 逗号分隔的来源目录，用于摄取文档 | *（空）* |
 | `OBSIDIAN_MAX_PAGES_PER_INGEST` | 每次摄取最多创建或更新多少个页面 | `15` |
 | `OBSIDIAN_LINK_FORMAT` | `wikilink` → `[[concepts/foo]]`，或 `markdown` → `` [text](path.md) ``。只影响之后的写入——既有内容绝不会被迁移 | `wikilink` |
@@ -131,7 +134,7 @@ patch 或直通来源文本。缺失、空或不可读的 profile 不会阻塞�
 |---|---|---|
 | `OBSIDIAN_KNOWLEDGE_PACK` | 当前生效的原子 Profile/Layout/Routing pack | `_meta/knowledge-pack.json` 中的名称 |
 | `OBSIDIAN_OWNER_RULES_PATH` | 编译进 context 的 owner rules | `<vault>/AGENTS.md` |
-| `OBSIDIAN_WRITING_PROFILE_PATH` | 编译进 context 的 Writing Profile | `<配置目录>/WRITING.md`（默认 `~/.obsidian-wiki/WRITING.md`） |
+| `OBSIDIAN_WRITING_PROFILE_PATH` | 编译进 context 的 Writing Profile | `<配置目录>/WRITING.md` |
 | `OBSIDIAN_VAULT_METADATA_DIR` | 稳定的 vault 元数据与 Knowledge Pack 标记根目录 | `<vault>/_meta` |
 | `OBSIDIAN_TAXONOMY_PATH` | 受控 taxonomy 来源 | `<metadata-dir>/taxonomy.md` |
 | `OBSIDIAN_CONTEXT_SNAPSHOT` | 持久化的已编译 context JSON | `<metadata-dir>/context/wiki-context.json` |
@@ -162,7 +165,7 @@ manifest、index、hot cache、logs、ingest Job、当前 CWD 与内联覆盖仍
 | 变量 | 作用 | 默认值 |
 |---|---|---|
 | `WIKI_STAGED_WRITES` | 为 `true` 时，LLM 写入的页面落入 `_staging/` 等待人工复核，而不是直接进入 live vault。用 `/wiki-stage-commit` 提升它们 | `false`——直接写入 |
-| `OBSIDIAN_TRUST_STRICT` | 为 `1` 时，`obsidian-wiki lint` 把缺失 trust 字段、ledger 错误、过期复核与分数不匹配视为失败而非警告。等同于 `lint --strict-trust` | *（未设置）* |
+| `OBSIDIAN_TRUST_STRICT` | 为 `1` 时，`graph-wiki lint` 把缺失 trust 字段、ledger 错误、过期复核与分数不匹配视为失败而非警告。等同于 `lint --strict-trust` | *（未设置）* |
 | `OBSIDIAN_ALLOWED_LIFECYCLES` | 该解析后 vault 的逗号分隔 lifecycle 扩展 | *（仅框架默认值）* |
 | `OBSIDIAN_ALLOWED_RELATIONSHIP_TYPES` | 该解析后 vault 的逗号分隔 relationship 类型扩展 | *（仅框架默认值）* |
 | `OBSIDIAN_REQUIRED_TRUST_FIELDS` | 逗号分隔的实际生效必填 trust 字段。允许值：`base_confidence`、`lifecycle`、`lifecycle_changed`、`updated`；未知值失败关闭 | lint 为 `base_confidence,lifecycle`；独立 trust 命令还包括 `updated` |
@@ -216,7 +219,7 @@ staged review、可续跑与收尾能力，但不创建 Packet 文件。`adaptiv
 达到最小值，并可能把略高于目标值的小尾巴合并进来，只要仍在硬上限内。`strict_sections` 保留旧行为：
 每次 heading-path 变化都结束一个单元。直接使用 CLI 时，对应参数会按每次调用覆盖命令默认值。
 
-自定义策略名来自受信任的已安装 Python 包，通过 `obsidian_wiki.text_chunk_strategies` entry-point 组
+自定义策略名来自受信任的已安装 Python 包，通过 `graph_wiki.text_chunk_strategies` entry-point 组
 注册。选择一个策略会执行该包的代码；不要配置不受信任的扩展。
 
 提取并发作用于整个 Job 中的所有 packet unit，包括来自同一来源文档的多个 unit。Worker 写入各自不同的
@@ -322,8 +325,8 @@ awk -F= '/^OBSIDIAN_VAULT_PATH=/{print $2 "/_raw"; exit}' "$(git rev-parse --sho
 ## 把 vault 同步到 GitHub
 
 你的 vault 是一个纯 markdown 文件目录——把它推送到一个私有 GitHub repo，你就免费获得版本历史、备份与
-跨设备同步。`obsidian-wiki setup` 与 `python3 setup.py` 都会在安装时提供配置它的选项；它们共用同一套
-实现（`obsidian_wiki/sync.py`），因此 pip 安装与源码安装得到完全一致的过程。
+跨设备同步。`graph-wiki setup` 会在安装时提供配置它的选项；`python3 setup.py` 委托给它，因此 pip 安装与源码
+安装共用同一套实现（`graph_wiki/sync.py`），过程完全一致。
 
 **Setup 会做什么：**
 
@@ -338,7 +341,7 @@ awk -F= '/^OBSIDIAN_VAULT_PATH=/{print $2 "/_raw"; exit}' "$(git rev-parse --sho
 
 ```bash
 wiki-sync            # 由 setup 添加的别名
-obsidian-wiki sync   # 或者直接调用
+graph-wiki sync   # 或者直接调用
 ```
 
 每次运行都会暂存所有变更，以 `sync 2026-07-30 14:00` 提交并推送。
@@ -346,7 +349,7 @@ obsidian-wiki sync   # 或者直接调用
 **之后配置，或手工配置：**
 
 ```bash
-obsidian-wiki sync-setup https://github.com/you/my-wiki.git
+graph-wiki sync-setup https://github.com/you/my-wiki.git
 # 或者：
 cd /path/to/your/vault
 git init
@@ -356,7 +359,7 @@ git remote add origin https://github.com/you/my-wiki.git
 **通过 cron 每小时自动同步：**
 
 ```
-0 * * * * obsidian-wiki sync --vault /path/to/your/vault >> ~/.obsidian-wiki/sync.log 2>&1
+0 * * * * graph-wiki sync --vault /path/to/your/vault >> ~/.graph-wiki/sync.log 2>&1
 ```
 
 > 如果你的 vault 包含个人笔记，请把 repo 保持为 **私有**。不会向任何第三方服务发送任何东西——你的

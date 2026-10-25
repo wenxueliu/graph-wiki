@@ -1,6 +1,6 @@
 ---
 name: wiki-lint-consolidate
-description: "对 Obsidian wiki 执行完整 lint dry-run，经人工批准后安全应用可自动化的结构维护"
+description: "对 Graph Wiki 执行完整 lint dry-run，经人工批准后安全应用可自动化的结构维护"
 ---
 
 # wiki-lint-consolidate
@@ -17,7 +17,7 @@ description: "对 Obsidian wiki 执行完整 lint dry-run，经人工批准后�
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow wiki-lint-consolidate`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow wiki-lint-consolidate`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 

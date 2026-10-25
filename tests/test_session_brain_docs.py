@@ -53,7 +53,7 @@ class SkillFilesTest(unittest.TestCase):
         self.assertIn("may not exist", text)
 
     def test_skills_only_reference_real_cli_subcommands(self) -> None:
-        from obsidian_wiki.cli import build_parser
+        from graph_wiki.cli import build_parser
 
         known = set()
         for action in build_parser()._actions:
@@ -97,7 +97,7 @@ class ZeroDependencyTest(unittest.TestCase):
         )
         for name in ("session_sources", "session_index", "session_graph",
                      "session_viz", "session_query"):
-            source = (ROOT / "obsidian_wiki" / f"{name}.py").read_text(encoding="utf-8")
+            source = (ROOT / "graph_wiki" / f"{name}.py").read_text(encoding="utf-8")
             for node in ast.walk(ast.parse(source)):
                 module = None
                 if isinstance(node, ast.Import):
@@ -108,7 +108,7 @@ class ZeroDependencyTest(unittest.TestCase):
                     continue
                 root = module.split(".")[0]
                 self.assertTrue(
-                    root == "obsidian_wiki" or root in allowed_stdlib_prefixes
+                    root == "graph_wiki" or root in allowed_stdlib_prefixes
                     or module.startswith("__future__"),
                     f"{name}.py imports non-stdlib module {module!r}",
                 )

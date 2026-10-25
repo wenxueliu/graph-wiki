@@ -43,7 +43,7 @@ does not decide what the vault should remember.
 
 The bundled packs are `default`, `software-knowledge`, and `book-knowledge`. They live in the
 top-level `knowledge-packs/` product directory and are installed into the Python package as
-`obsidian_wiki/_data/knowledge-packs/`. Workflows consume them through the shared Pack loader; they
+`graph_wiki/_data/knowledge-packs/`. Workflows consume them through the shared Pack loader; they
 do not own or embed Pack definitions.
 
 ## The four stages
@@ -95,7 +95,7 @@ retains durable Jobs and Packets for interruption-safe resume and staged review.
 
 ## The loop
 
-1. Agent resolves the vault path (`@name` → `.env` → `config` in the config directory, default `~/.obsidian-wiki`)
+1. Agent resolves the vault path (`@name` → `.env` → `config` in the config directory; default `~/.graph-wiki`, or `<project>/.graph-wiki` when the project `.env` comes from the shipped template)
 2. Agent reads `.manifest.json` to know what's already been done
 3. Agent loads the active Knowledge Profile and Vault Layout from the bound Knowledge Pack
 4. Agent reads the relevant skill for instructions
@@ -184,7 +184,7 @@ The [original gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519
 
 - **Provenance tracking.** Every claim is tagged: extracted (default), `^[inferred]` (LLM synthesis), or `^[ambiguous]` (sources disagree). A `provenance:` block in frontmatter summarizes the mix per page, and `wiki-lint` flags pages drifting into mostly speculation. You can always tell what your wiki knows from what it guessed.
 
-- **Trust ledger.** `obsidian-wiki trust-record` / `trust-check` record and validate human-approved confidence reviews against material fingerprints, so CI can gate on "a person actually checked this."
+- **Trust ledger.** `graph-wiki trust-record` / `trust-check` record and validate human-approved confidence reviews against material fingerprints, so CI can gate on "a person actually checked this."
 
 - **Explicit extension points.** PDF structure providers and multimodal/structured-data pipelines
   are deferred; unsupported inputs are reported with their detected kind and reason.
@@ -210,7 +210,7 @@ The OKF round-trip is lossless. The `graph.json` round-trip is not — it carrie
 ## Repo layout
 
 ```
-obsidian-wiki/
+graph-wiki/
 ├── .skills/                             # ← Canonical skill definitions (source of truth)
 │   └── <skill-name>/SKILL.md            #   50 skills — see docs/skills.md
 │
@@ -219,7 +219,7 @@ obsidian-wiki/
 │   ├── <name>.yaml                      #   22 workflows
 │   ├── scripts/                         # Deterministic helpers the workflows call
 │   └── templates/wiki-setup/            # Vault scaffold templates (index, log, hot, manifest, WRITING)
-├── obsidian_wiki/                       # Python package — CLI, setup, sync, session brain
+├── graph_wiki/                       # Python package — CLI, setup, sync, session brain
 ├── scripts/                             # Standalone helpers (daily-update, manifest, wiki-notify)
 ├── tools/                               # sync_workflow_skills.py, check_readme_sync.py
 ├── tests/                               # pytest suite
@@ -230,11 +230,11 @@ obsidian-wiki/
 ├── GEMINI.md                            # Bootstrap → Gemini CLI (→ AGENTS.md)
 ├── AGENTS.md                            # Bootstrap → Codex, OpenCode, Aider, Droid, Trae, Hermes, OpenClaw
 ├── .hermes.md                           # Bootstrap → Hermes (symlink → AGENTS.md)
-├── .cursor/rules/obsidian-wiki.mdc      # Always-on → Cursor (alwaysApply: true)
-├── .windsurf/rules/obsidian-wiki.md     # Always-on → Windsurf
-├── .kiro/steering/obsidian-wiki.md      # Always-on → Kiro (inclusion: always)
-├── .agent/rules/obsidian-wiki.md        # Always-on → Google Antigravity
-├── .agent/workflows/obsidian-wiki.md    # Slash-command registry → Antigravity
+├── .cursor/rules/graph-wiki.mdc      # Always-on → Cursor (alwaysApply: true)
+├── .windsurf/rules/graph-wiki.md     # Always-on → Windsurf
+├── .kiro/steering/graph-wiki.md      # Always-on → Kiro (inclusion: always)
+├── .agent/rules/graph-wiki.md        # Always-on → Google Antigravity
+├── .agent/workflows/graph-wiki.md    # Slash-command registry → Antigravity
 ├── .github/copilot-instructions.md      # Always-on → GitHub Copilot (VS Code Chat)
 │
 ├── .claude/skills/   → symlinks to .skills/*   (created by setup)
@@ -250,6 +250,6 @@ obsidian-wiki/
 └── docs/                                # You are here
 ```
 
-Global symlink targets created by setup are listed in [Installation → What `python3 setup.py` wires up](installation.md#what-python3-setuppy-wires-up).
+Project-local symlink targets created by setup are listed in [Installation → What `python3 setup.py` wires up](installation.md#what-python3-setuppy-wires-up).
 
 For the full pattern — three-layer architecture, page templates, project organization — read [`.skills/llm-wiki/SKILL.md`](../.skills/llm-wiki/SKILL.md).

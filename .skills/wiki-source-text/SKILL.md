@@ -69,13 +69,13 @@ state beyond the required Job metadata. Do not modify `job.json` or any shared f
 Run exactly:
 
 ```bash
-obsidian-wiki text-chunk-read "<source-path>" \
+graph-wiki text-chunk-read "<source-path>" \
   --start-byte "<start_byte>" \
   --end-byte "<end_byte>" \
   --expect-hash "<whole-source-content_hash>"
 ```
 
-If the console script is unavailable, use `python3 -m obsidian_wiki text-chunk-read ...`.
+If the console script is unavailable, use `python3 -m graph_wiki text-chunk-read ...`.
 `--expect-hash` verifies the whole planned source version; `start_byte/end_byte` select the only
 range returned. A hash mismatch is a hard failure: do not write a Packet, and tell the coordinator
 to invalidate or replan the source.
@@ -110,7 +110,7 @@ warnings, range/hash, and the atomic-write method, without quoting source body t
 
 ## Validate and hand off
 
-Run `obsidian_wiki.ingest_pipeline.validate_packet` with the exact Job source record. Require the
+Run `graph_wiki.ingest_pipeline.validate_packet` with the exact Job source record. Require the
 Packet's version, IDs, source path/hash, range, fields, provenance, locators, and path boundary to
 match the Job. Confirm that no shared Job, manifest, special file, wiki page, or other Packet changed.
 

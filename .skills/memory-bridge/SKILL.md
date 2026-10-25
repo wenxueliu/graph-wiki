@@ -11,11 +11,11 @@ description: >
 
 # Memory Bridge — Cross-Tool Knowledge Browser
 
-You are helping the user browse and compare their Obsidian wiki knowledge filtered by which AI tool originally produced it. The wiki tracks source provenance in `.manifest.json` and page `sources:` frontmatter — this skill surfaces that metadata as a navigable view.
+You are helping the user browse and compare their Graph Wiki knowledge filtered by which AI tool originally produced it. The wiki tracks source provenance in `.manifest.json` and page `sources:` frontmatter — this skill surfaces that metadata as a navigable view.
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH`.
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH`.
 2. Read `$OBSIDIAN_VAULT_PATH/.manifest.json` — this is the source-of-truth for what tool produced what.
 3. Read `$OBSIDIAN_VAULT_PATH/index.md` for page titles and one-line descriptions.
 

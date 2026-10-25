@@ -1,4 +1,4 @@
-"""Tests for obsidian_wiki.graph — networkx-based vault graph queries."""
+"""Tests for graph_wiki.graph — networkx-based vault graph queries."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ import pytest
 
 pytest.importorskip("networkx", reason="networkx not installed")
 
-from obsidian_wiki.graph import build_graph, load_graph, save_graph
-from obsidian_wiki.graph import find_paths, neighbors, centrality, communities, stats
-from obsidian_wiki.graph import tag_subgraph
+from graph_wiki.graph import build_graph, load_graph, save_graph
+from graph_wiki.graph import find_paths, neighbors, centrality, communities, stats
+from graph_wiki.graph import tag_subgraph
 
 
 def _make_vault(tmp_path: Path) -> Path:

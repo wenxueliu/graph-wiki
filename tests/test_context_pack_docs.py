@@ -10,7 +10,7 @@ def read(relative: str) -> str:
 
 def test_context_skill_uses_cli_and_is_read_only() -> None:
     skill = read(".skills/wiki-context-pack/SKILL.md")
-    assert 'obsidian-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH"' in skill
+    assert 'graph-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH"' in skill
     assert "read-only" in skill.lower()
     assert "must not modify" in skill
     assert "Append to" not in skill
@@ -20,10 +20,10 @@ def test_context_skill_uses_cli_and_is_read_only() -> None:
 def test_context_skill_canonicalizes_vault_and_has_clone_fallback() -> None:
     skill = read(".skills/wiki-context-pack/SKILL.md")
     assert 'cd "$OBSIDIAN_VAULT_PATH" && pwd -P' in skill
-    assert "command -v obsidian-wiki" in skill
-    assert '"$OBSIDIAN_WIKI_REPO/obsidian_wiki/cli.py"' in skill
-    assert "python3 -m obsidian_wiki.cli context-pack" in skill
-    assert "pip install obsidian-wiki" in skill
+    assert "command -v graph-wiki" in skill
+    assert '"$GRAPH_WIKI_REPO/graph_wiki/cli.py"' in skill
+    assert "python3 -m graph_wiki.cli context-pack" in skill
+    assert "pip install graph-wiki-skills" in skill
     assert "rerun setup from a valid clone" in skill
 
 
@@ -36,24 +36,27 @@ def test_context_skill_preserves_cli_output_and_recent_default_budget() -> None:
     assert '--recent --budget 4000' not in skill
 
 
-def test_setup_py_installs_context_pack_as_portable() -> None:
+def test_setup_py_delegates_to_cli_without_global_installs() -> None:
     setup_py = read("setup.py")
-    assert "wiki-update" in setup_py and "wiki-query" in setup_py and "wiki-context-pack" in setup_py
+    assert "graph_wiki.cli" in setup_py
+    assert '"--agent"' in setup_py
+    assert "wiki-update" not in setup_py
+    assert "~/.claude/skills" not in setup_py
 
 
 def test_cli_setup_does_not_declare_global_portable_skills() -> None:
-    cli = read("obsidian_wiki/cli.py")
+    cli = read("graph_wiki/cli.py")
     assert "PORTABLE_SKILLS" not in cli
 
 
 def test_all_bootstraps_route_context_pack() -> None:
     files = [
         "AGENTS.md",
-        ".cursor/rules/obsidian-wiki.mdc",
-        ".windsurf/rules/obsidian-wiki.md",
-        ".kiro/steering/obsidian-wiki.md",
-        ".agent/rules/obsidian-wiki.md",
-        ".agent/workflows/obsidian-wiki.md",
+        ".cursor/rules/graph-wiki.mdc",
+        ".windsurf/rules/graph-wiki.md",
+        ".kiro/steering/graph-wiki.md",
+        ".agent/rules/graph-wiki.md",
+        ".agent/workflows/graph-wiki.md",
         ".github/copilot-instructions.md",
     ]
     for relative in files:
@@ -65,7 +68,7 @@ def test_cli_docs_document_agent_context_contract() -> None:
     chinese = read("docs/cli.zh-CN.md")
 
     for text in (english, chinese):
-        assert "obsidian-wiki context-pack" in text
+        assert "graph-wiki context-pack" in text
         assert "--budget 8000" in text
         assert "--public-only" in text
         assert "wiki-context-pack" in text

@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.cli import scaffold_vault
-from obsidian_wiki.knowledge_pack import (
+from graph_wiki.cli import scaffold_vault
+from graph_wiki.knowledge_pack import (
     KnowledgePackContractError,
     active_knowledge_pack,
     iter_content_pages,

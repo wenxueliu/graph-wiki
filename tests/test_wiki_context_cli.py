@@ -6,9 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-import obsidian_wiki.cli as cli
-from obsidian_wiki.cli import scaffold_vault
-from obsidian_wiki.knowledge_pack import load_knowledge_pack
+import graph_wiki.cli as cli
+from graph_wiki.cli import scaffold_vault
+from graph_wiki.knowledge_pack import load_knowledge_pack
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,7 +43,7 @@ def run_context_resolver(
         env["HOME"] = str(home)
     return subprocess.run(
         [
-            sys.executable, "-m", "obsidian_wiki", "wiki-context-resolve",
+            sys.executable, "-m", "graph_wiki", "wiki-context-resolve",
             "--input", str(supplied), "--source-cwd", str(tmp_path),
             "--requested-keys", requested_keys,
             "--optional-reads", optional_reads,
@@ -69,7 +69,7 @@ def test_wiki_context_resolve_does_not_depend_on_cwd(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "obsidian_wiki",
+            "graph_wiki",
             "wiki-context-resolve",
             "--input",
             str(supplied),
@@ -93,7 +93,7 @@ def test_wiki_context_resolve_does_not_depend_on_cwd(tmp_path: Path) -> None:
 def test_wiki_context_workflow_uses_cwd_independent_cli() -> None:
     workflow = (ROOT / "workflows" / "wiki-context.yaml").read_text(encoding="utf-8")
 
-    assert "obsidian-wiki wiki-context-resolve" in workflow
+    assert "graph-wiki wiki-context-resolve" in workflow
     assert "python3 .cac/ralph-flow/workflows/wiki/scripts/resolve_wiki_context.py" not in workflow
     assert '"mode":"config"' in workflow
     assert "manual_step:" not in workflow
@@ -136,7 +136,7 @@ def test_setup_compiles_context_once_and_runtime_reuses_snapshot(
     vault = tmp_path / "vault"
     scaffold_vault(vault, load_knowledge_pack("default"))
     config_home = tmp_path / "config-home"
-    monkeypatch.setattr(cli, "GLOBAL_CONFIG_DIR", config_home / ".obsidian-wiki")
+    monkeypatch.setattr(cli, "GLOBAL_CONFIG_DIR", config_home / ".graph-wiki")
 
     snapshot = cli.compile_context_snapshot(
         vault, "default", source_cwd=tmp_path
@@ -387,7 +387,7 @@ def test_context_resolver_reads_vault_from_global_setup_config(tmp_path: Path) -
     vault = tmp_path / "vault"
     project.mkdir(parents=True)
     vault.mkdir()
-    config = home / ".obsidian-wiki" / "config"
+    config = home / ".graph-wiki" / "config"
     config.parent.mkdir()
     config.write_text(f"OBSIDIAN_VAULT_PATH={vault}\n", encoding="utf-8")
 
@@ -409,7 +409,7 @@ def test_context_resolver_honors_project_config_dir_override(tmp_path: Path) -> 
     project.mkdir(parents=True)
     vault.mkdir()
     (project / ".env").write_text(
-        "OBSIDIAN_WIKI_CONFIG_DIR=.wiki-config\n", encoding="utf-8"
+        "GRAPH_WIKI_CONFIG_DIR=.wiki-config\n", encoding="utf-8"
     )
     config = project / ".wiki-config" / "config.work"
     config.parent.mkdir()
@@ -438,7 +438,7 @@ def test_context_resolver_honors_config_dir_env_var(
     config_root.mkdir()
     config = config_root / "config.work"
     config.write_text(f"OBSIDIAN_VAULT_PATH={vault}\n", encoding="utf-8")
-    monkeypatch.setenv("OBSIDIAN_WIKI_CONFIG_DIR", str(config_root))
+    monkeypatch.setenv("GRAPH_WIKI_CONFIG_DIR", str(config_root))
 
     result = run_context_resolver(
         project, None, setup_mode="false", mode="config", profile="work",
@@ -457,7 +457,7 @@ def test_context_resolver_honors_named_vault_profile(tmp_path: Path) -> None:
     vault = tmp_path / "work-vault"
     project.mkdir(parents=True)
     vault.mkdir()
-    config = home / ".obsidian-wiki" / "config.work"
+    config = home / ".graph-wiki" / "config.work"
     config.parent.mkdir()
     config.write_text(f"OBSIDIAN_VAULT_PATH={vault}\n", encoding="utf-8")
 
@@ -479,7 +479,7 @@ def test_context_resolver_does_not_bypass_empty_nearest_vault_config(tmp_path: P
     project.mkdir(parents=True)
     global_vault.mkdir()
     (project / ".env").write_text("OBSIDIAN_VAULT_PATH=\n", encoding="utf-8")
-    config = home / ".obsidian-wiki" / "config"
+    config = home / ".graph-wiki" / "config"
     config.parent.mkdir()
     config.write_text(f"OBSIDIAN_VAULT_PATH={global_vault}\n", encoding="utf-8")
 
@@ -498,7 +498,7 @@ def test_missing_named_profile_never_falls_back_to_default(tmp_path: Path) -> No
     default_vault = tmp_path / "default-vault"
     project.mkdir(parents=True)
     default_vault.mkdir()
-    config_dir = home / ".obsidian-wiki"
+    config_dir = home / ".graph-wiki"
     config_dir.mkdir()
     (config_dir / "config").write_text(
         f"OBSIDIAN_VAULT_PATH={default_vault}\n", encoding="utf-8"
@@ -536,7 +536,7 @@ def test_wiki_route_resolve_does_not_depend_on_cwd(tmp_path: Path) -> None:
     env["PYTHONPATH"] = str(ROOT)
     result = subprocess.run(
         [
-            sys.executable, "-m", "obsidian_wiki", "wiki-route-resolve",
+            sys.executable, "-m", "graph_wiki", "wiki-route-resolve",
             "--routing", str(routing), "--page-type", "concept", "--slug", "alpha",
         ],
         cwd=tmp_path,
@@ -577,7 +577,7 @@ def test_wiki_route_resolve_accepts_frozen_wiki_context(tmp_path: Path) -> None:
     env["PYTHONPATH"] = str(ROOT)
     result = subprocess.run(
         [
-            sys.executable, "-m", "obsidian_wiki", "wiki-route-resolve",
+            sys.executable, "-m", "graph_wiki", "wiki-route-resolve",
             "--routing", str(context), "--page-type", "concept", "--slug", "alpha",
         ],
         cwd=tmp_path,
@@ -593,7 +593,7 @@ def test_wiki_route_resolve_accepts_frozen_wiki_context(tmp_path: Path) -> None:
 
 def test_page_contract_is_a_single_read_only_contract_compiler() -> None:
     workflow = (ROOT / "workflows" / "wiki-page-contract.yaml").read_text(encoding="utf-8")
-    assert "obsidian-wiki wiki-route-resolve" in workflow
+    assert "graph-wiki wiki-route-resolve" in workflow
     assert "transaction_kind" in workflow
     assert "source_scope" in workflow
     assert "不得扫描 index" in workflow

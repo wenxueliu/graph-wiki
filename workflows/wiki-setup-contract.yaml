@@ -16,11 +16,11 @@ steps:
       运行 workflow-local builder 的 `core` phase：
 
       ```bash
-      obsidian-wiki wiki-setup-contract-build core \
+      graph-wiki wiki-setup-contract-build core \
         --output-dir "{{artifacts_dir}}"
       ```
 
-      console script 不在 PATH 时使用等价的 `python3 -m obsidian_wiki wiki-setup-contract-build core ...`。
+      console script 不在 PATH 时使用等价的 `python3 -m graph_wiki wiki-setup-contract-build core ...`。
 
       builder 从随包发布的 `workflows/templates/wiki-setup/` 收集 `WRITING.md`、`index.md`、`log.md`、`hot.md`、`manifest.json`、`app.json`、`appearance.json`，将 source path、完整正文、allowed placeholders 和 SHA-256 写入 core artifacts。
 
@@ -40,11 +40,11 @@ steps:
       使用已通过上一 step check 的 core contract 生成 final contract：
 
       ```bash
-      obsidian-wiki wiki-setup-contract-build finalize \
+      graph-wiki wiki-setup-contract-build finalize \
         --output-dir "{{artifacts_dir}}"
       ```
 
-      console script 不在 PATH 时使用等价的 `python3 -m obsidian_wiki wiki-setup-contract-build finalize ...`。
+      console script 不在 PATH 时使用等价的 `python3 -m graph_wiki wiki-setup-contract-build finalize ...`。
 
       builder 将 `integrations.json` 中的 QMD、Stop hook、Git sync、required checks、manual plugins 和 next steps 合并进 core contract，先形成唯一 canonical final contract result；`setup-contract.json` 完整承载该 result，Markdown 只从同一 result 渲染、不得独立推导或补充事实，并在同一批 artifact 写入中提交二者。
 

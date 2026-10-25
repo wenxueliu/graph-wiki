@@ -1,6 +1,6 @@
-# Obsidian Wiki — Agent Context
+# Graph Wiki — Agent Context
 
-Obsidian Wiki compiles source material into a persistent, interconnected knowledge graph. The
+Graph Wiki compiles source material into a persistent, interconnected knowledge graph. The
 product combines Markdown Agent Skills with a pure-stdlib Python CLI for deterministic operations
 such as configuration resolution, hashing, routing, planning, and state transitions. Agents remain
 responsible for knowledge extraction, synthesis, and editorial judgment.
@@ -59,7 +59,7 @@ The resolver applies this precedence:
 2. **Config directory** — use `<config-dir>/config` when no qualifying local `.env` exists.
 3. **Setup required** — if none exists, tell the user to run `wiki-setup`.
 
-The config directory is `~/.obsidian-wiki` by default. Setting `OBSIDIAN_WIKI_CONFIG_DIR` — in the
+The config directory is `~/.graph-wiki` by default. Setting `GRAPH_WIKI_CONFIG_DIR` — in the
 process environment or in the nearest `.env` — relocates it, so `config`, `config.<name>`, and
 `WRITING.md` can live inside a project instead of the home directory. All vault-aware CLI commands
 use this same order: `query`, `context-pack`, `lint`, `trust-*`, `validate`, `verify`, `doctor`, and

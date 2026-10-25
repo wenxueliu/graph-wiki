@@ -8,8 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from obsidian_wiki.lint import lint_vault
-from obsidian_wiki.trust import (
+from graph_wiki.lint import lint_vault
+from graph_wiki.trust import (
     build_trust_ledger,
     check_trust_ledger,
     page_fingerprint,
@@ -61,7 +61,7 @@ def _run_cli(home: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["HOME"] = str(home)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True,
         text=True,
         env=env,

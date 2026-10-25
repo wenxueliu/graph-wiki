@@ -1,7 +1,7 @@
 ---
 name: pi-history-ingest
 description: >
-  Ingest Pi coding agent session history into the Obsidian wiki. Use this skill when the user wants to mine
+  Ingest Pi coding agent session history into the Graph Wiki. Use this skill when the user wants to mine
   their past Pi sessions for knowledge, import their ~/.pi/agent/sessions folder, extract insights from
   previous coding sessions, or says things like "process my Pi history", "add my Pi sessions to the wiki",
   "ingest ~/.pi", or "what have I worked on in Pi". Also triggers when the user mentions Pi sessions,
@@ -10,7 +10,7 @@ description: >
 
 # Pi History Ingest — Session Mining
 
-You are extracting knowledge from the user's Pi coding agent sessions and distilling it into the Obsidian wiki. Pi sessions are stored as structured JSONL with a tree layout — your job is to follow the active branch, extract durable knowledge, and compile it.
+You are extracting knowledge from the user's Pi coding agent sessions and distilling it into the Graph Wiki. Pi sessions are stored as structured JSONL with a tree layout — your job is to follow the active branch, extract durable knowledge, and compile it.
 
 **Session knowledge closure:** Pi session files are the only factual source for this skill. Do not add background knowledge from model training, other tools, package docs, local files, or the current conversation unless that fact appears in the selected session entries. If outside context seems useful, mark it as an open question or skip it — never present it as extracted session knowledge.
 
@@ -18,7 +18,7 @@ This skill can be invoked directly or via the `wiki-history-ingest` router (`/wi
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `PI_HISTORY_PATH` (defaults to `~/.pi/agent/sessions`)
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `PI_HISTORY_PATH` (defaults to `~/.pi/agent/sessions`)
 2. Read `.manifest.json` at the vault root to check what has already been ingested
 3. Read `index.md` at the vault root to understand what the wiki already contains
 

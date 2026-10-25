@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import obsidian_wiki.cli as cli
+import graph_wiki.cli as cli
 
 
 def _template_root(tmp_path: Path) -> tuple[Path, str]:
@@ -39,12 +39,13 @@ def test_ensure_global_writing_profile_never_overwrites_user_preferences(
     assert target.read_text(encoding="utf-8") == "custom profile\n"
 
 
-def test_source_and_cli_setup_have_writing_profile_parity():
+def test_cli_setup_owns_writing_profile():
     root = Path(__file__).resolve().parents[1]
     source_setup = (root / "setup.py").read_text(encoding="utf-8")
-    cli_setup = (root / "obsidian_wiki" / "cli.py").read_text(encoding="utf-8")
+    cli_setup = (root / "graph_wiki" / "cli.py").read_text(encoding="utf-8")
 
-    for implementation in (source_setup, cli_setup):
-        assert "ensure_global_writing_profile" in implementation
-        assert '"WRITING.md"' in implementation
-        assert "if target.exists()" in implementation or "if not target.exists()" in implementation
+    assert "ensure_global_writing_profile" in cli_setup
+    assert '"WRITING.md"' in cli_setup
+    assert "if target.exists()" in cli_setup or "if not target.exists()" in cli_setup
+    # The source installer delegates; it must not duplicate the profile logic.
+    assert "ensure_global_writing_profile" not in source_setup

@@ -17,7 +17,7 @@ description: "只读计算 Wiki 来源增量、健康优先级与 token footprin
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow wiki-status`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow wiki-status`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -175,7 +175,7 @@ next-actions.json + 完整 standard wiki-status-report.md
 
 insights mode 时：
 1. 若 live pages<20 或 fresh rebuild 后尚无 ingest，写明确 skip 原因，不创建/改写 _insights.md。
-2. 否则优先运行 `obsidian-wiki graph-analyse "$OBSIDIAN_VAULT_PATH" --pretty`；不可用才解析 wikilinks 构建 graph。
+2. 否则优先运行 `graph-wiki graph-analyse "$OBSIDIAN_VAULT_PATH" --pretty`；不可用才解析 wikilinks 构建 graph。
 3. 计算 top-10 incoming anchors、top-5 bridges、n>=5 tag cohesion（<0.15 fragmented）、top-5 surprising cross-category connections、orphan-adjacent、rough clusters。
 4. 读取旧 _insights.md GRAPH_SNAPSHOT 并计算 nodes/edges add/remove、新连接与 lost incoming；首次无 snapshot 则略过 delta。
 5. 只建议 tier，不改页面：incoming>=5 或 top-5 bridge 提升 core；incoming<=1 且 stale>=90d 降 peripheral，最多10项。问题最多7项，ambiguous→bridge→isolated。

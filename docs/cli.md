@@ -2,46 +2,46 @@ English | [简体中文](cli.zh-CN.md)
 
 # CLI Reference
 
-The `obsidian-wiki` Python package ships a CLI for setup, inspection, and the deterministic parts of the workflow — the things that don't need an LLM. Everything else is a [skill](skills.md) your agent runs.
+The `graph-wiki` Python package ships a CLI for setup, inspection, and the deterministic parts of the workflow — the things that don't need an LLM. Everything else is a [skill](skills.md) your agent runs.
 
 ```bash
-pip install obsidian-wiki
-obsidian-wiki --help
-obsidian-wiki --version
+pip install graph-wiki-skills
+graph-wiki --help
+graph-wiki --version
 ```
 
-Running `obsidian-wiki` with no subcommand defaults to `setup`.
+Running `graph-wiki` with no subcommand defaults to `setup`.
 
 ## Setup & inspection
 
 | Command | What it does |
 |---|---|
-| `setup` | Install selected agent skills in the command directory and write the config file (`~/.obsidian-wiki/config` by default) |
+| `setup` | Install selected agent skills in the command directory and write the config file (`<project>/.graph-wiki/config` for setup-created projects; `~/.graph-wiki/config` when unset) |
 | `info` | Show install paths, version, and resolved config |
 | `list` | List the bundled skills |
 | `doctor` | Health-check config, vault shape, bootstrap assets, and installed skills |
 | `artifacts-create` | Create one unique temporary artifacts directory for a skill invocation |
 
 ```bash
-obsidian-wiki setup --vault ~/brain
-obsidian-wiki setup --list-agents          # list selectable agent skill targets
-obsidian-wiki setup --vault ~/brain --knowledge-pack default --agent claude --agent codex
-obsidian-wiki setup --vault ~/brain --knowledge-pack software-knowledge --agent claude,codex,pi
-obsidian-wiki setup --vault ~/brain --knowledge-pack default --agent all  # all local agent targets
-obsidian-wiki setup --agent none       # configure a vault without installing agent skills
-obsidian-wiki setup --list-knowledge-packs         # list Knowledge Packs (Profile + Layout)
-obsidian-wiki setup --vault ~/brain --knowledge-pack software-knowledge
-obsidian-wiki setup --project /work/app  # override the command-directory install target
-obsidian-wiki setup --project-only       # deprecated no-op; setup is always project-local
-obsidian-wiki setup --copy             # copy skill files instead of symlinking
-obsidian-wiki setup --copy --skills-only --agent cursor  # command-directory files only; do not touch a vault
-obsidian-wiki setup --vault ~/brain --knowledge-pack default --refresh-knowledge-pack-marker  # refresh one same-Pack marker
-obsidian-wiki setup --remote https://github.com/you/my-wiki.git   # configure sync non-interactively
+graph-wiki setup --vault ~/brain
+graph-wiki setup --list-agents          # list selectable agent skill targets
+graph-wiki setup --vault ~/brain --knowledge-pack default --agent claude --agent codex
+graph-wiki setup --vault ~/brain --knowledge-pack software-knowledge --agent claude,codex,pi
+graph-wiki setup --vault ~/brain --knowledge-pack default --agent all  # all local agent targets
+graph-wiki setup --agent none       # configure a vault without installing agent skills
+graph-wiki setup --list-knowledge-packs         # list Knowledge Packs (Profile + Layout)
+graph-wiki setup --vault ~/brain --knowledge-pack software-knowledge
+graph-wiki setup --project /work/app  # override the command-directory install target
+graph-wiki setup --project-only       # deprecated no-op; setup is always project-local
+graph-wiki setup --copy             # copy skill files instead of symlinking
+graph-wiki setup --copy --skills-only --agent cursor  # command-directory files only; do not touch a vault
+graph-wiki setup --vault ~/brain --knowledge-pack default --refresh-knowledge-pack-marker  # refresh one same-Pack marker
+graph-wiki setup --remote https://github.com/you/my-wiki.git   # configure sync non-interactively
 
-obsidian-wiki doctor --json --pretty
-obsidian-wiki doctor --vault /other/vault --project .
-obsidian-wiki doctor --strict          # exit non-zero on warnings too
-obsidian-wiki artifacts-create --workflow wiki-ingest --pretty
+graph-wiki doctor --json --pretty
+graph-wiki doctor --vault /other/vault --project .
+graph-wiki doctor --strict          # exit non-zero on warnings too
+graph-wiki artifacts-create --workflow wiki-ingest --pretty
 ```
 
 `artifacts-create` returns JSON containing a unique `run_id` and an absolute `artifacts_dir` under
@@ -54,7 +54,7 @@ Setup compiles stable Wiki context once into the path configured by
 resolution links that snapshot into the invocation artifacts directory. Use setup/repair after
 changing the Knowledge Pack, owner rules, Writing Profile, taxonomy, or stable metadata paths.
 
-Commands other than `setup` and `info` warn you when the command-directory install has gone stale (the package upgraded but skills weren't re-linked). Re-run `obsidian-wiki setup` in that directory to fix.
+Commands other than `setup` and `info` warn you when the command-directory install has gone stale (the package upgraded but skills weren't re-linked). Re-run `graph-wiki setup` in that directory to fix.
 
 When setup runs in a terminal without `--agent`, it displays a numbered agent menu with no default
 selection. Non-interactive setup requires one or more `--agent NAME` flags, a comma-separated list,
@@ -65,6 +65,11 @@ Project installation applies that selection to every generated agent-specific fi
 skill directories. For example, selecting only `claude` creates `.claude/skills/`, shared
 `AGENTS.md`, and `CLAUDE.md`; it does not create Cursor, Windsurf, Kiro, Antigravity, Copilot,
 Gemini, or Hermes bootstrap files. Existing files for unselected agents are left untouched.
+
+Whenever at least one agent is selected, setup also copies every bundled skill into the project's
+shared `.agents/skills/` directory. That copy is always real files, even when other targets are
+symlinks, so generic tooling keeps working if the package is upgraded or removed; an existing
+symlink mirror of the same bundled skills is left untouched. `--agent none` installs no skills.
 
 When setup runs in a terminal without `--knowledge-pack`, it displays the available Knowledge Packs and
 requires exactly one number or name. Knowledge Pack selection never accepts a list. Non-interactive setup
@@ -96,14 +101,14 @@ marker hashes; it cannot switch Pack names, which requires a content-aware migra
 | `lint [vault]` | Find missing frontmatter, broken links, duplicates, and orphans |
 
 ```bash
-obsidian-wiki query "what do I know about MCP security?"
-obsidian-wiki query "rate limiting" --top 12 --max-read 5 --json
+graph-wiki query "what do I know about MCP security?"
+graph-wiki query "rate limiting" --top 12 --max-read 5 --json
 
-obsidian-wiki lint                     # uses the configured vault
-obsidian-wiki lint /path/to/vault --strict
-obsidian-wiki lint @research --json    # uses <config-dir>/config.research only
-obsidian-wiki lint --strict-trust      # fail on trust-ledger problems, not just warn
-obsidian-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
+graph-wiki lint                     # uses the configured vault
+graph-wiki lint /path/to/vault --strict
+graph-wiki lint @research --json    # uses <config-dir>/config.research only
+graph-wiki lint --strict-trust      # fail on trust-ledger problems, not just warn
+graph-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
   --required-trust-field updated --schema-source /path/to/vault/AGENTS.md
 ```
 
@@ -118,10 +123,10 @@ Lint resolves its vault and schema together: explicit path (no config inheritanc
 | `verify-sections <structure.json>` | Compare a PageIndex `_structure.json` against the pages it planned to cover |
 
 ```bash
-obsidian-wiki validate --pages concepts/rate-limiting.md entities/nginx.md --json
-obsidian-wiki validate --from-stdin --pretty < changed-pages.txt
-obsidian-wiki verify --sources ~/research/a.md ~/research/b.md
-obsidian-wiki verify-sections /tmp/pageindex/_structure.json --pages concepts/example.md
+graph-wiki validate --pages concepts/rate-limiting.md entities/nginx.md --json
+graph-wiki validate --from-stdin --pretty < changed-pages.txt
+graph-wiki verify --sources ~/research/a.md ~/research/b.md
+graph-wiki verify-sections /tmp/pageindex/_structure.json --pages concepts/example.md
 ```
 
 All three accept `--json` and `--pretty`, and resolve their vault the same way `lint` does. `validate` and `verify` accept `--from-stdin`; `verify-sections` takes `--pages` only as a coverage hint.
@@ -133,9 +138,9 @@ Notes do not need to be moved into wiki-generated folders or migrated to the
 full frontmatter schema. The command is read-only.
 
 ```bash
-obsidian-wiki context-pack "authentication architecture" --budget 8000
-obsidian-wiki context-pack --recent --budget 4000
-obsidian-wiki context-pack "release notes" --budget 8000 --public-only
+graph-wiki context-pack "authentication architecture" --budget 8000
+graph-wiki context-pack --recent --budget 4000
+graph-wiki context-pack "release notes" --budget 8000 --public-only
 ```
 
 Omitting `--budget` uses the default of 8000 estimated tokens.
@@ -170,17 +175,17 @@ Builds a topic graph over your agent session history. Output is a **sidecar** at
 | `sessions-name --from FILE` | Assign durable names to clusters, surviving rebuilds |
 
 ```bash
-obsidian-wiki sessions-build                       # ~3s cold, under a second incrementally
-obsidian-wiki sessions-build --full --verbose      # ignore caches, re-read everything
-obsidian-wiki sessions-build --since 2026-01-01 --skip archived,scratch
-obsidian-wiki sessions-build --k 12 --min-sim 0.12 --mutual --half-life 60
+graph-wiki sessions-build                       # ~3s cold, under a second incrementally
+graph-wiki sessions-build --full --verbose      # ignore caches, re-read everything
+graph-wiki sessions-build --since 2026-01-01 --skip archived,scratch
+graph-wiki sessions-build --k 12 --min-sim 0.12 --mutual --half-life 60
 
-obsidian-wiki sessions-query "prismor telemetry"
-obsidian-wiki sessions-query "auth bug" --project my-app --cluster 3 --json
+graph-wiki sessions-query "prismor telemetry"
+graph-wiki sessions-query "auth bug" --project my-app --cluster 3 --json
 
-obsidian-wiki sessions-show 01935a40 --neighbors 12
-obsidian-wiki sessions-clusters --unnamed
-obsidian-wiki sessions-name --from names.json      # or - for stdin
+graph-wiki sessions-show 01935a40 --neighbors 12
+graph-wiki sessions-clusters --unnamed
+graph-wiki sessions-name --from names.json      # or - for stdin
 ```
 
 `sessions-name` takes a JSON array of `{"id": N, "name": "...", "summary": "..."}`. The `/session-brain` skill generates this for you.
@@ -193,8 +198,8 @@ obsidian-wiki sessions-name --from names.json      # or - for stdin
 | `sync-setup <remote>` | Configure GitHub sync (git init, `.gitignore`, remote) |
 
 ```bash
-obsidian-wiki sync
-obsidian-wiki sync-setup https://github.com/you/my-wiki.git
+graph-wiki sync
+graph-wiki sync-setup https://github.com/you/my-wiki.git
 ```
 
 See [Configuration → Syncing your vault to GitHub](configuration.md#syncing-your-vault-to-github).
@@ -209,11 +214,11 @@ Records and validates human-approved confidence reviews, so you can gate on "a p
 | `trust-check` | Validate confidence values and material fingerprints against the ledger |
 
 ```bash
-obsidian-wiki trust-record --all --reviewed-at 2026-07-30T10:00:00+00:00 --approved
-obsidian-wiki trust-record --page concepts/rate-limiting.md --reviewed-at <ISO> --approved
-obsidian-wiki trust-check --strict
-obsidian-wiki trust-record @research --all --reviewed-at <ISO> --approved --allow-lifecycle active
-obsidian-wiki trust-check @research --allow-lifecycle active --schema-source /vault/AGENTS.md
+graph-wiki trust-record --all --reviewed-at 2026-07-30T10:00:00+00:00 --approved
+graph-wiki trust-record --page concepts/rate-limiting.md --reviewed-at <ISO> --approved
+graph-wiki trust-check --strict
+graph-wiki trust-record @research --all --reviewed-at <ISO> --approved --allow-lifecycle active
+graph-wiki trust-check @research --allow-lifecycle active --schema-source /vault/AGENTS.md
 ```
 
 `--reviewed-at` needs a timezone. `--approved` is required and mandatory — it's your assertion that a human approved every confidence value being recorded. `trust-check --strict` is the CI/scheduled gate. `trust-record` and `trust-check` resolve the same vault-scoped schema as lint; pass the same lifecycle and required-field overrides to record and check. If the owner schema does not require `base_confidence`, pages without it are reported as `not_applicable`, excluded by `trust-record --all`, and any obsolete ledger entry is warned by `trust-check` then removed by `trust-record --page` or a rebuild. Both JSON and human-readable record output list excluded pages and removed obsolete entries; human output also emits a stderr warning when removal occurs. Required-field config accepts only `base_confidence`, `lifecycle`, `lifecycle_changed`, and `updated`; typos fail closed. Lifecycle, relationship-type, and required-field override values are stripped and empty or whitespace-only entries are rejected rather than added to an allowlist. Without an explicit `--schema-source`, CLI overrides on an explicit vault are labeled `cli:explicit-vault`; combined CLI and config overrides use `cli+config:<resolved-config-path>`.
@@ -226,7 +231,7 @@ Available for automation, scripting, and debugging. Skills call some of these in
 |---|---|
 | `graph-query <vault> <question>` | Answer from the wikilink index without reading page bodies |
 | `graph-analyse <vault>` | God nodes, communities, surprising connections — pure Python, no extra dependencies |
-| `graph <vault> <subcommand>` | NetworkX graph queries: `paths`, `neighbors`, `centrality`, `tag-subgraph`, `communities`, `stats` (needs `pip install obsidian-wiki[graph]`) |
+| `graph <vault> <subcommand>` | NetworkX graph queries: `paths`, `neighbors`, `centrality`, `tag-subgraph`, `communities`, `stats` (needs `pip install graph-wiki-skills[graph]`) |
 | `batch-plan <vault> <source_dir>` | Split a source directory into parallel-ingest batches, skipping unchanged files |
 | `cache-check <vault> <sources...>` | Which sources are new / modified / unchanged vs. `.manifest.json` |
 | `cache-update <vault> <source>` | Record a source's SHA-256 in `.manifest.json` after ingest |
@@ -252,50 +257,50 @@ Available for automation, scripting, and debugging. Skills call some of these in
 | `ast-extract <path>` | Extract classes, functions, and imports from code — no LLM, no API calls |
 
 ```bash
-obsidian-wiki graph-query /path/to/vault "transformer architecture" --pretty
-obsidian-wiki graph-analyse /path/to/vault --top 30 --pretty
-obsidian-wiki graph /path/to/vault centrality --method pagerank --top 20 --pretty
-obsidian-wiki graph /path/to/vault paths --from concepts/rate-limiting --to entities/nginx --max-len 4
-obsidian-wiki graph /path/to/vault neighbors concepts/rate-limiting --radius 2 --pretty
-obsidian-wiki graph /path/to/vault stats --pretty
-obsidian-wiki batch-plan /path/to/vault ~/research --max-mb 4 --max-files 30
-obsidian-wiki cache-check /path/to/vault ~/research/*.pdf
-obsidian-wiki cache-update /path/to/vault ~/research/paper.pdf --pages concepts/attention.md
-obsidian-wiki text-chunk-plan ~/research/large.md \
+graph-wiki graph-query /path/to/vault "transformer architecture" --pretty
+graph-wiki graph-analyse /path/to/vault --top 30 --pretty
+graph-wiki graph /path/to/vault centrality --method pagerank --top 20 --pretty
+graph-wiki graph /path/to/vault paths --from concepts/rate-limiting --to entities/nginx --max-len 4
+graph-wiki graph /path/to/vault neighbors concepts/rate-limiting --radius 2 --pretty
+graph-wiki graph /path/to/vault stats --pretty
+graph-wiki batch-plan /path/to/vault ~/research --max-mb 4 --max-files 30
+graph-wiki cache-check /path/to/vault ~/research/*.pdf
+graph-wiki cache-update /path/to/vault ~/research/paper.pdf --pages concepts/attention.md
+graph-wiki text-chunk-plan ~/research/large.md \
   --chunk-strategy adaptive_sections --min-budget 24000 --pretty
-obsidian-wiki text-chunk-strategies --pretty
-obsidian-wiki text-chunk-read ~/research/large.md \
+graph-wiki text-chunk-strategies --pretty
+graph-wiki text-chunk-read ~/research/large.md \
   --start-byte 0 --end-byte 47231 --expect-hash sha256:9e9f...
-obsidian-wiki text-document-plan ~/research \
+graph-wiki text-document-plan ~/research \
   --vault ~/brain \
   --target-budget 48000 --min-budget 24000 --hard-budget 64000 \
   --chunk-strategy adaptive_sections --strategy-options-file /tmp/chunk-options.json \
   --output /tmp/document-plan.json --pretty
-obsidian-wiki text-document-read /tmp/document-plan.json --document-id doc-...
-obsidian-wiki text-document-commit /tmp/document-plan.json \
+graph-wiki text-document-read /tmp/document-plan.json --document-id doc-...
+graph-wiki text-document-commit /tmp/document-plan.json \
   --document-id doc-... --created-page concepts/example.md --pretty
 
 # Recoverable wiki-folder-ingest Job/Packet commands
-obsidian-wiki text-ingest-plan ~/research --vault ~/brain --output /tmp/job-plan.json --pretty
-obsidian-wiki text-ingest-status ~/brain/_meta/ingest-jobs/<job-id> --pretty
-obsidian-wiki text-ingest-extract ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-plan ~/research --vault ~/brain --output /tmp/job-plan.json --pretty
+graph-wiki text-ingest-status ~/brain/_meta/ingest-jobs/<job-id> --pretty
+graph-wiki text-ingest-extract ~/brain/_meta/ingest-jobs/<job-id> \
   --max-workers 4 --worker-timeout-seconds 3600 \
   --output /tmp/packet-extraction-report.json --pretty
-obsidian-wiki text-ingest-report ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-report ~/brain/_meta/ingest-jobs/<job-id> \
   --output /tmp/job-completion.json \
   --markdown-output /tmp/folder-ingest-completion.md --pretty
-obsidian-wiki text-ingest-packet-check ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json
-obsidian-wiki text-ingest-unit-advance ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json \
+graph-wiki text-ingest-packet-check ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json
+graph-wiki text-ingest-unit-advance ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json \
   --mode staged --artifact _staging/concepts/example.md
-obsidian-wiki text-ingest-inline-check ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-inline-check ~/brain/_meta/ingest-jobs/<job-id> \
   --source-id <source-id> --unit-id <unit-id>
-obsidian-wiki text-ingest-inline-advance ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-inline-advance ~/brain/_meta/ingest-jobs/<job-id> \
   --source-id <source-id> --unit-id <unit-id> --mode direct
-obsidian-wiki wiki-setup-contract-build core --output-dir /tmp/wiki-setup
-obsidian-wiki wiki-knowledge-pack-apply --knowledge-pack default --vault ~/brain --output-dir /tmp/wiki-setup
-obsidian-wiki wiki-route-resolve --routing page-contract.json \
+graph-wiki wiki-setup-contract-build core --output-dir /tmp/wiki-setup
+graph-wiki wiki-knowledge-pack-apply --knowledge-pack default --vault ~/brain --output-dir /tmp/wiki-setup
+graph-wiki wiki-route-resolve --routing page-contract.json \
   --page-type concept --slug example
-obsidian-wiki ast-extract ./src --pretty
+graph-wiki ast-extract ./src --pretty
 ```
 
 `wiki-knowledge-pack-apply --knowledge-pack <name>` selects a complete Knowledge Pack. Its `profile.json` defines
@@ -349,7 +354,7 @@ in the Job; chunk compatibility fields are also retained in the completed manife
 A trusted extension package registers an entry point in its `pyproject.toml`:
 
 ```toml
-[project.entry-points."obsidian_wiki.text_chunk_strategies"]
+[project.entry-points."graph_wiki.text_chunk_strategies"]
 my_sections = "my_wiki_extension.chunking:pack_sections"
 ```
 
@@ -357,7 +362,7 @@ The target is a callable with this contract:
 
 ```python
 from collections.abc import Iterable
-from obsidian_wiki.text_chunker import ChunkStrategyContext, TextBlock
+from graph_wiki.text_chunker import ChunkStrategyContext, TextBlock
 
 def pack_sections(
     blocks: Iterable[TextBlock], context: ChunkStrategyContext
@@ -379,7 +384,7 @@ or source checkout. Workflows therefore do not depend on a `.cac/...` path or th
 working directory. A `vault-input.json` with `{"mode":"config"}` makes `wiki-context-resolve`
 load the vault configured by wiki-setup: an optional Named Vault Profile (`profile`) first, otherwise the nearest
 `.env` containing `OBSIDIAN_VAULT_PATH`, then the config file. All of these live in the config directory,
-which is `~/.obsidian-wiki` unless `OBSIDIAN_WIKI_CONFIG_DIR` relocates it. An explicit approved vault
+which defaults to `~/.graph-wiki`, or `<project>/.graph-wiki` when the project `.env` comes from the shipped template (which sets `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`). An explicit approved vault
 path uses `{"mode":"interactive","vault_path":"/absolute/path"}`.
 
 Most commands accept `--json` and/or `--pretty` for machine-readable output.

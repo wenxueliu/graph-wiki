@@ -20,7 +20,7 @@ except ModuleNotFoundError:  # Python < 3.11
 
 ROOT = Path(__file__).resolve().parents[1]
 HOOK_SRC = ROOT / ".claude" / "hooks" / "wiki-stop-capture.sh"
-PACKAGED_HOOK_DEST = "obsidian_wiki/_data/hooks/wiki-stop-capture.sh"
+PACKAGED_HOOK_DEST = "graph_wiki/_data/hooks/wiki-stop-capture.sh"
 
 
 @unittest.skipIf(tomllib is None, "tomllib requires Python 3.11+")
@@ -63,7 +63,7 @@ class WikiSetupSkillTest(unittest.TestCase):
 
     def test_skill_offers_github_fallback(self) -> None:
         self.assertIn(
-            "raw.githubusercontent.com/wenxueliu/obsidian-wiki/main/.claude/hooks/wiki-stop-capture.sh",
+            "raw.githubusercontent.com/wenxueliu/graph-wiki/main/.claude/hooks/wiki-stop-capture.sh",
             self.integrations,
         )
 

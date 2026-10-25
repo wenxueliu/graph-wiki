@@ -5,7 +5,8 @@ English | [简体中文](configuration.zh-CN.md)
 ## How config is resolved
 
 The **config directory** holds `config` (the active vault), named profiles (`config.<name>`), and
-`WRITING.md`. It is `~/.obsidian-wiki` unless `OBSIDIAN_WIKI_CONFIG_DIR` relocates it. That override
+`WRITING.md`. It defaults to `~/.graph-wiki`, but the shipped `.env.example` sets
+`GRAPH_WIKI_CONFIG_DIR=.graph-wiki`, so setup-created projects keep it in-tree. That override
 is read from the process environment first, then from the nearest `.env` walking up to `$HOME`; a
 relative value resolves against the directory containing that `.env`. Relocating the directory moves
 all three files together.
@@ -24,18 +25,20 @@ Both the config file and `.env` use the same `KEY=value` format. Start from [`.e
 ### Keeping configuration inside a project
 
 A project can be fully self-contained: put the vault path and a relative config directory in its
-`.env`, and nothing is read from or written to your home directory.
+`.env`, and nothing is read from or written to your home directory. This is the default for a
+`.env` created by setup, because the shipped `.env.example` sets
+`GRAPH_WIKI_CONFIG_DIR=.graph-wiki`.
 
 ```bash
 # <project>/.env
 OBSIDIAN_VAULT_PATH=/absolute/path/to/vault
-OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki
+GRAPH_WIKI_CONFIG_DIR=.graph-wiki
 ```
 
 ```bash
 cd /path/to/project
-obsidian-wiki setup --vault /absolute/path/to/vault   # writes <project>/.obsidian-wiki/config
-obsidian-wiki context-pack authentication            # finds the same project .env
+graph-wiki setup --vault /absolute/path/to/vault   # writes <project>/.graph-wiki/config
+graph-wiki context-pack authentication            # finds the same project .env
 ```
 
 Every vault-aware command uses the same order: `query`, `context-pack`, `lint`, `trust-record`,
@@ -68,7 +71,7 @@ Setup also compiles the low-frequency context into
 rules, Writing Profile, Profile, Layout, routing, and stable metadata on every invocation. Run
 setup/repair after intentionally changing any of those inputs.
 
-Use `obsidian-wiki setup --list-knowledge-packs` to inspect available Knowledge Packs and select one during
+Use `graph-wiki setup --list-knowledge-packs` to inspect available Knowledge Packs and select one during
 setup with `--knowledge-pack`. One vault is assumed to serve
 one knowledge purpose, so ingest checks source compatibility against the fixed Profile rather than
 auto-detecting and switching domains. Changing an existing vault to another Pack requires a
@@ -91,7 +94,7 @@ Neither changes what the active Knowledge Profile considers durable or authorita
 
 ## Global wiki writing profile
 
-Setup creates `WRITING.md` in the config directory (`~/.obsidian-wiki` by default) on every platform. It never overwrites an existing
+Setup creates `WRITING.md` in the config directory (`<project>/.graph-wiki` for setup-created projects; `~/.graph-wiki` when unset) on every platform. It never overwrites an existing
 profile.
 Use it for writing preferences shared across projects, for example:
 
@@ -121,8 +124,8 @@ The deterministic `lint`, `trust-record`, and `trust-check` commands use the sam
 | Variable | What it does | Default |
 |---|---|---|
 | `OBSIDIAN_VAULT_PATH` | **Required.** Absolute path to your vault | — |
-| `OBSIDIAN_WIKI_CONFIG_DIR` | Relocates `config`, `config.<name>`, and `WRITING.md`. Environment or nearest `.env`; relative values resolve against that `.env` | `~/.obsidian-wiki` |
-| `OBSIDIAN_WIKI_REPO` | Where this repo is cloned (set by setup; used for skill/asset lookups) | *auto* |
+| `GRAPH_WIKI_CONFIG_DIR` | Relocates `config`, `config.<name>`, and `WRITING.md`. Environment or nearest `.env`; relative values resolve against that `.env` | `~/.graph-wiki`; shipped `.env.example` sets `.graph-wiki` |
+| `GRAPH_WIKI_REPO` | Where this repo is cloned (set by setup; used for skill/asset lookups) | *auto* |
 | `OBSIDIAN_SOURCES_DIR` | Comma-separated source directories to ingest documents from | *(empty)* |
 | `OBSIDIAN_MAX_PAGES_PER_INGEST` | Max pages created or updated per ingest | `15` |
 | `OBSIDIAN_LINK_FORMAT` | `wikilink` → `[[concepts/foo]]`, or `markdown` → `` [text](path.md) ``. Affects future writes only — existing content is never migrated | `wikilink` |
@@ -138,7 +141,7 @@ routing content.
 |---|---|---|
 | `OBSIDIAN_KNOWLEDGE_PACK` | Active atomic Profile/Layout/Routing pack | Name in `_meta/knowledge-pack.json` |
 | `OBSIDIAN_OWNER_RULES_PATH` | Owner rules compiled into context | `<vault>/AGENTS.md` |
-| `OBSIDIAN_WRITING_PROFILE_PATH` | Writing Profile compiled into context | `<config-dir>/WRITING.md` (`~/.obsidian-wiki/WRITING.md` by default) |
+| `OBSIDIAN_WRITING_PROFILE_PATH` | Writing Profile compiled into context | `<config-dir>/WRITING.md` |
 | `OBSIDIAN_VAULT_METADATA_DIR` | Stable vault metadata and Knowledge Pack marker root | `<vault>/_meta` |
 | `OBSIDIAN_TAXONOMY_PATH` | Controlled taxonomy source | `<metadata-dir>/taxonomy.md` |
 | `OBSIDIAN_CONTEXT_SNAPSHOT` | Persistent compiled context JSON | `<metadata-dir>/context/wiki-context.json` |
@@ -166,7 +169,7 @@ Local git repo clones work in `OBSIDIAN_SOURCES_DIR` (public or private, any hos
 | Variable | What it does | Default |
 |---|---|---|
 | `WIKI_STAGED_WRITES` | When `true`, LLM-written pages land in `_staging/` for human review instead of the live vault. Promote them with `/wiki-stage-commit` | `false` — direct writes |
-| `OBSIDIAN_TRUST_STRICT` | When `1`, `obsidian-wiki lint` treats missing trust fields, ledger errors, stale reviews, and score mismatches as failures rather than warnings. Same as `lint --strict-trust` | *(unset)* |
+| `OBSIDIAN_TRUST_STRICT` | When `1`, `graph-wiki lint` treats missing trust fields, ledger errors, stale reviews, and score mismatches as failures rather than warnings. Same as `lint --strict-trust` | *(unset)* |
 | `OBSIDIAN_ALLOWED_LIFECYCLES` | Comma-separated lifecycle extensions for this resolved vault | *(framework defaults only)* |
 | `OBSIDIAN_ALLOWED_RELATIONSHIP_TYPES` | Comma-separated relationship-type extensions for this resolved vault | *(framework defaults only)* |
 | `OBSIDIAN_REQUIRED_TRUST_FIELDS` | Comma-separated effective required trust fields. Allowed values: `base_confidence`, `lifecycle`, `lifecycle_changed`, `updated`; unknown values fail closed | `base_confidence,lifecycle` for lint; also `updated` for standalone trust commands |
@@ -217,7 +220,7 @@ minimum is reached and may merge a small tail above target when it remains withi
 direct CLI use, the corresponding flags override command defaults per invocation.
 
 Custom strategy names come from trusted installed Python packages using the
-`obsidian_wiki.text_chunk_strategies` entry-point group. Selecting one executes that package's code;
+`graph_wiki.text_chunk_strategies` entry-point group. Selecting one executes that package's code;
 do not configure an untrusted extension.
 
 Extraction concurrency applies across packet units in the whole Job, including multiple units from
@@ -316,7 +319,7 @@ awk -F= '/^OBSIDIAN_VAULT_PATH=/{print $2 "/_raw"; exit}' "$(git rev-parse --sho
 
 ## Syncing your vault to GitHub
 
-Your vault is a directory of plain markdown files — push it to a private GitHub repo and you get version history, backup, and cross-device sync for free. `obsidian-wiki setup` and `python3 setup.py` both offer to configure this during install; they share one implementation (`obsidian_wiki/sync.py`), so pip and source installs get an identical flow.
+Your vault is a directory of plain markdown files — push it to a private GitHub repo and you get version history, backup, and cross-device sync for free. `graph-wiki setup` offers to configure this during install; `python3 setup.py` delegates to it, so pip and source installs share one implementation (`graph_wiki/sync.py`) and an identical flow.
 
 **What setup does:**
 
@@ -330,7 +333,7 @@ Your vault is a directory of plain markdown files — push it to a private GitHu
 
 ```bash
 wiki-sync            # alias added by setup
-obsidian-wiki sync   # or call it directly
+graph-wiki sync   # or call it directly
 ```
 
 Each run stages all changes, commits as `sync 2026-07-30 14:00`, and pushes.
@@ -338,7 +341,7 @@ Each run stages all changes, commits as `sync 2026-07-30 14:00`, and pushes.
 **Configure it later, or by hand:**
 
 ```bash
-obsidian-wiki sync-setup https://github.com/you/my-wiki.git
+graph-wiki sync-setup https://github.com/you/my-wiki.git
 # or:
 cd /path/to/your/vault
 git init
@@ -348,7 +351,7 @@ git remote add origin https://github.com/you/my-wiki.git
 **Hourly auto-sync via cron:**
 
 ```
-0 * * * * obsidian-wiki sync --vault /path/to/your/vault >> ~/.obsidian-wiki/sync.log 2>&1
+0 * * * * graph-wiki sync --vault /path/to/your/vault >> ~/.graph-wiki/sync.log 2>&1
 ```
 
 > Keep the repo **private** if your vault contains personal notes. Nothing is sent to any third-party service — your vault lives on your machines and in your GitHub account only.

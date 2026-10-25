@@ -18,9 +18,19 @@ __pycache__/
 # Packed browser extension (rebuildable from extensions/brain-capture/)
 extensions/brain-capture/*.zip
 
-# Agent skill symlinks (created by setup.py) — these are just pointers to .skills/
-# We track them so cloners get the symlinks too, but if your git doesn't
-# preserve symlinks, run `python3 setup.py` after cloning.
-
 # Local agent memory/log scratch (not framework source)
 .remember/
+
+# Agent skill mirrors (created by setup.py / `graph-wiki setup`) — pointers to
+# the canonical .skills/ tree. They are install output, not source: regenerate
+# them with `python3 setup.py` after cloning instead of tracking them.
+.claude/skills/
+.cursor/skills/
+.windsurf/skills/
+.agents/skills/
+.pi/skills/
+.kiro/skills/
+.cac/skills/
+
+# Generated Obsidian vault state inside examples
+example/*/.obsidian/

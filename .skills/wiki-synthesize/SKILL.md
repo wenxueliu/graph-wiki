@@ -1,7 +1,7 @@
 ---
 name: wiki-synthesize
 description: >
-  Systematically discover synthesis opportunities across the Obsidian wiki — pairs or clusters of
+  Systematically discover synthesis opportunities across the Graph Wiki — pairs or clusters of
   concepts that co-occur frequently across pages but have no synthesis page connecting them. Creates
   new synthesis/ pages that draw explicit cross-cutting conclusions. Use when the user says "synthesize
   my wiki", "find connections", "what concepts keep coming up together", "/wiki-synthesize", or after
@@ -14,7 +14,7 @@ You are scanning the wiki for concepts that co-occur across many pages but have 
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `OBSIDIAN_LINK_FORMAT` (default: `wikilink`).
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `OBSIDIAN_LINK_FORMAT` (default: `wikilink`).
 2. Read `index.md` to get the full page inventory.
 3. Read `hot.md` if it exists — it surfaces recent activity and active threads that may already point to synthesis opportunities.
 4. Read `_meta/taxonomy.md` to understand the tag vocabulary.

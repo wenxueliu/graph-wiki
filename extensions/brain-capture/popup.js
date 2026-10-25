@@ -26,7 +26,7 @@ chooseFolder.addEventListener("click", async () => {
     }
 
     rawDirectoryHandle = await window.showDirectoryPicker({
-      id: "obsidian-wiki-raw",
+      id: "graph-wiki-raw",
       mode: "readwrite",
       startIn: "documents"
     });

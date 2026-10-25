@@ -6,7 +6,7 @@ committed to the repo but were never force-included into the published wheel
 — the same packaging-gap class as #143 (the Stop hook), which that fix did
 not cover. These tests pin the packaging config that force-includes
 ``scripts/`` and the skill instructions that resolve it via
-``$OBSIDIAN_WIKI_REPO``.
+``$GRAPH_WIKI_REPO``.
 """
 
 from __future__ import annotations
@@ -22,11 +22,11 @@ except ModuleNotFoundError:  # Python < 3.11
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = ROOT / "scripts"
-PACKAGED_SCRIPTS_DEST = "obsidian_wiki/_data/scripts"
+PACKAGED_SCRIPTS_DEST = "graph_wiki/_data/scripts"
 
 REFERENCED_SCRIPTS = (
     "daily-update.sh",
-    "com.obsidian-wiki.daily-update.plist",
+    "com.graph-wiki.daily-update.plist",
     "wiki-notify.sh",
 )
 

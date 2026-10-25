@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manifest helper for the Obsidian wiki — normalize paths and compute ingest deltas.
+"""Manifest helper for the Graph Wiki — normalize paths and compute ingest deltas.
 
 Pure stdlib, no dependencies. Optional accelerator for the ingest skills: the
 markdown instructions still work without it, but this makes the manifest steps

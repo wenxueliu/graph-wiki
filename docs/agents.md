@@ -2,11 +2,11 @@ English | [简体中文](agents.zh-CN.md)
 
 # Agent Compatibility
 
-Works with **any AI coding agent that can read files**. `obsidian-wiki setup` offers explicit agent
-targets (`--list-agents`, then one or more `--agent NAME` selections); `python3 setup.py` retains the
-legacy all-agent source-install behavior.
+Works with **any AI coding agent that can read files**. `graph-wiki setup` offers explicit agent
+targets (`--list-agents`, then one or more `--agent NAME` selections); `python3 setup.py` delegates
+to the same installer with `--agent all`, so a source checkout gets every project-local target.
 
-Each agent has its own convention for discovering skills. `obsidian-wiki setup` installs only below
+Each agent has its own convention for discovering skills. `graph-wiki setup` installs only below
 the command directory: native project paths where available, and the shared `.agents/skills/`
 project path for agents that previously had only global targets. It never writes skill files under the user's home directory.
 
@@ -15,12 +15,12 @@ project path for agents that previously had only global targets. It never writes
 | Agent | Bootstrap | Skills Directory | Slash Commands |
 |---|---|---|---|
 | **[Claude Code](https://claude.ai/code)** | `CLAUDE.md` | `.claude/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
-| **[Cursor](https://cursor.com)** | `.cursor/rules/obsidian-wiki.mdc` | `.cursor/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
-| **[Windsurf](https://windsurf.com)** | `.windsurf/rules/obsidian-wiki.md` | `.windsurf/skills/` | ✅ via Cascade |
+| **[Cursor](https://cursor.com)** | `.cursor/rules/graph-wiki.mdc` | `.cursor/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
+| **[Windsurf](https://windsurf.com)** | `.windsurf/rules/graph-wiki.md` | `.windsurf/skills/` | ✅ via Cascade |
 | **[Codex (OpenAI)](https://openai.com/codex)** | `AGENTS.md` | `.agents/skills/` | `$wiki-folder-ingest` (Codex uses `$`) |
 | **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** | `GEMINI.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-query`, etc. |
 | **[Google Antigravity](https://antigravity.google)** | `.agent/rules/` + `.agent/workflows/` | `.agents/skills/` | ✅ via workflows registry |
-| **[Kiro IDE/CLI](https://kiro.dev)** | `.kiro/steering/obsidian-wiki.md` | `.kiro/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
+| **[Kiro IDE/CLI](https://kiro.dev)** | `.kiro/steering/graph-wiki.md` | `.kiro/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
 | **[Hermes](https://hermes-agent.nousresearch.com)** | `.hermes.md` | `.agents/skills/` | ✅ `/hermes-history-ingest`, `/wiki-hermes <topic>` |
 | **[OpenClaw](https://openclaw.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-history-ingest openclaw`, etc. |
 | **[OpenCode](https://opencode.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-query`, etc. |
@@ -39,7 +39,7 @@ Named-vault routing (`@work update wiki`) works in every agent above, because `@
 
 ## Manual setup
 
-Only needed if you're not running `python3 setup.py` or `obsidian-wiki setup`.
+Only needed if you're not running `python3 setup.py` or `graph-wiki setup`.
 
 <details>
 <summary><b>Claude Code</b></summary>
@@ -47,14 +47,14 @@ Only needed if you're not running `python3 setup.py` or `obsidian-wiki setup`.
 Skills are auto-discovered from `.claude/skills/`. Either run `python3 setup.py` or copy `.skills/*` to `.claude/skills/`. The `CLAUDE.md` file at the repo root is automatically loaded as project context.
 
 ```bash
-cd /path/to/obsidian-wiki && claude "set up my wiki"
+cd /path/to/graph-wiki && claude "set up my wiki"
 ```
 </details>
 
 <details>
 <summary><b>Cursor</b></summary>
 
-Skills are auto-discovered from `.cursor/skills/`. The `.cursor/rules/obsidian-wiki.mdc` file provides always-on context. Either run `python3 setup.py` or copy `.skills/*` to `.cursor/skills/`. Then type `/wiki-setup` in the chat.
+Skills are auto-discovered from `.cursor/skills/`. The `.cursor/rules/graph-wiki.mdc` file provides always-on context. Either run `python3 setup.py` or copy `.skills/*` to `.cursor/skills/`. Then type `/wiki-setup` in the chat.
 </details>
 
 <details>
@@ -66,51 +66,54 @@ Cascade reads rules from `.windsurf/rules/` and skills from `.windsurf/skills/`.
 <details>
 <summary><b>Codex</b></summary>
 
-Reads `AGENTS.md` for project context. `python3 setup.py` installs skills globally to `~/.codex/skills/`. Either run `python3 setup.py` or manually symlink `.skills/*` to `~/.codex/skills/`.
+Reads `AGENTS.md` for project context. Skills are discovered from the shared project path
+`.agents/skills/`. Either run `python3 setup.py` or manually symlink `.skills/*` to `.agents/skills/`.
 
 ```bash
-cd /path/to/obsidian-wiki && codex "set up my wiki"
+cd /path/to/graph-wiki && codex "set up my wiki"
 ```
 </details>
 
 <details>
 <summary><b>Gemini CLI</b></summary>
 
-Reads `GEMINI.md` and discovers global skills from `~/.gemini/skills/`. Either run `python3 setup.py` or manually symlink `.skills/*` to `~/.gemini/skills/`.
+Reads `GEMINI.md` and discovers skills from the shared project path `.agents/skills/`. Either run
+`python3 setup.py` or manually symlink `.skills/*` to `.agents/skills/`.
 
 ```bash
-cd /path/to/obsidian-wiki && gemini "set up my wiki"
+cd /path/to/graph-wiki && gemini "set up my wiki"
 ```
 </details>
 
 <details>
 <summary><b>Google Antigravity</b></summary>
 
-Always-on via `.agent/rules/` + `.agent/workflows/`. `python3 setup.py` ships both files and symlinks skills into `.agents/skills/`. The legacy `~/.gemini/antigravity/skills/` path is also wired.
+Always-on via `.agent/rules/` + `.agent/workflows/`. `python3 setup.py` ships both files and symlinks
+skills into the project-local `.agents/skills/`.
 </details>
 
 <details>
 <summary><b>Kiro IDE/CLI</b></summary>
 
-Always-on via `.kiro/steering/*.md` with `inclusion: always`. `python3 setup.py` symlinks `.skills/*` into both `.kiro/skills/` and `~/.kiro/skills/`. Invoke with `/wiki-folder-ingest`, `/wiki-query`, etc.
+Always-on via `.kiro/steering/*.md` with `inclusion: always`. `python3 setup.py` symlinks `.skills/*`
+into the project-local `.kiro/skills/`. Invoke with `/wiki-folder-ingest`, `/wiki-query`, etc.
 </details>
 
 <details>
 <summary><b>OpenCode / Aider / Factory Droid / Trae</b></summary>
 
-All read `AGENTS.md` at the repo root. `python3 setup.py` symlinks skills into `~/.agents/skills/` (shared discovery path). Trae also gets `~/.trae/skills/` and `~/.trae-cn/skills/`.
+All read `AGENTS.md` at the repo root. `python3 setup.py` symlinks skills into the project-local
+`.agents/skills/` (shared discovery path). Trae and Trae CN use the same project-local path.
 </details>
 
 <details>
 <summary><b>Hermes</b></summary>
 
 Reads `.hermes.md` first, then falls back to `AGENTS.md`. Project-local skills live in
-`.agents/skills/`. The legacy global installer adds `~/.hermes/skills/` for the default profile,
-`$HERMES_HOME/skills/` for the active named profile, and `~/.hermes/profiles/*/skills/` for every
-named profile.
+`.agents/skills/`.
 
 ```bash
-cd /path/to/obsidian-wiki && hermes "set up my wiki"
+cd /path/to/graph-wiki && hermes "set up my wiki"
 # Bulk-ingest ~/.hermes memories and sessions:
 /hermes-history-ingest
 # Pull Hermes knowledge on one topic into the vault:
@@ -125,10 +128,11 @@ runs. Use `/wiki-hermes <topic>` when you only need one question answered.
 <details>
 <summary><b>OpenClaw</b></summary>
 
-Reads `AGENTS.md` (priority 10). Discovers skills from `~/.openclaw/skills/` and `~/.agents/skills/`. Skills auto-register as slash commands.
+Reads `AGENTS.md` (priority 10). Discovers project-local skills from `.agents/skills/`. Skills
+auto-register as slash commands.
 
 ```bash
-cd /path/to/obsidian-wiki && openclaw "set up my wiki"
+cd /path/to/graph-wiki && openclaw "set up my wiki"
 # Mine OpenClaw history:
 /wiki-history-ingest openclaw
 ```
@@ -139,16 +143,18 @@ cd /path/to/obsidian-wiki && openclaw "set up my wiki"
 
 **VS Code Chat:** reads `.github/copilot-instructions.md`. Say "set up my wiki" in Copilot Chat.
 
-**CLI:** discovers skills from `~/.copilot/skills/`. Run `python3 setup.py` or manually symlink `.skills/*` there.
+**CLI:** discovers project-local skills from `.agents/skills/`. Run `python3 setup.py` or manually
+symlink `.skills/*` there.
 </details>
 
 <details>
 <summary><b>Pi</b></summary>
 
-Reads `AGENTS.md` (walking up from cwd). Discovers skills from `.pi/skills/`, `.agents/skills/`, and `~/.pi/agent/skills/`. Run `python3 setup.py` or manually symlink `.skills/*` to `~/.pi/agent/skills/`.
+Reads `AGENTS.md` (walking up from cwd). Discovers project-local skills from `.pi/skills/` and
+`.agents/skills/`. Run `python3 setup.py` or manually symlink `.skills/*` to `.pi/skills/`.
 
 ```bash
-cd /path/to/obsidian-wiki && pi "set up my wiki"
+cd /path/to/graph-wiki && pi "set up my wiki"
 # Mine Pi session history:
 /wiki-history-ingest pi
 ```
@@ -157,5 +163,5 @@ cd /path/to/obsidian-wiki && pi "set up my wiki"
 <details>
 <summary><b>CodeAgent</b></summary>
 
-Reads `AGENTS.md` for project context. Discovers skills from `.cac/skills/`. Run `obsidian-wiki setup --agent codeagent` or manually symlink `.skills/*` to `.cac/skills/`.
+Reads `AGENTS.md` for project context. Discovers skills from `.cac/skills/`. Run `graph-wiki setup --agent codeagent` or manually symlink `.skills/*` to `.cac/skills/`.
 </details>

@@ -7,8 +7,33 @@ set -euo pipefail
 #
 # Config resolution order (mirrors llm-wiki/SKILL.md protocol):
 #   1. Walk up from CWD looking for .env with OBSIDIAN_VAULT_PATH
-#   2. Fall back to ~/.obsidian-wiki/config
+#   2. Fall back to <config-dir>/config, where the config directory comes from
+#      GRAPH_WIKI_CONFIG_DIR (environment or nearest .env) and defaults to
+#      ~/.graph-wiki
 #   3. Exit with error if neither found
+
+_resolve_config_dir() {
+  local value="${GRAPH_WIKI_CONFIG_DIR:-}"
+  if [[ -n "$value" ]]; then
+    [[ "$value" = /* ]] || value="$PWD/$value"
+    echo "$value"
+    return
+  fi
+  local dir="$PWD"
+  while [[ "$dir" != "$HOME" && "$dir" != "/" ]]; do
+    if [[ -f "$dir/.env" ]]; then
+      value=$(grep -E '^GRAPH_WIKI_CONFIG_DIR=' "$dir/.env" | head -1 | cut -d= -f2- \
+        | sed -e "s/^[\"']//" -e "s/[\"']$//")
+      if [[ -n "$value" ]]; then
+        [[ "$value" = /* ]] || value="$dir/$value"
+        echo "$value"
+        return
+      fi
+    fi
+    dir="$(dirname "$dir")"
+  done
+  echo "$HOME/.graph-wiki"
+}
 
 _find_config() {
   local dir="$PWD"
@@ -19,8 +44,10 @@ _find_config() {
     fi
     dir="$(dirname "$dir")"
   done
-  if [[ -f "$HOME/.obsidian-wiki/config" ]]; then
-    echo "$HOME/.obsidian-wiki/config"
+  local config_dir
+  config_dir="$(_resolve_config_dir)"
+  if [[ -f "$config_dir/config" ]]; then
+    echo "$config_dir/config"
     return
   fi
   echo ""
@@ -45,7 +72,7 @@ fi
 VAULT_ID=$(echo "$OBSIDIAN_VAULT_PATH" | md5sum 2>/dev/null | cut -c1-8 || \
            md5 -q - <<< "$OBSIDIAN_VAULT_PATH" 2>/dev/null | cut -c1-8 || \
            echo "default")
-STATE_DIR="$HOME/.obsidian-wiki/state/$VAULT_ID"
+STATE_DIR="$HOME/.graph-wiki/state/$VAULT_ID"
 mkdir -p "$STATE_DIR"
 
 # Write vault path so wiki-notify.sh can find this state dir

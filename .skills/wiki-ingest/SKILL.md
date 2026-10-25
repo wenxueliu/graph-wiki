@@ -2,7 +2,7 @@
 name: wiki-ingest
 description: >
   轻量摄取本地 UTF-8 文本：将每个文件统一规划为独立 ingest documents，并在 fresh sessions
-  中直接归并到 Obsidian wiki。用于明确要求轻量、无 Job/Packet 的 ingest；小文档一个 document，
+  中直接归并到 Graph Wiki。用于明确要求轻量、无 Job/Packet 的 ingest；小文档一个 document，
   大文档多个 documents。需要 staged review 或 Job 级恢复时使用 wiki-folder-ingest。
 ---
 
@@ -18,7 +18,7 @@ existing-first 归并。
 
 ## Runtime artifacts
 
-每次顶层 invocation 先运行 `obsidian-wiki artifacts-create --workflow wiki-ingest`，从 JSON
+每次顶层 invocation 先运行 `graph-wiki artifacts-create --workflow wiki-ingest`，从 JSON
 绑定本次唯一 `run_id` 和绝对 `artifacts_dir`。同一次执行的 context、plan、subagents 和重试复用
 该绑定，并把两个值显式传给 `wiki-context`；新的 invocation 必须重新创建，禁止复用 `latest` 或
 上一次目录。所有 `<artifacts-dir>` 都替换为该绝对路径，不得把运行产物写进 skill 安装目录、源码
@@ -60,7 +60,7 @@ options。
 运行确定性 Python CLI：
 
 ```bash
-obsidian-wiki text-document-plan "<source-root>" \
+graph-wiki text-document-plan "<source-root>" \
   --vault "<canonical-vault>" \
   --target-budget "<text_chunking.target_bytes>" \
   --min-budget "<text_chunking.min_bytes>" \
@@ -71,7 +71,7 @@ obsidian-wiki text-document-plan "<source-root>" \
   --pretty
 ```
 
-若 console script 不在 PATH，使用 `python3 -m obsidian_wiki ...`。CLI 独占 discovery、UTF-8
+若 console script 不在 PATH，使用 `python3 -m graph_wiki ...`。CLI 独占 discovery、UTF-8
 校验、当前 chunker 分片、stable document identity 和 manifest 去重。小文件必须产生一个
 document，大文件产生多个；计划只含 source path/hash、heading 和 line/byte range，不含正文。
 

@@ -17,7 +17,7 @@ description: "将知识库需求设计为可执行的三层 LLM Wiki 架构、sc
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow llm-wiki`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow llm-wiki`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -110,7 +110,7 @@ wiki-architecture.md（三层架构、Knowledge Profile/Layout、page/special-fi
 
 写 operations-design.md：
 
-1. Config Resolution：交互式确认 vault 绝对路径，其他 requested keys 按 user overrides → CWD .env walk-up → config directory（默认 `~/.obsidian-wiki`，可由 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移）；vault-scoped runtime state 与 Writing Profile precedence。
+1. Config Resolution：交互式确认 vault 绝对路径，其他 requested keys 按 user overrides → CWD .env walk-up → config directory（默认 `~/.graph-wiki`，可由 `GRAPH_WIKI_CONFIG_DIR` 迁移）；vault-scoped runtime state 与 Writing Profile precedence。
 2. Retrieval Primitives：index/frontmatter → summary → anchored grep context → whole page last；说明 QMD 是可选 index、Markdown 是 source of truth。
 3. 写入事务：direct/staged 边界、validation、index/log/hot、manifest-last、QMD 仅在 live commit 后刷新。
 4. ingest append/rebuild/restore 路由，canonical sources、delta、idempotency、cross-links、contradictions 与 trust review。

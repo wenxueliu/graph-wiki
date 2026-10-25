@@ -1,7 +1,7 @@
 """Regression guard for issue #153.
 
-Both `setup.py` (source/curl installs) and `obsidian-wiki setup` (pip/uv CLI)
-delegate to obsidian_wiki/sync.py. These tests pin that setup.py calls into the
+Both `setup.py` (source/curl installs) and `graph-wiki setup` (pip/uv CLI)
+delegate to graph_wiki/sync.py. These tests pin that setup.py calls into the
 CLI instead of re-implementing git plumbing, and that the CLI exposes the
 subcommands setup.py (and agents, via wiki-setup) depend on.
 """
@@ -17,17 +17,19 @@ class SetupPyDelegatesToCliTest(unittest.TestCase):
     def setUp(self) -> None:
         self.setup_py = (ROOT / "setup.py").read_text()
 
-    def test_calls_sync_setup_subcommand(self) -> None:
-        self.assertIn("sync-setup", self.setup_py)
+    def test_delegates_setup_to_cli(self) -> None:
+        self.assertIn("graph_wiki.cli", self.setup_py)
+        self.assertIn('"--agent"', self.setup_py)
+        self.assertIn('"setup"', self.setup_py)
 
     def test_calls_cli_module_not_a_standalone_git_flow(self) -> None:
-        self.assertIn("obsidian_wiki.cli", self.setup_py)
+        self.assertIn("graph_wiki.cli", self.setup_py)
 
     def test_does_not_hand_roll_git_init(self) -> None:
         self.assertNotIn('git -C "$VAULT_PATH" init', self.setup_py)
 
     def test_does_not_generate_a_standalone_sync_script(self) -> None:
-        self.assertNotIn("Wrote ~/.obsidian-wiki/sync.sh", self.setup_py)
+        self.assertNotIn("Wrote ~/.graph-wiki/sync.sh", self.setup_py)
 
 
 class EnvExampleDoesNotOverclaimTest(unittest.TestCase):
@@ -38,7 +40,7 @@ class EnvExampleDoesNotOverclaimTest(unittest.TestCase):
 
 class CliExposesSyncSubcommandsTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.cli = (ROOT / "obsidian_wiki" / "cli.py").read_text()
+        self.cli = (ROOT / "graph_wiki" / "cli.py").read_text()
 
     def test_sync_setup_subcommand_registered(self) -> None:
         self.assertIn('sub.add_parser(\n        "sync-setup"', self.cli)

@@ -11,8 +11,8 @@ fresh `general-purpose` subagent in serialized order and committed directly to `
 
 Implementation mapping:
 
-- deterministic partitioning: `obsidian_wiki/text_chunker.py`;
-- minimal Job and Packet contracts: `obsidian_wiki/ingest_pipeline.py`;
+- deterministic partitioning: `graph_wiki/text_chunker.py`;
+- minimal Job and Packet contracts: `graph_wiki/ingest_pipeline.py`;
 - CLI materialization boundary: `text-chunk-plan`, `text-chunk-read`, `text-chunk-strategies`;
 - lightweight document normalization: `text-document-plan`, `text-document-read`, `text-document-commit`;
 - recoverable Job lifecycle: `text-ingest-plan`, `text-ingest-status`, `text-ingest-extract`,
@@ -118,7 +118,7 @@ permanent source manifest.
 ### 4.2 Independent `text-chunker`
 
 The partitioner is deterministic infrastructure, not an Agent Skill. It belongs in a reusable
-Python module, tentatively `obsidian_wiki/text_chunker.py`.
+Python module, tentatively `graph_wiki/text_chunker.py`.
 
 It validates encoding, scans structure, finds semantic boundaries, enforces a hard budget, emits
 line and byte ranges, materializes one requested range, and reports forced splits. It does not
@@ -477,25 +477,25 @@ V1 uses path plus content hash as identity. Rename detection is deferred.
 
 ```bash
 # Independent partitioner (also used by wiki-folder-ingest)
-obsidian-wiki text-chunk-plan <source> --pretty
-obsidian-wiki text-chunk-read <source> \
+graph-wiki text-chunk-plan <source> --pretty
+graph-wiki text-chunk-read <source> \
   --start-byte <N> --end-byte <N> --expect-hash sha256:<hex>
-obsidian-wiki text-chunk-strategies --pretty
+graph-wiki text-chunk-strategies --pretty
 
 # Lightweight wiki-ingest path (no Job, no Packet)
-obsidian-wiki text-document-plan <source>
-obsidian-wiki text-document-read <plan.json> --document-id <id>
-obsidian-wiki text-document-commit <plan.json> --document-id <id>
+graph-wiki text-document-plan <source>
+graph-wiki text-document-read <plan.json> --document-id <id>
+graph-wiki text-document-commit <plan.json> --document-id <id>
 
 # Recoverable wiki-folder-ingest Job lifecycle
-obsidian-wiki text-ingest-plan <source> --vault <vault>
-obsidian-wiki text-ingest-status <job-dir>
-obsidian-wiki text-ingest-extract <job-dir> --max-workers 4
-obsidian-wiki text-ingest-report <job-dir>
-obsidian-wiki text-ingest-packet-check <job-dir> <packet.json>
-obsidian-wiki text-ingest-unit-advance <job-dir> <packet.json>
-obsidian-wiki text-ingest-inline-check <job-dir> --source-id <id> --unit-id <id>
-obsidian-wiki text-ingest-inline-advance <job-dir> --source-id <id> --unit-id <id>
+graph-wiki text-ingest-plan <source> --vault <vault>
+graph-wiki text-ingest-status <job-dir>
+graph-wiki text-ingest-extract <job-dir> --max-workers 4
+graph-wiki text-ingest-report <job-dir>
+graph-wiki text-ingest-packet-check <job-dir> <packet.json>
+graph-wiki text-ingest-unit-advance <job-dir> <packet.json>
+graph-wiki text-ingest-inline-check <job-dir> --source-id <id> --unit-id <id>
+graph-wiki text-ingest-inline-advance <job-dir> --source-id <id> --unit-id <id>
 ```
 
 The skills orchestrate these helpers and the existing cache/validation commands. V1 adds no general
@@ -574,7 +574,7 @@ is updated last, after page and special-file validation.
 
 ### Phase 1 — Independent partitioner
 
-- implement `obsidian_wiki/text_chunker.py`;
+- implement `graph_wiki/text_chunker.py`;
 - add `text-chunk-plan` and `text-chunk-read`;
 - add plan serialization and validation;
 - prove boundary and budget invariants.

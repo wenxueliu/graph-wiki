@@ -17,7 +17,7 @@ description: "运行 vault-scoped 的每日 Wiki 维护：source freshness、ind
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow daily-update`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow daily-update`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -44,7 +44,7 @@ daily invocation 与当前 CWD
 
 调用参数：
 
-- `requested_keys`: OBSIDIAN_VAULT_PATH,OBSIDIAN_WIKI_REPO,QMD_TRANSPORT,QMD_WIKI_COLLECTION,QMD_CLI_SEARCH_MODE
+- `requested_keys`: OBSIDIAN_VAULT_PATH,GRAPH_WIKI_REPO,QMD_TRANSPORT,QMD_WIKI_COLLECTION,QMD_CLI_SEARCH_MODE
 
 - `optional_reads`: owner AGENTS,index,hot,manifest,active knowledge pack
 
@@ -72,8 +72,8 @@ wiki-context.json + wiki-context.md
 
 使用 wiki-context.json 检查 vault-scoped state 与 source freshness。
 
-1. 使用 context 的 canonical OBSIDIAN_VAULT_PATH、OBSIDIAN_WIKI_REPO、QMD 设置和 owner rules；不得重新选择 profile。
-2. 用 canonical vault path 的 MD5 前 8 位派生 `$HOME/.obsidian-wiki/state/<vault-id>`，记录准确算法和 STATE_DIR；不得复用其他 vault 的全局状态。
+1. 使用 context 的 canonical OBSIDIAN_VAULT_PATH、GRAPH_WIKI_REPO、QMD 设置和 owner rules；不得重新选择 profile。
+2. 用 canonical vault path 的 MD5 前 8 位派生 `$HOME/.graph-wiki/state/<vault-id>`，记录准确算法和 STATE_DIR；不得复用其他 vault 的全局状态。
 3. 读取并兼容解析 `.manifest.json` 的 source list/dict 与 project metadata。对每个文件 source 比较 filesystem mtime 和 manifest ingested_at/last_ingested：mtime<=ingested 为 fresh，mtime>ingested 为 stale，不存在为 missing。
 4. timestamp 必须 timezone/epoch 可比较；无效或缺失字段单列 warning，不猜为 fresh。Missing 只报告潜在 stale pages，绝不删除页面或 manifest。
 5. 写 artifacts/daily-context.md、source-freshness.json 和 freshness-report.md，包含 stable cycle_id、vault/state/config、fresh/stale/missing/invalid counts、paths、timestamps 与建议的 sync workflow。此步骤不修改 vault/state/QMD。

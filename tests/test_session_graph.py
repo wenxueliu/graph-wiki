@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki import session_graph as sg
+from graph_wiki import session_graph as sg
 
 NOW = datetime(2026, 7, 25, tzinfo=timezone.utc)
 

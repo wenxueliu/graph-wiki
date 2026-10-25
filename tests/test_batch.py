@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.batch import (
+from graph_wiki.batch import (
     _classify,
     _make_batches,
     discover_sources,
@@ -225,7 +225,7 @@ class TestPlanBatches:
     def test_skips_unchanged_after_cache_update(self, source_dir, vault):
         f = _write(source_dir / "doc.md", "some content")
         # Mark it as ingested
-        from obsidian_wiki.cache import update_source
+        from graph_wiki.cache import update_source
         update_source(vault, f)
         result = plan_batches(source_dir, vault)
         assert result["stats"]["skipped_unchanged"] == 1
@@ -233,7 +233,7 @@ class TestPlanBatches:
 
     def test_no_cache_flag_includes_unchanged(self, source_dir, vault):
         f = _write(source_dir / "doc.md", "some content")
-        from obsidian_wiki.cache import update_source
+        from graph_wiki.cache import update_source
         update_source(vault, f)
         result = plan_batches(source_dir, vault, skip_unchanged=False)
         assert result["stats"]["to_ingest"] == 1
@@ -258,7 +258,7 @@ class TestPlanBatches:
 class TestBatchPlanCLI:
     def _run(self, *args):
         return subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", *args],
+            [sys.executable, "-m", "graph_wiki.cli", *args],
             capture_output=True, text=True,
         )
 

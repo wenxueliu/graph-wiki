@@ -1,24 +1,24 @@
 ---
 name: wiki-switch
 description: >
-  Switch between multiple Obsidian wiki vault profiles. Use this skill when the user says
+  Switch between multiple Graph Wiki vault profiles. Use this skill when the user says
   "/wiki-switch NAME", "switch to my work wiki", "switch vault", "change wiki", "which wiki am I on",
   "list my wikis", "show my vaults", "create a new vault config", or "add a new wiki profile".
-  The skill manages named config files inside the config directory (default `~/.obsidian-wiki`)
+  The skill manages named config files inside the config directory (default `~/.graph-wiki`)
   and activates one by symlinking it to the active `config` file.
 ---
 
 # Wiki Switch — Manage Multiple Vault Profiles
 
 The **config directory** holds `config` (the active vault), `config.<name>` profiles, and
-`WRITING.md`. It defaults to `~/.obsidian-wiki` and can be relocated with
-`OBSIDIAN_WIKI_CONFIG_DIR`, read from the environment first, then from the nearest `.env` walking up
+`WRITING.md`. It defaults to `~/.graph-wiki` and can be relocated with
+`GRAPH_WIKI_CONFIG_DIR`, read from the environment first, then from the nearest `.env` walking up
 to `$HOME`. A relative value resolves against that `.env`'s directory.
 
 Resolve it once before acting, then use `$WIKI_CONFIG_DIR` everywhere below:
 
 ```bash
-WIKI_CONFIG_DIR="${OBSIDIAN_WIKI_CONFIG_DIR:-$HOME/.obsidian-wiki}"
+WIKI_CONFIG_DIR="${GRAPH_WIKI_CONFIG_DIR:-$HOME/.graph-wiki}"
 ```
 
 Each vault is a complete config file at `$WIKI_CONFIG_DIR/config.<name>`. The active vault is
@@ -108,7 +108,7 @@ Scaffold a new vault config from the current active config as a template.
    - If there are no section headers, present all fields and let the user decide which to change
 4. Ask the user for updated values for the vault-specific fields. Use the current values as visible defaults — the user only needs to supply what differs.
 5. Write the updated values into `$WIKI_CONFIG_DIR/config.<name>`.
-6. Update the top comment line to describe the new vault (e.g., `# Obsidian Wiki — <name> vault`).
+6. Update the top comment line to describe the new vault (e.g., `# Graph Wiki — <name> vault`).
 7. Confirm:
    ```
    Created: <resolved config dir>/config.<name>

@@ -57,7 +57,7 @@ def test_recoverable_and_lightweight_ingest_dispatch_differ_intentionally():
     coordinator = (ROOT / "workflows" / "wiki-folder-ingest.yaml").read_text()
     lightweight = (ROOT / ".skills" / "wiki-ingest" / "SKILL.md").read_text()
 
-    assert "obsidian-wiki text-ingest-extract" in coordinator
+    assert "graph-wiki text-ingest-extract" in coordinator
     assert "claude -p --dangerously-skip-permissions" in coordinator
     assert "直接调用 `/wiki-source-text`" in coordinator
     assert "Job directory、一个 source_id 和当前 unit_id" in coordinator

@@ -4,7 +4,7 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
-import obsidian_wiki.cli as cli
+import graph_wiki.cli as cli
 import pytest
 
 
@@ -280,18 +280,25 @@ def test_list_skills_only_returns_directories_with_skill_marker(
 def test_project_skill_install_only_targets_selected_agents(
     monkeypatch, tmp_path: Path,
 ) -> None:
-    installed: list[Path] = []
+    installed: list[tuple[Path, str]] = []
     monkeypatch.setattr(
         cli,
         "install_skills",
-        lambda target, _label, **_kwargs: installed.append(target) or 1,
+        lambda target, _label, **kwargs: installed.append(
+            (target, kwargs.get("mode", "symlink"))
+        )
+        or 1,
     )
     monkeypatch.setattr(cli, "bootstrap_dir", lambda: None)
 
     result = cli.install_project(tmp_path, "copy", ("cursor", "kiro"))
 
     assert result == {"cursor", "kiro"}
-    assert installed == [tmp_path / ".cursor/skills", tmp_path / ".kiro/skills"]
+    assert installed == [
+        (tmp_path / ".cursor/skills", "copy"),
+        (tmp_path / ".kiro/skills", "copy"),
+        (tmp_path / ".agents/skills", "copy"),
+    ]
 
 
 def test_project_skill_install_supports_all_agents_and_deduplicates_shared_dir(
@@ -313,11 +320,102 @@ def test_project_skill_install_supports_all_agents_and_deduplicates_shared_dir(
         tmp_path / ".claude/skills",
         tmp_path / ".cursor/skills",
         tmp_path / ".windsurf/skills",
-        tmp_path / ".agents/skills",
         tmp_path / ".pi/skills",
         tmp_path / ".cac/skills",
         tmp_path / ".kiro/skills",
+        tmp_path / ".agents/skills",
     ]
+
+
+def test_install_project_uses_relative_links_for_source_checkout(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    skills = tmp_path / ".skills"
+    skills.mkdir()
+    monkeypatch.setattr(cli, "skills_dir", lambda: skills)
+    monkeypatch.setattr(cli, "bootstrap_dir", lambda: None)
+    monkeypatch.setattr(cli, "_is_linked_skill_mirror", lambda *_args: True)
+    calls: list[tuple[Path, str]] = []
+    monkeypatch.setattr(
+        cli,
+        "install_skills",
+        lambda target, _label, **kwargs: calls.append(
+            (target, kwargs.get("mode", "symlink"))
+        )
+        or 1,
+    )
+
+    cli.install_project(tmp_path, "symlink", ("claude",))
+    assert calls == [(tmp_path / ".claude/skills", "relative")]
+
+    project = tmp_path / "project"
+    project.mkdir()
+    calls.clear()
+    cli.install_project(project, "symlink", ("claude",))
+    assert calls == [(project / ".claude/skills", "symlink")]
+
+
+def test_install_skills_relative_mode_creates_relative_link(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    source = tmp_path / ".skills" / "demo"
+    source.mkdir(parents=True)
+    (source / "SKILL.md").write_text("---\nname: demo\n---\n", encoding="utf-8")
+    monkeypatch.setattr(cli, "skills_dir", lambda: source.parent)
+
+    target = tmp_path / ".claude" / "skills"
+    cli.install_skills(target, "test", mode="relative")
+
+    link = target / "demo"
+    assert link.is_symlink()
+    assert not link.readlink().is_absolute()
+    assert (link / "SKILL.md").is_file()
+
+
+def test_generic_skills_are_copied_even_when_other_targets_are_symlinks(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    installed: list[tuple[Path, str]] = []
+    monkeypatch.setattr(
+        cli,
+        "install_skills",
+        lambda target, _label, **kwargs: installed.append(
+            (target, kwargs.get("mode", "symlink"))
+        )
+        or 1,
+    )
+    monkeypatch.setattr(cli, "bootstrap_dir", lambda: None)
+
+    cli.install_project(tmp_path, "symlink", ("claude",))
+
+    assert installed == [
+        (tmp_path / ".claude/skills", "symlink"),
+        (tmp_path / ".agents/skills", "copy"),
+    ]
+
+
+def test_existing_generic_skills_mirror_is_left_untouched(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    source = tmp_path / ".skills"
+    (source / "alpha").mkdir(parents=True)
+    (source / "alpha" / "SKILL.md").write_text("alpha\n", encoding="utf-8")
+    project = tmp_path / "project"
+    generic = project / ".agents/skills"
+    generic.mkdir(parents=True)
+    (generic / "alpha").symlink_to(source / "alpha")
+    installed: list[Path] = []
+    monkeypatch.setattr(cli, "skills_dir", lambda: source)
+    monkeypatch.setattr(
+        cli,
+        "install_skills",
+        lambda target, _label, **_kwargs: installed.append(target) or 1,
+    )
+    monkeypatch.setattr(cli, "bootstrap_dir", lambda: None)
+
+    cli.install_project(project, "symlink", ("codex",))
+
+    assert generic not in installed
 
 
 def test_project_bootstrap_only_targets_selected_agents(
@@ -357,9 +455,9 @@ def test_project_bootstrap_supports_multiple_selected_agents(
 
     cli.install_project(project, "copy", ("cursor", "gemini"))
 
-    assert (project / ".cursor/rules/obsidian-wiki.mdc").is_file()
+    assert (project / ".cursor/rules/graph-wiki.mdc").is_file()
     assert (project / "GEMINI.md").exists()
-    assert not (project / ".windsurf/rules/obsidian-wiki.md").exists()
+    assert not (project / ".windsurf/rules/graph-wiki.md").exists()
     assert not (project / "CLAUDE.md").exists()
 
 
@@ -483,10 +581,60 @@ def test_env_example_declares_stable_context_bindings() -> None:
     assert "WIKI_STAGED_WRITES=false" in template
 
 
+def test_env_example_defaults_config_dir_to_project_local() -> None:
+    template = (Path(__file__).resolve().parents[1] / ".env.example").read_text(
+        encoding="utf-8"
+    )
+
+    assert "\nGRAPH_WIKI_CONFIG_DIR=.graph-wiki\n" in template
+
+
+def test_project_env_template_keeps_config_inside_project(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    project = tmp_path / "project"
+    monkeypatch.delenv("GRAPH_WIKI_CONFIG_DIR", raising=False)
+
+    cli.ensure_project_env(project)
+
+    assert cli.config_dir(start=project) == (project / ".graph-wiki").resolve()
+
+
+def test_setup_writes_config_into_project_local_dir_from_template(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    project = tmp_path / "project"
+    vault = tmp_path / "vault"
+    vault.mkdir()
+    monkeypatch.delenv("GRAPH_WIKI_CONFIG_DIR", raising=False)
+    monkeypatch.setattr(cli, "GLOBAL_CONFIG_DIR", tmp_path / "home" / ".graph-wiki")
+    monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: False)
+    monkeypatch.setattr(cli, "resolve_vault_path", lambda _vault, **_kwargs: str(vault))
+    monkeypatch.setattr(cli, "_maybe_configure_sync", lambda _vault, _remote: False)
+    monkeypatch.setattr(
+        cli, "install_project", lambda _path, _mode, agents: set(agents)
+    )
+    monkeypatch.setattr(
+        cli,
+        "compile_context_snapshot",
+        lambda *_args, **_kwargs: project / "context.json",
+    )
+
+    result = cli.cmd_setup(
+        setup_args(project=str(project), knowledge_pack="default")
+    )
+
+    assert result == 0
+    assert (project / ".graph-wiki" / "config").is_file()
+    assert not (tmp_path / "home" / ".graph-wiki" / "config").exists()
+
+
 def test_stable_context_config_uses_selected_pack_and_vault_paths(
     tmp_path: Path, monkeypatch,
 ) -> None:
-    config_home = tmp_path / "home" / ".obsidian-wiki"
+    config_home = tmp_path / "home" / ".graph-wiki"
     monkeypatch.setattr(cli, "GLOBAL_CONFIG_DIR", config_home)
     vault = tmp_path / "vault"
 

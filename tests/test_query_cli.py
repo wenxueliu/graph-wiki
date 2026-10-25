@@ -33,7 +33,7 @@ def _run(home: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["HOME"] = str(home)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True,
         text=True,
         env=env,
@@ -46,7 +46,7 @@ def test_query_cli_uses_configured_vault(tmp_path: Path) -> None:
     _page(vault, "transformer", title="Transformer Architecture", summary="Self-attention model.")
     _page(vault, "attention", title="Attention Mechanism", summary="Weighted lookup.", links=["transformer"])
 
-    config_dir = home / ".obsidian-wiki"
+    config_dir = home / ".graph-wiki"
     config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "config").write_text(f'OBSIDIAN_VAULT_PATH="{vault}"\n', encoding="utf-8")
 

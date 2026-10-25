@@ -17,7 +17,7 @@ description: "经人工审批安装或验证每日 9 点 Wiki 调度、vault-sco
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow daily-update-setup`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow daily-update-setup`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -46,7 +46,7 @@ setup invocation 与当前 CWD
 
 调用参数：
 
-- `requested_keys`: OBSIDIAN_VAULT_PATH,OBSIDIAN_WIKI_REPO
+- `requested_keys`: OBSIDIAN_VAULT_PATH,GRAPH_WIKI_REPO
 
 - `optional_reads`: owner AGENTS
 
@@ -74,7 +74,7 @@ wiki-context.json + wiki-context.md
 
 使用 wiki-context.json 检查 scheduler setup。
 
-1. 使用 context 的 canonical OBSIDIAN_VAULT_PATH/OBSIDIAN_WIKI_REPO，并派生 vault-scoped STATE_DIR。
+1. 使用 context 的 canonical OBSIDIAN_VAULT_PATH/GRAPH_WIKI_REPO，并派生 vault-scoped STATE_DIR。
 2. 检测 macOS/Linux/Windows、headless 状态、shell/rc/profile、scheduler 工具与当前 9:00 task。读取但不修改现有 launchd plist/cron/Task Scheduler entry。
 3. 验证 repo scripts：daily-update.sh 或 daily-update.py、wiki-notify.sh/py、macOS plist；检查存在、可读/可执行、plist XML/Label/ProgramArguments 与绝对 repo path。
 4. 询问用户是否安装 terminal notification；headless/VPS 默认 skip。列出 exact scheduler/rc/profile targets、commands、existing/preserve/replace decision、日志路径与 rollback 方法。
@@ -138,9 +138,9 @@ approval-request.md + approved-daily-setup.json
 
 只执行 approved-daily-setup.json：
 
-1. macOS：将 repo placeholder 替换为 canonical path 写 `~/Library/LaunchAgents/com.obsidian-wiki.daily-update.plist`，验证 XML 后幂等 unload/load；Label 与 filename 一致。
-2. Linux：保留现有 crontab，排序去重加入 `0 9 * * * <repo>/scripts/daily-update.sh >> /tmp/obsidian-wiki-daily.log 2>&1`，不得删除其他 jobs。
-3. Windows：幂等 create/replace `ObsidianWikiDailyUpdate` 09:00 task，command/path 正确。
+1. macOS：将 repo placeholder 替换为 canonical path 写 `~/Library/LaunchAgents/com.graph-wiki.daily-update.plist`，验证 XML 后幂等 unload/load；Label 与 filename 一致。
+2. Linux：保留现有 crontab，排序去重加入 `0 9 * * * <repo>/scripts/daily-update.sh >> /tmp/graph-wiki-daily.log 2>&1`，不得删除其他 jobs。
+3. Windows：幂等 create/replace `GraphWikiDailyUpdate` 09:00 task，command/path 正确。
 4. notification 仅在批准且非 headless 时：bash/zsh 向对应 rc、PowerShell 向 PROFILE 加一个有 marker 的 source/call entry；存在则不重复。unsupported shell 只报告 manual instruction。
 5. 所有修改采用备份/验证；写 install-report.md，记录 applied/skipped/existing、targets、commands、backups、errors。不得修改 vault pages。
 

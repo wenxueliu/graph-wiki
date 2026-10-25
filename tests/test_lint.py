@@ -9,8 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from obsidian_wiki.lint import lint_vault
-from obsidian_wiki.trust import build_trust_ledger, write_trust_ledger
+from graph_wiki.lint import lint_vault
+from graph_wiki.trust import build_trust_ledger, write_trust_ledger
 
 
 def _page(
@@ -58,7 +58,7 @@ def _run(home: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["HOME"] = str(home)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True,
         check=False,
         text=True,
@@ -71,7 +71,7 @@ def _run_at(home: Path, cwd: Path, *args: str) -> subprocess.CompletedProcess[st
     env["HOME"] = str(home)
     env["PYTHONPATH"] = str(Path(__file__).parents[1])
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True,
         check=False,
         text=True,
@@ -129,7 +129,7 @@ def test_lint_cli_uses_configured_vault_and_strict_mode(tmp_path: Path) -> None:
     vault = tmp_path / "vault"
     _page(vault, "concepts/alpha.md", summary=None)
 
-    config_dir = home / ".obsidian-wiki"
+    config_dir = home / ".graph-wiki"
     config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "config").write_text(f'OBSIDIAN_VAULT_PATH="{vault}"\n', encoding="utf-8")
     ledger = build_trust_ledger(vault, reviewed_at="2026-07-12T17:38:39+07:00")
@@ -193,7 +193,7 @@ def test_lint_cli_strict_trust_flag_fails_legacy_vault(tmp_path: Path) -> None:
     vault = tmp_path / "vault"
     _page(vault, "concepts/alpha.md", include_trust_fields=False)
 
-    config_dir = home / ".obsidian-wiki"
+    config_dir = home / ".graph-wiki"
     config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "config").write_text(f'OBSIDIAN_VAULT_PATH="{vault}"\n', encoding="utf-8")
 
@@ -554,7 +554,7 @@ def test_schema_config_is_scoped_to_explicit_cwd_and_named_vaults(tmp_path: Path
         page = _page(vault, "concepts/alpha.md")
         page.write_text(page.read_text().replace("lifecycle: reviewed", "lifecycle: active"))
 
-    config_dir = home / ".obsidian-wiki"
+    config_dir = home / ".graph-wiki"
     config_dir.mkdir(parents=True)
     (config_dir / "config").write_text(
         f'OBSIDIAN_VAULT_PATH="{global_vault}"\nOBSIDIAN_ALLOWED_LIFECYCLES=active\n',

@@ -16,10 +16,10 @@
     "opt_in": true,
     "unix_candidates": ["<REPO>/hooks/wiki-stop-capture.sh", "<REPO>/.claude/hooks/wiki-stop-capture.sh"],
     "windows_candidate": "<REPO>/.claude/hooks/wiki-stop-capture.ps1",
-    "unix_url": "https://raw.githubusercontent.com/wenxueliu/obsidian-wiki/main/.claude/hooks/wiki-stop-capture.sh",
-    "windows_url": "https://raw.githubusercontent.com/wenxueliu/obsidian-wiki/main/.claude/hooks/wiki-stop-capture.ps1",
-    "unix_download_target": "~/.obsidian-wiki/hooks/wiki-stop-capture.sh",
-    "windows_download_target": "%LOCALAPPDATA%/.obsidian-wiki/hooks/wiki-stop-capture.ps1",
+    "unix_url": "https://raw.githubusercontent.com/wenxueliu/graph-wiki/main/.claude/hooks/wiki-stop-capture.sh",
+    "windows_url": "https://raw.githubusercontent.com/wenxueliu/graph-wiki/main/.claude/hooks/wiki-stop-capture.ps1",
+    "unix_download_target": "~/.graph-wiki/hooks/wiki-stop-capture.sh",
+    "windows_download_target": "%LOCALAPPDATA%/.graph-wiki/hooks/wiki-stop-capture.ps1",
     "unix_command": "bash <HOOK_PATH>",
     "windows_command": "powershell -NoProfile -File <HOOK_PATH>",
     "meaningful_work": "file edits or ≥ 4 shell commands",
@@ -31,13 +31,13 @@
   "git_sync": {
     "opt_in": true,
     "privacy": "recommend private; never create a public repository without approval",
-    "preferred": "obsidian-wiki sync-setup \"<repo-url>\" --vault \"$OBSIDIAN_VAULT_PATH\"",
-    "fallback": "PYTHONPATH=\"$OBSIDIAN_WIKI_REPO\" python3 -m obsidian_wiki.cli sync-setup \"<repo-url>\" --vault \"$OBSIDIAN_VAULT_PATH\"",
-    "subsequent": "obsidian-wiki sync",
+    "preferred": "graph-wiki sync-setup \"<repo-url>\" --vault \"$OBSIDIAN_VAULT_PATH\"",
+    "fallback": "PYTHONPATH=\"$GRAPH_WIKI_REPO\" python3 -m graph_wiki.cli sync-setup \"<repo-url>\" --vault \"$OBSIDIAN_VAULT_PATH\"",
+    "subsequent": "graph-wiki sync",
     "status_source": "the vault git remote"
   },
   "verification": {
-    "preferred": "obsidian-wiki doctor",
+    "preferred": "graph-wiki doctor",
     "required": [
       "canonical vault and every active Knowledge Pack directory exist",
       ".obsidian/ and _staging/ exist",

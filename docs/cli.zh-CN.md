@@ -2,47 +2,47 @@
 
 # CLI 参考
 
-`obsidian-wiki` Python 包提供了一个 CLI，覆盖安装、检查，以及工作流中确定性的部分——也就是不需要
+`graph-wiki` Python 包提供了一个 CLI，覆盖安装、检查，以及工作流中确定性的部分——也就是不需要
 LLM 的那些事。其余部分都是 agent 执行的 [skill](skills.zh-CN.md)。
 
 ```bash
-pip install obsidian-wiki
-obsidian-wiki --help
-obsidian-wiki --version
+pip install graph-wiki-skills
+graph-wiki --help
+graph-wiki --version
 ```
 
-不带子命令运行 `obsidian-wiki` 时，默认执行 `setup`。
+不带子命令运行 `graph-wiki` 时，默认执行 `setup`。
 
 ## 安装与检查
 
 | 命令 | 作用 |
 |---|---|
-| `setup` | 在命令所在目录安装所选 agent 的 skill，并写入配置文件（默认 `~/.obsidian-wiki/config`） |
+| `setup` | 在命令所在目录安装所选 agent 的 skill，并写入配置文件（由 setup 创建的项目为 `<project>/.graph-wiki/config`；未设置时为 `~/.graph-wiki/config`） |
 | `info` | 显示安装路径、版本与解析后的配置 |
 | `list` | 列出内置 skill |
 | `doctor` | 健康检查配置、vault 形态、bootstrap 资源与已安装 skill |
 | `artifacts-create` | 为一次 skill 调用创建一个唯一的临时 artifacts 目录 |
 
 ```bash
-obsidian-wiki setup --vault ~/brain
-obsidian-wiki setup --list-agents          # 列出可选的 agent skill 目标
-obsidian-wiki setup --vault ~/brain --knowledge-pack default --agent claude --agent codex
-obsidian-wiki setup --vault ~/brain --knowledge-pack software-knowledge --agent claude,codex,pi
-obsidian-wiki setup --vault ~/brain --knowledge-pack default --agent all  # 所有本地 agent 目标
-obsidian-wiki setup --agent none       # 只配置 vault，不安装 agent skill
-obsidian-wiki setup --list-knowledge-packs         # 列出 Knowledge Pack（Profile + Layout）
-obsidian-wiki setup --vault ~/brain --knowledge-pack software-knowledge
-obsidian-wiki setup --project /work/app  # 覆盖命令所在目录这一安装目标
-obsidian-wiki setup --project-only       # 已废弃的空操作；setup 始终是项目本地安装
-obsidian-wiki setup --copy             # 复制 skill 文件，而不是创建符号链接
-obsidian-wiki setup --copy --skills-only --agent cursor  # 只写命令目录文件；不触碰 vault
-obsidian-wiki setup --vault ~/brain --knowledge-pack default --refresh-knowledge-pack-marker  # 刷新同一个 Pack 的标记
-obsidian-wiki setup --remote https://github.com/you/my-wiki.git   # 非交互式配置同步
+graph-wiki setup --vault ~/brain
+graph-wiki setup --list-agents          # 列出可选的 agent skill 目标
+graph-wiki setup --vault ~/brain --knowledge-pack default --agent claude --agent codex
+graph-wiki setup --vault ~/brain --knowledge-pack software-knowledge --agent claude,codex,pi
+graph-wiki setup --vault ~/brain --knowledge-pack default --agent all  # 所有本地 agent 目标
+graph-wiki setup --agent none       # 只配置 vault，不安装 agent skill
+graph-wiki setup --list-knowledge-packs         # 列出 Knowledge Pack（Profile + Layout）
+graph-wiki setup --vault ~/brain --knowledge-pack software-knowledge
+graph-wiki setup --project /work/app  # 覆盖命令所在目录这一安装目标
+graph-wiki setup --project-only       # 已废弃的空操作；setup 始终是项目本地安装
+graph-wiki setup --copy             # 复制 skill 文件，而不是创建符号链接
+graph-wiki setup --copy --skills-only --agent cursor  # 只写命令目录文件；不触碰 vault
+graph-wiki setup --vault ~/brain --knowledge-pack default --refresh-knowledge-pack-marker  # 刷新同一个 Pack 的标记
+graph-wiki setup --remote https://github.com/you/my-wiki.git   # 非交互式配置同步
 
-obsidian-wiki doctor --json --pretty
-obsidian-wiki doctor --vault /other/vault --project .
-obsidian-wiki doctor --strict          # 有警告时也返回非零退出码
-obsidian-wiki artifacts-create --workflow wiki-ingest --pretty
+graph-wiki doctor --json --pretty
+graph-wiki doctor --vault /other/vault --project .
+graph-wiki doctor --strict          # 有警告时也返回非零退出码
+graph-wiki artifacts-create --workflow wiki-ingest --pretty
 ```
 
 `artifacts-create` 返回的 JSON 包含唯一的 `run_id` 与一个位于操作系统临时目录下的绝对
@@ -55,7 +55,7 @@ artifacts 目录。当你更改 Knowledge Pack、owner rules、Writing Profile�
 后，请运行 setup/repair。
 
 除 `setup` 与 `info` 外，其他命令都会在命令所在目录的安装已过期时给出警告（包已升级，但 skill 尚未
-重新链接）。在该目录重新运行 `obsidian-wiki setup` 即可修复。
+重新链接）。在该目录重新运行 `graph-wiki setup` 即可修复。
 
 在终端中运行 setup 且未传 `--agent` 时，它会显示一个带编号的 agent 菜单，且没有默认选中项。非交互
 式 setup 必须显式提供一个或多个 `--agent NAME`、逗号分隔列表、`--agent all`，或 `--agent none`；
@@ -64,6 +64,10 @@ artifacts 目录。当你更改 Knowledge Pack、owner rules、Writing Profile�
 项目安装会把该选择应用到每一个生成的 agent 专属文件，而不只是 skill 目录。例如只选择 `claude` 会
 创建 `.claude/skills/`、共享的 `AGENTS.md` 与 `CLAUDE.md`；它不会创建 Cursor、Windsurf、Kiro、
 Antigravity、Copilot、Gemini 或 Hermes 的 bootstrap 文件。未选中 agent 的既有文件保持不动。
+
+只要选中了至少一个 agent，setup 还会把全部内置 skill 拷贝到项目的共享目录 `.agents/skills/`。该
+目录始终是真实文件副本，即使其他目标使用符号链接；这样即使包被升级或移除，通用工具仍可正常工作。
+若该目录已是同一批内置 skill 的符号链接镜像，则保持不动。`--agent none` 不安装任何 skill。
 
 在终端中运行 setup 且未传 `--knowledge-pack` 时，它会列出可用的 Knowledge Pack，并要求你准确选择
 一个编号或名称。Knowledge Pack 的选择从不接受列表。非交互式 setup 必须传 `--knowledge-pack NAME`；
@@ -93,14 +97,14 @@ Pack 不会绕过迁移安全：setup 会直接失败，而不是切换契约。
 | `lint [vault]` | 发现缺失的 frontmatter、失效链接、重复页面与孤立页面 |
 
 ```bash
-obsidian-wiki query "what do I know about MCP security?"
-obsidian-wiki query "rate limiting" --top 12 --max-read 5 --json
+graph-wiki query "what do I know about MCP security?"
+graph-wiki query "rate limiting" --top 12 --max-read 5 --json
 
-obsidian-wiki lint                     # 使用已配置的 vault
-obsidian-wiki lint /path/to/vault --strict
-obsidian-wiki lint @research --json    # 只用 <配置目录>/config.research
-obsidian-wiki lint --strict-trust      # trust ledger 出问题时直接失败，而不只是警告
-obsidian-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
+graph-wiki lint                     # 使用已配置的 vault
+graph-wiki lint /path/to/vault --strict
+graph-wiki lint @research --json    # 只用 <配置目录>/config.research
+graph-wiki lint --strict-trust      # trust ledger 出问题时直接失败，而不只是警告
+graph-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
   --required-trust-field updated --schema-source /path/to/vault/AGENTS.md
 ```
 
@@ -116,10 +120,10 @@ Lint 会同时解析 vault 与 schema：显式路径（不继承配置）、位�
 | `verify-sections <structure.json>` | 把 PageIndex 的 `_structure.json` 与其计划覆盖的页面对照 |
 
 ```bash
-obsidian-wiki validate --pages concepts/rate-limiting.md entities/nginx.md --json
-obsidian-wiki validate --from-stdin --pretty < changed-pages.txt
-obsidian-wiki verify --sources ~/research/a.md ~/research/b.md
-obsidian-wiki verify-sections /tmp/pageindex/_structure.json --pages concepts/example.md
+graph-wiki validate --pages concepts/rate-limiting.md entities/nginx.md --json
+graph-wiki validate --from-stdin --pretty < changed-pages.txt
+graph-wiki verify --sources ~/research/a.md ~/research/b.md
+graph-wiki verify-sections /tmp/pageindex/_structure.json --pages concepts/example.md
 ```
 
 三者都支持 `--json` 与 `--pretty`，并像 `lint` 一样解析 vault。`validate` 与 `verify` 支持
@@ -131,9 +135,9 @@ obsidian-wiki verify-sections /tmp/pageindex/_structure.json --pages concepts/ex
 要被移动到 wiki 生成的目录中，也不需要迁移到完整 frontmatter schema。流程是 read-only。
 
 ```bash
-obsidian-wiki context-pack "authentication architecture" --budget 8000
-obsidian-wiki context-pack --recent --budget 4000
-obsidian-wiki context-pack "release notes" --budget 8000 --public-only
+graph-wiki context-pack "authentication architecture" --budget 8000
+graph-wiki context-pack --recent --budget 4000
+graph-wiki context-pack "release notes" --budget 8000 --public-only
 ```
 
 省略 `--budget` 会使用预设的 8000 个估算 token。
@@ -167,17 +171,17 @@ obsidian-wiki context-pack "release notes" --budget 8000 --public-only
 | `sessions-name --from FILE` | 为主题簇分配可跨重建保留的名称 |
 
 ```bash
-obsidian-wiki sessions-build                       # 冷启动约 3 秒，增量不到 1 秒
-obsidian-wiki sessions-build --full --verbose      # 忽略缓存，重新读取全部会话
-obsidian-wiki sessions-build --since 2026-01-01 --skip archived,scratch
-obsidian-wiki sessions-build --k 12 --min-sim 0.12 --mutual --half-life 60
+graph-wiki sessions-build                       # 冷启动约 3 秒，增量不到 1 秒
+graph-wiki sessions-build --full --verbose      # 忽略缓存，重新读取全部会话
+graph-wiki sessions-build --since 2026-01-01 --skip archived,scratch
+graph-wiki sessions-build --k 12 --min-sim 0.12 --mutual --half-life 60
 
-obsidian-wiki sessions-query "prismor telemetry"
-obsidian-wiki sessions-query "auth bug" --project my-app --cluster 3 --json
+graph-wiki sessions-query "prismor telemetry"
+graph-wiki sessions-query "auth bug" --project my-app --cluster 3 --json
 
-obsidian-wiki sessions-show 01935a40 --neighbors 12
-obsidian-wiki sessions-clusters --unnamed
-obsidian-wiki sessions-name --from names.json      # 或传 - 从 stdin 读取
+graph-wiki sessions-show 01935a40 --neighbors 12
+graph-wiki sessions-clusters --unnamed
+graph-wiki sessions-name --from names.json      # 或传 - 从 stdin 读取
 ```
 
 `sessions-name` 接收一个 JSON 数组，元素形如 `{"id": N, "name": "...", "summary": "..."}`。
@@ -191,8 +195,8 @@ obsidian-wiki sessions-name --from names.json      # 或传 - 从 stdin 读取
 | `sync-setup <remote>` | 配置 GitHub 同步（git init、`.gitignore`、remote） |
 
 ```bash
-obsidian-wiki sync
-obsidian-wiki sync-setup https://github.com/you/my-wiki.git
+graph-wiki sync
+graph-wiki sync-setup https://github.com/you/my-wiki.git
 ```
 
 见 [Configuration → 把 vault 同步到 GitHub](configuration.zh-CN.md#把-vault-同步到-github)。
@@ -207,11 +211,11 @@ obsidian-wiki sync-setup https://github.com/you/my-wiki.git
 | `trust-check` | 对照 ledger 校验置信度值与材料指纹 |
 
 ```bash
-obsidian-wiki trust-record --all --reviewed-at 2026-07-30T10:00:00+00:00 --approved
-obsidian-wiki trust-record --page concepts/rate-limiting.md --reviewed-at <ISO> --approved
-obsidian-wiki trust-check --strict
-obsidian-wiki trust-record @research --all --reviewed-at <ISO> --approved --allow-lifecycle active
-obsidian-wiki trust-check @research --allow-lifecycle active --schema-source /vault/AGENTS.md
+graph-wiki trust-record --all --reviewed-at 2026-07-30T10:00:00+00:00 --approved
+graph-wiki trust-record --page concepts/rate-limiting.md --reviewed-at <ISO> --approved
+graph-wiki trust-check --strict
+graph-wiki trust-record @research --all --reviewed-at <ISO> --approved --allow-lifecycle active
+graph-wiki trust-check @research --allow-lifecycle active --schema-source /vault/AGENTS.md
 ```
 
 `--reviewed-at` 必须带时区。`--approved` 是必填且强制的——它代表你的断言：所有被记录的置信度值都已
@@ -234,7 +238,7 @@ CLI 与配置同时覆盖时使用 `cli+config:<resolved-config-path>`。
 |---|---|
 | `graph-query <vault> <question>` | 只读 wikilink 索引回答问题，不打开页面正文 |
 | `graph-analyse <vault>` | 枢纽节点、社区、意外连接——纯 Python，无额外依赖 |
-| `graph <vault> <subcommand>` | NetworkX 图谱查询：`paths`、`neighbors`、`centrality`、`tag-subgraph`、`communities`、`stats`（需要 `pip install obsidian-wiki[graph]`） |
+| `graph <vault> <subcommand>` | NetworkX 图谱查询：`paths`、`neighbors`、`centrality`、`tag-subgraph`、`communities`、`stats`（需要 `pip install graph-wiki-skills[graph]`） |
 | `batch-plan <vault> <source_dir>` | 把来源目录拆成可并行摄取的批次，并跳过未变更文件 |
 | `cache-check <vault> <sources...>` | 相对 `.manifest.json` 判断哪些来源是新增 / 已修改 / 未变更 |
 | `cache-update <vault> <source>` | 摄取后把来源的 SHA-256 记入 `.manifest.json` |
@@ -260,50 +264,50 @@ CLI 与配置同时覆盖时使用 `cli+config:<resolved-config-path>`。
 | `ast-extract <path>` | 从代码中提取类、函数与 import——无 LLM，无 API 调用 |
 
 ```bash
-obsidian-wiki graph-query /path/to/vault "transformer architecture" --pretty
-obsidian-wiki graph-analyse /path/to/vault --top 30 --pretty
-obsidian-wiki graph /path/to/vault centrality --method pagerank --top 20 --pretty
-obsidian-wiki graph /path/to/vault paths --from concepts/rate-limiting --to entities/nginx --max-len 4
-obsidian-wiki graph /path/to/vault neighbors concepts/rate-limiting --radius 2 --pretty
-obsidian-wiki graph /path/to/vault stats --pretty
-obsidian-wiki batch-plan /path/to/vault ~/research --max-mb 4 --max-files 30
-obsidian-wiki cache-check /path/to/vault ~/research/*.pdf
-obsidian-wiki cache-update /path/to/vault ~/research/paper.pdf --pages concepts/attention.md
-obsidian-wiki text-chunk-plan ~/research/large.md \
+graph-wiki graph-query /path/to/vault "transformer architecture" --pretty
+graph-wiki graph-analyse /path/to/vault --top 30 --pretty
+graph-wiki graph /path/to/vault centrality --method pagerank --top 20 --pretty
+graph-wiki graph /path/to/vault paths --from concepts/rate-limiting --to entities/nginx --max-len 4
+graph-wiki graph /path/to/vault neighbors concepts/rate-limiting --radius 2 --pretty
+graph-wiki graph /path/to/vault stats --pretty
+graph-wiki batch-plan /path/to/vault ~/research --max-mb 4 --max-files 30
+graph-wiki cache-check /path/to/vault ~/research/*.pdf
+graph-wiki cache-update /path/to/vault ~/research/paper.pdf --pages concepts/attention.md
+graph-wiki text-chunk-plan ~/research/large.md \
   --chunk-strategy adaptive_sections --min-budget 24000 --pretty
-obsidian-wiki text-chunk-strategies --pretty
-obsidian-wiki text-chunk-read ~/research/large.md \
+graph-wiki text-chunk-strategies --pretty
+graph-wiki text-chunk-read ~/research/large.md \
   --start-byte 0 --end-byte 47231 --expect-hash sha256:9e9f...
-obsidian-wiki text-document-plan ~/research \
+graph-wiki text-document-plan ~/research \
   --vault ~/brain \
   --target-budget 48000 --min-budget 24000 --hard-budget 64000 \
   --chunk-strategy adaptive_sections --strategy-options-file /tmp/chunk-options.json \
   --output /tmp/document-plan.json --pretty
-obsidian-wiki text-document-read /tmp/document-plan.json --document-id doc-...
-obsidian-wiki text-document-commit /tmp/document-plan.json \
+graph-wiki text-document-read /tmp/document-plan.json --document-id doc-...
+graph-wiki text-document-commit /tmp/document-plan.json \
   --document-id doc-... --created-page concepts/example.md --pretty
 
 # 可恢复的 wiki-folder-ingest Job/Packet 命令
-obsidian-wiki text-ingest-plan ~/research --vault ~/brain --output /tmp/job-plan.json --pretty
-obsidian-wiki text-ingest-status ~/brain/_meta/ingest-jobs/<job-id> --pretty
-obsidian-wiki text-ingest-extract ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-plan ~/research --vault ~/brain --output /tmp/job-plan.json --pretty
+graph-wiki text-ingest-status ~/brain/_meta/ingest-jobs/<job-id> --pretty
+graph-wiki text-ingest-extract ~/brain/_meta/ingest-jobs/<job-id> \
   --max-workers 4 --worker-timeout-seconds 3600 \
   --output /tmp/packet-extraction-report.json --pretty
-obsidian-wiki text-ingest-report ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-report ~/brain/_meta/ingest-jobs/<job-id> \
   --output /tmp/job-completion.json \
   --markdown-output /tmp/folder-ingest-completion.md --pretty
-obsidian-wiki text-ingest-packet-check ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json
-obsidian-wiki text-ingest-unit-advance ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json \
+graph-wiki text-ingest-packet-check ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json
+graph-wiki text-ingest-unit-advance ~/brain/_meta/ingest-jobs/<job-id> packets/<packet>.json \
   --mode staged --artifact _staging/concepts/example.md
-obsidian-wiki text-ingest-inline-check ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-inline-check ~/brain/_meta/ingest-jobs/<job-id> \
   --source-id <source-id> --unit-id <unit-id>
-obsidian-wiki text-ingest-inline-advance ~/brain/_meta/ingest-jobs/<job-id> \
+graph-wiki text-ingest-inline-advance ~/brain/_meta/ingest-jobs/<job-id> \
   --source-id <source-id> --unit-id <unit-id> --mode direct
-obsidian-wiki wiki-setup-contract-build core --output-dir /tmp/wiki-setup
-obsidian-wiki wiki-knowledge-pack-apply --knowledge-pack default --vault ~/brain --output-dir /tmp/wiki-setup
-obsidian-wiki wiki-route-resolve --routing page-contract.json \
+graph-wiki wiki-setup-contract-build core --output-dir /tmp/wiki-setup
+graph-wiki wiki-knowledge-pack-apply --knowledge-pack default --vault ~/brain --output-dir /tmp/wiki-setup
+graph-wiki wiki-route-resolve --routing page-contract.json \
   --page-type concept --slug example
-obsidian-wiki ast-extract ./src --pretty
+graph-wiki ast-extract ./src --pretty
 ```
 
 `wiki-knowledge-pack-apply --knowledge-pack <name>` 选择一整套 Knowledge Pack。它的 `profile.json`
@@ -350,7 +354,7 @@ Packet 提取可以并发进行，而所有页面归并仍然是串行的。`wik
 受信任的扩展包在它的 `pyproject.toml` 中注册一个 entry point：
 
 ```toml
-[project.entry-points."obsidian_wiki.text_chunk_strategies"]
+[project.entry-points."graph_wiki.text_chunk_strategies"]
 my_sections = "my_wiki_extension.chunking:pack_sections"
 ```
 
@@ -358,7 +362,7 @@ my_sections = "my_wiki_extension.chunking:pack_sections"
 
 ```python
 from collections.abc import Iterable
-from obsidian_wiki.text_chunker import ChunkStrategyContext, TextBlock
+from graph_wiki.text_chunker import ChunkStrategyContext, TextBlock
 
 def pack_sections(
     blocks: Iterable[TextBlock], context: ChunkStrategyContext
@@ -377,8 +381,8 @@ def pack_sections(
 `wiki-route-resolve` 会在已安装的包或源码检出中定位各自的辅助脚本与内置资源。因此 workflow 不依赖
 `.cac/...` 路径，也不依赖调用者的当前工作目录。带有 `{"mode":"config"}` 的 `vault-input.json` 会让
 `wiki-context-resolve` 加载 wiki-setup 配置的 vault：优先一个可选的 Named Vault Profile（`profile`），
-否则取包含 `OBSIDIAN_VAULT_PATH` 的最近 `.env`，再否则取配置文件。配置目录默认为 `~/.obsidian-wiki`，
-可用 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移。显式批准的 vault
+否则取包含 `OBSIDIAN_VAULT_PATH` 的最近 `.env`，再否则取配置文件。配置目录默认为 `~/.graph-wiki`；
+当项目 `.env` 来自随附模板（其中设置了 `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`）时为 `<project>/.graph-wiki`。显式批准的 vault
 路径使用 `{"mode":"interactive","vault_path":"/absolute/path"}`。
 
 大多数命令都接受 `--json` 与/或 `--pretty`，以输出机器可读结果。

@@ -1,4 +1,4 @@
-<h1 align="center">obsidian-wiki</h1>
+<h1 align="center">graph-wiki</h1>
 
 <p align="center"><b>一个由 AI agent 陪你一起养大的数字大脑。</b></p>
 
@@ -8,18 +8,18 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/obsidian-wiki/"><img src="https://img.shields.io/pypi/v/obsidian-wiki?color=blue" alt="PyPI" /></a>
-  <a href="https://deepwiki.com/wenxueliu/obsidian-wiki"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
-  <a href="https://github.com/wenxueliu/obsidian-wiki/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
+  <a href="https://pypi.org/project/graph-wiki-skills/"><img src="https://img.shields.io/pypi/v/graph-wiki-skills?color=blue" alt="PyPI" /></a>
+  <a href="https://deepwiki.com/wenxueliu/graph-wiki"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  <a href="https://github.com/wenxueliu/graph-wiki/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
   <a href="https://x.com/_ar9av"><img src="https://img.shields.io/badge/@__ar9av-black?logo=x&logoColor=white" alt="X" /></a>
 </p>
 
 <p align="center">
-  <img width="768" alt="obsidian-wiki" src="https://github.com/user-attachments/assets/b44cf63b-3197-4fb1-8e18-dbc9a39f27a7" />
+  <img width="768" alt="graph-wiki" src="https://github.com/user-attachments/assets/b44cf63b-3197-4fb1-8e18-dbc9a39f27a7" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/wenxueliu/obsidian-wiki/blob/main/README.md">English</a> | 简体中文
+  <a href="https://github.com/wenxueliu/graph-wiki/blob/main/README.md">English</a> | 简体中文
 </p>
 
 ---
@@ -30,14 +30,14 @@
 
 **你的第二大脑。你的 AI agent 让它持续成长。**
 
-这里每个 skill 都是一个 markdown 文件，任何 agent 都能读取并执行，包括 Claude Code、Cursor、Codex、Windsurf、Gemini CLI，以及[更多](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/agents.md)。确定性的本地工具负责哈希与受限文本区段；不需要托管 runtime、API key，也不绑任何厂商。
+这里每个 skill 都是一个 markdown 文件，任何 agent 都能读取并执行，包括 Claude Code、Cursor、Codex、Windsurf、Gemini CLI，以及[更多](https://github.com/wenxueliu/graph-wiki/blob/main/docs/agents.md)。确定性的本地工具负责哈希与受限文本区段；不需要托管 runtime、API key，也不绑任何厂商。
 
 ## 60 秒上手
 
 ```bash
-pip install obsidian-wiki
+pip install graph-wiki-skills
 cd /path/to/your/project
-obsidian-wiki setup --vault ~/brain
+graph-wiki setup --vault ~/brain
 ```
 
 Setup 只会把 skills 安装到当前项目。接着在你的 agent 里打开该项目，说 **"set up my wiki"**。
@@ -45,10 +45,10 @@ Setup 只会把 skills 安装到当前项目。接着在你的 agent 里打开�
 不想碰终端？把下面这行交给你的 agent，它会全部处理好：
 
 ```text
-https://github.com/wenxueliu/obsidian-wiki — set up my wiki
+https://github.com/wenxueliu/graph-wiki — set up my wiki
 ```
 
-其他安装方式（`git clone`、Skills CLI、多个 vault）请见 **[安装说明](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/installation.md)**（英文）
+其他安装方式（`git clone`、Skills CLI、多个 vault）请见 **[安装说明](https://github.com/wenxueliu/graph-wiki/blob/main/docs/installation.md)**（英文）
 
 ## 你实际会做的事
 
@@ -73,8 +73,8 @@ https://github.com/wenxueliu/obsidian-wiki — set up my wiki
 **找出那个你叫不出名字的 session。**
 
 ```bash
-obsidian-wiki sessions-build
-obsidian-wiki sessions-query "the auth bug with the weird retry loop"
+graph-wiki sessions-build
+graph-wiki sessions-query "the auth bug with the weird retry loop"
 ```
 
 **维持它的品质。** vault 自己会变乱，这些 skill 负责整理。
@@ -86,14 +86,14 @@ obsidian-wiki sessions-query "the auth bug with the weird retry loop"
 /wiki-status          # 已导入什么、还有什么待处理、枢纽页面在哪
 ```
 
-全部 50 个 skill 请见 **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)**（英文）
+全部 50 个 skill 请见 **[Skills Reference](https://github.com/wenxueliu/graph-wiki/blob/main/docs/skills.md)**（英文）
 
 ## 看见它
 
 在 Obsidian 打开 vault，然后开启 graph view（Cmd/Ctrl+P → "Open graph view"）。说 **"color my graph"**，它就会依照 tag、category 或 visibility 为节点上色。
 
 <p align="center">
-  <img width="900" alt="obsidian-wiki graph view" src="https://github.com/user-attachments/assets/f2980840-4b5b-438a-8264-5ad1de42f483" />
+  <img width="900" alt="graph-wiki graph view" src="https://github.com/user-attachments/assets/f2980840-4b5b-438a-8264-5ad1de42f483" />
 </p>
 
 你也可以把整个图谱导出成 `graph.json`、GraphML（Gephi/yEd）、Neo4j Cypher，或一个自带所有资源的交互式 `graph.html`。
@@ -107,7 +107,7 @@ obsidian-wiki sessions-query "the auth bug with the weird retry loop"
 - **它是你的。** 就是文件夹里的纯 markdown。推到私人 repo、用 Obsidian 打开、用 grep 搜、直接删掉都行。没有服务、没有锁定，什么都不会离开你的机器。
 - **在你原本工作的地方就能用。** 一个 bundled `.skills/` 目录，链接到项目内每个选定的 agent。
 
-更多细节请见 **[Architecture](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/architecture.md)**（英文）
+更多细节请见 **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.md)**（英文）
 
 ## 文档
 
@@ -115,19 +115,19 @@ obsidian-wiki sessions-query "the auth bug with the weird retry loop"
 
 | | |
 |---|---|
-| **[Installation](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/installation.md)** | pip、clone、由 agent 设置、多个 vault |
-| **[Skills Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/skills.md)** | 全部 50 个 skill 与其 slash command |
-| **[Agent Compatibility](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/agents.md)** | 完整兼容性表格与各 agent 手动设置 |
-| **[CLI Reference](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/cli.md)** | 每一个 `obsidian-wiki` 子命令 |
-| **[Configuration](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/configuration.md)** | 设置变量、QMD 语义搜索、`_raw/` 暂存区、GitHub 同步 |
-| **[Architecture](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/architecture.md)** | 四个导入阶段、vault 结构、我们在 Karpathy 模式上加了什么 |
-| **[Session Brain](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/session-brain.md)** | 建立在 agent session 历史之上的主题图谱 |
-| **[Contributing](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/contributing.md)** | 新增 skill、维持中英双语文档同步 |
+| **[Installation](https://github.com/wenxueliu/graph-wiki/blob/main/docs/installation.md)** | pip、clone、由 agent 设置、多个 vault |
+| **[Skills Reference](https://github.com/wenxueliu/graph-wiki/blob/main/docs/skills.md)** | 全部 50 个 skill 与其 slash command |
+| **[Agent Compatibility](https://github.com/wenxueliu/graph-wiki/blob/main/docs/agents.md)** | 完整兼容性表格与各 agent 手动设置 |
+| **[CLI Reference](https://github.com/wenxueliu/graph-wiki/blob/main/docs/cli.md)** | 每一个 `graph-wiki` 子命令 |
+| **[Configuration](https://github.com/wenxueliu/graph-wiki/blob/main/docs/configuration.md)** | 设置变量、QMD 语义搜索、`_raw/` 暂存区、GitHub 同步 |
+| **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.md)** | 四个导入阶段、vault 结构、我们在 Karpathy 模式上加了什么 |
+| **[Session Brain](https://github.com/wenxueliu/graph-wiki/blob/main/docs/session-brain.md)** | 建立在 agent session 历史之上的主题图谱 |
+| **[Contributing](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.md)** | 新增 skill、维持中英双语文档同步 |
 
 ## 参与贡献
 
-这个项目还很早期。skills 是能用的，但还有很多空间让这个大脑变得更聪明：更好的交叉引用、更精准的去重、支撑更大的 vault、更多导入来源。如果你有一个工作流程适合做成 skill，[欢迎提交 PR](https://github.com/wenxueliu/obsidian-wiki/blob/main/docs/contributing.md)。
+这个项目还很早期。skills 是能用的，但还有很多空间让这个大脑变得更聪明：更好的交叉引用、更精准的去重、支撑更大的 vault、更多导入来源。如果你有一个工作流程适合做成 skill，[欢迎提交 PR](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.md)。
 
 ## 授权
 
-[MIT](https://github.com/wenxueliu/obsidian-wiki/blob/main/LICENSE)
+[MIT](https://github.com/wenxueliu/graph-wiki/blob/main/LICENSE)

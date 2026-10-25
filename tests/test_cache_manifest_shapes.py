@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.cache import (
+from graph_wiki.cache import (
     check_sources,
     compute_hash,
     update_source,
@@ -22,7 +22,7 @@ from obsidian_wiki.cache import (
     _load_raw,
     _manifest_path,
 )
-from obsidian_wiki.text_chunker import CHUNKER_VERSION, DEFAULT_CHUNK_STRATEGY
+from graph_wiki.text_chunker import CHUNKER_VERSION, DEFAULT_CHUNK_STRATEGY
 
 
 @pytest.fixture

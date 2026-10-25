@@ -34,11 +34,11 @@ class InlineVaultTargetingDocsTest(unittest.TestCase):
     def test_agent_bootstrap_files_mention_named_vault_routing(self) -> None:
         for relpath in [
             "AGENTS.md",
-            ".agent/rules/obsidian-wiki.md",
-            ".cursor/rules/obsidian-wiki.mdc",
+            ".agent/rules/graph-wiki.md",
+            ".cursor/rules/graph-wiki.mdc",
             ".github/copilot-instructions.md",
-            ".kiro/steering/obsidian-wiki.md",
-            ".windsurf/rules/obsidian-wiki.md",
+            ".kiro/steering/graph-wiki.md",
+            ".windsurf/rules/graph-wiki.md",
             "docs/installation.md",
             "SETUP.md",
         ]:
@@ -64,8 +64,8 @@ class InlineVaultTargetingDocsTest(unittest.TestCase):
         wiki_context = self.read(".skills/wiki-context/SKILL.md")
 
         self.assertIn("严格按 `@name` 指定 config", wiki_context)
-        self.assertIn("再到全局 `~/.obsidian-wiki/config`", wiki_context)
-        self.assertNotIn("Prefer `~/.obsidian-wiki/config`", wiki_context)
+        self.assertIn("再到全局 `~/.graph-wiki/config`", wiki_context)
+        self.assertNotIn("Prefer `~/.graph-wiki/config`", wiki_context)
 
 
 if __name__ == "__main__":

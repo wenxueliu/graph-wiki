@@ -11,8 +11,8 @@ document 由一个由父 Agent 派发的、全新上下文的 `general-purpose` 
 
 实现对应关系：
 
-- 确定性分区：`obsidian_wiki/text_chunker.py`；
-- 最小 Job 与 Packet 契约：`obsidian_wiki/ingest_pipeline.py`；
+- 确定性分区：`graph_wiki/text_chunker.py`；
+- 最小 Job 与 Packet 契约：`graph_wiki/ingest_pipeline.py`；
 - CLI 物化边界：`text-chunk-plan`、`text-chunk-read`、`text-chunk-strategies`；
 - 轻量 document 规范化：`text-document-plan`、`text-document-read`、`text-document-commit`；
 - 可恢复 Job 生命周期：`text-ingest-plan`、`text-ingest-status`、`text-ingest-extract`、
@@ -115,7 +115,7 @@ wiki-packet-integrate
 ### 4.2 独立的 `text-chunker`
 
 分区器是确定性基础设施，不是 Agent Skill。它属于一个可复用的 Python 模块，暂定为
-`obsidian_wiki/text_chunker.py`。
+`graph_wiki/text_chunker.py`。
 
 它校验编码、扫描结构、寻找语义边界、强制执行硬预算、产出行与字节区间、物化一个被请求的区间，并报告
 强制切分。它不做摘要、不做推断、不调用模型、不创建 Packet，也不知道 vault 的存在。
@@ -459,25 +459,25 @@ V1 用路径加内容哈希作为身份。重命名侦测推迟。
 
 ```bash
 # 独立分区器（wiki-folder-ingest 也使用）
-obsidian-wiki text-chunk-plan <source> --pretty
-obsidian-wiki text-chunk-read <source> \
+graph-wiki text-chunk-plan <source> --pretty
+graph-wiki text-chunk-read <source> \
   --start-byte <N> --end-byte <N> --expect-hash sha256:<hex>
-obsidian-wiki text-chunk-strategies --pretty
+graph-wiki text-chunk-strategies --pretty
 
 # 轻量 wiki-ingest 路径（无 Job，无 Packet）
-obsidian-wiki text-document-plan <source>
-obsidian-wiki text-document-read <plan.json> --document-id <id>
-obsidian-wiki text-document-commit <plan.json> --document-id <id>
+graph-wiki text-document-plan <source>
+graph-wiki text-document-read <plan.json> --document-id <id>
+graph-wiki text-document-commit <plan.json> --document-id <id>
 
 # 可恢复的 wiki-folder-ingest Job 生命周期
-obsidian-wiki text-ingest-plan <source> --vault <vault>
-obsidian-wiki text-ingest-status <job-dir>
-obsidian-wiki text-ingest-extract <job-dir> --max-workers 4
-obsidian-wiki text-ingest-report <job-dir>
-obsidian-wiki text-ingest-packet-check <job-dir> <packet.json>
-obsidian-wiki text-ingest-unit-advance <job-dir> <packet.json>
-obsidian-wiki text-ingest-inline-check <job-dir> --source-id <id> --unit-id <id>
-obsidian-wiki text-ingest-inline-advance <job-dir> --source-id <id> --unit-id <id>
+graph-wiki text-ingest-plan <source> --vault <vault>
+graph-wiki text-ingest-status <job-dir>
+graph-wiki text-ingest-extract <job-dir> --max-workers 4
+graph-wiki text-ingest-report <job-dir>
+graph-wiki text-ingest-packet-check <job-dir> <packet.json>
+graph-wiki text-ingest-unit-advance <job-dir> <packet.json>
+graph-wiki text-ingest-inline-check <job-dir> --source-id <id> --unit-id <id>
+graph-wiki text-ingest-inline-advance <job-dir> --source-id <id> --unit-id <id>
 ```
 
 这些 skill 编排上述辅助命令与既有的 cache/validation 命令。V1 不增加通用队列管理 CLI。
@@ -554,7 +554,7 @@ Job 与 manifest 写入使用临时文件加原子替换。永久 manifest 最�
 
 ### Phase 1 —— 独立分区器
 
-- 实现 `obsidian_wiki/text_chunker.py`；
+- 实现 `graph_wiki/text_chunker.py`；
 - 添加 `text-chunk-plan` 与 `text-chunk-read`；
 - 添加 plan 序列化与校验；
 - 证明边界与预算不变量。

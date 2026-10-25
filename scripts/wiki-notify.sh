@@ -2,15 +2,15 @@
 # Source this from your shell rc file to get wiki freshness reminders on terminal open.
 #
 # Setup (shell-specific):
-#   zsh/bash:  source /path/to/obsidian-wiki/scripts/wiki-notify.sh
-#   fish:      bass source /path/to/obsidian-wiki/scripts/wiki-notify.sh
+#   zsh/bash:  source /path/to/graph-wiki/scripts/wiki-notify.sh
+#   fish:      bass source /path/to/graph-wiki/scripts/wiki-notify.sh
 #              (or copy _wiki_notify logic natively using fish syntax)
 #
-# State is vault-scoped under ~/.obsidian-wiki/state/<vault-id>/
+# State is vault-scoped under ~/.graph-wiki/state/<vault-id>/
 # Multiple vaults are supported — all stale vaults are shown.
 
 _wiki_notify() {
-  local state_base="$HOME/.obsidian-wiki/state"
+  local state_base="$HOME/.graph-wiki/state"
   [[ -d "$state_base" ]] || return
 
   local now age_s age_h stale last vault_path shown=0

@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "obsidian-wiki"
+name = "graph-wiki-skills"
 dynamic = ["version"]
 description = "A skill-based framework for building and maintaining an AI-maintained Obsidian knowledge base (Karpathy's LLM Wiki pattern) across any AI coding agent."
 readme = "README.md"
@@ -40,27 +40,27 @@ ast = ["tree-sitter>=0.21", "tree-sitter-languages>=1.10"]
 graph = ["leidenalg>=0.10", "igraph>=0.11", "networkx>=3.0"]
 
 [project.urls]
-Homepage = "https://github.com/wenxueliu/obsidian-wiki"
-Repository = "https://github.com/wenxueliu/obsidian-wiki"
-Issues = "https://github.com/wenxueliu/obsidian-wiki/issues"
+Homepage = "https://github.com/wenxueliu/graph-wiki"
+Repository = "https://github.com/wenxueliu/graph-wiki"
+Issues = "https://github.com/wenxueliu/graph-wiki/issues"
 
 [project.scripts]
-obsidian-wiki = "obsidian_wiki.cli:main"
+graph-wiki = "graph_wiki.cli:main"
 
-# Version is derived from the git tag (CalVer, e.g. v2026.05.2 -> 2026.5.2),
-# matching the repo's release tags. Tagging a release is the version bump.
+# Version is derived from the git tag (SemVer, e.g. v0.2.1 -> 0.2.1), matching
+# the graph-wiki-skills release line. Tagging a release is the version bump.
 [tool.hatch.version]
 source = "vcs"
 
 # ── Build configuration ──────────────────────────────────────────────────────
-# The Python package is just the thin CLI in obsidian_wiki/. The actual product
+# The Python package is just the thin CLI in graph_wiki/. The actual product
 # is the markdown skill content under .skills/ plus the agent bootstrap files.
-# We force-include those into the wheel under obsidian_wiki/_data/ so the
+# We force-include those into the wheel under graph_wiki/_data/ so the
 # installed package is self-contained and the CLI can install skills without a
 # cloned repo. Source paths stay at the repo root (single source of truth).
 
 [tool.hatch.build.targets.wheel]
-packages = ["obsidian_wiki"]
+packages = ["graph_wiki"]
 # force-include copies straight from the working tree, not a VCS-filtered
 # view — without this, a local `scripts/__pycache__` picked up stray .pyc
 # files into the published wheel.
@@ -70,23 +70,23 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
-".skills" = "obsidian_wiki/_data/skills"
-"workflows" = "obsidian_wiki/_data/workflows"
-"knowledge-packs" = "obsidian_wiki/_data/knowledge-packs"
-"scripts" = "obsidian_wiki/_data/scripts"
-".claude/hooks/wiki-stop-capture.sh" = "obsidian_wiki/_data/hooks/wiki-stop-capture.sh"
-".claude/hooks/wiki-stop-capture.ps1" = "obsidian_wiki/_data/hooks/wiki-stop-capture.ps1"
-".env.example" = "obsidian_wiki/_data/.env.example"
-"AGENTS.md" = "obsidian_wiki/_data/bootstrap/AGENTS.md"
-".cursor/rules/obsidian-wiki.mdc" = "obsidian_wiki/_data/bootstrap/cursor/rules/obsidian-wiki.mdc"
-".windsurf/rules/obsidian-wiki.md" = "obsidian_wiki/_data/bootstrap/windsurf/rules/obsidian-wiki.md"
-".kiro/steering/obsidian-wiki.md" = "obsidian_wiki/_data/bootstrap/kiro/steering/obsidian-wiki.md"
-".agent/rules/obsidian-wiki.md" = "obsidian_wiki/_data/bootstrap/agent/rules/obsidian-wiki.md"
-".agent/workflows/obsidian-wiki.md" = "obsidian_wiki/_data/bootstrap/agent/workflows/obsidian-wiki.md"
-".github/copilot-instructions.md" = "obsidian_wiki/_data/bootstrap/github/copilot-instructions.md"
+".skills" = "graph_wiki/_data/skills"
+"workflows" = "graph_wiki/_data/workflows"
+"knowledge-packs" = "graph_wiki/_data/knowledge-packs"
+"scripts" = "graph_wiki/_data/scripts"
+".claude/hooks/wiki-stop-capture.sh" = "graph_wiki/_data/hooks/wiki-stop-capture.sh"
+".claude/hooks/wiki-stop-capture.ps1" = "graph_wiki/_data/hooks/wiki-stop-capture.ps1"
+".env.example" = "graph_wiki/_data/.env.example"
+"AGENTS.md" = "graph_wiki/_data/bootstrap/AGENTS.md"
+".cursor/rules/graph-wiki.mdc" = "graph_wiki/_data/bootstrap/cursor/rules/graph-wiki.mdc"
+".windsurf/rules/graph-wiki.md" = "graph_wiki/_data/bootstrap/windsurf/rules/graph-wiki.md"
+".kiro/steering/graph-wiki.md" = "graph_wiki/_data/bootstrap/kiro/steering/graph-wiki.md"
+".agent/rules/graph-wiki.md" = "graph_wiki/_data/bootstrap/agent/rules/graph-wiki.md"
+".agent/workflows/graph-wiki.md" = "graph_wiki/_data/bootstrap/agent/workflows/graph-wiki.md"
+".github/copilot-instructions.md" = "graph_wiki/_data/bootstrap/github/copilot-instructions.md"
 
 [tool.hatch.build.targets.sdist]
-# Prune build noise and the committed agent symlink mirrors (the CLI
+# Prune build noise and any locally generated agent skill mirrors (the CLI
 # regenerates those; left in, hatchling's VCS walker treats them as the
 # canonical path for each skill and drops the real .skills/<name> files).
 exclude = [

@@ -1,6 +1,6 @@
 ---
 name: wiki-setup
-description: "经人工确认后安全初始化或修复 Obsidian wiki 的配置、Knowledge Pack、核心文件与可选集成"
+description: "经人工确认后安全初始化或修复 Graph Wiki 的配置、Knowledge Pack、核心文件与可选集成"
 ---
 
 # wiki-setup
@@ -17,7 +17,7 @@ description: "经人工确认后安全初始化或修复 Obsidian wiki 的配置
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow wiki-setup`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow wiki-setup`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -47,7 +47,7 @@ setup invocation、source CWD 与可能存在的 config/vault metadata
 
 调用参数：
 
-- `requested_keys`: OBSIDIAN_VAULT_PATH,OBSIDIAN_SOURCES_DIR,CLAUDE_HISTORY_PATH,QMD_WIKI_COLLECTION,QMD_PAPERS_COLLECTION,QMD_TRANSPORT,QMD_CLI_SEARCH_MODE,WIKI_TOKEN_WARN_THRESHOLD,WIKI_STAGED_WRITES,WIKI_FOLDER_INGEST_MAX_EXTRACTION_WORKERS,WIKI_TEXT_DIRECT_EXTRACT_MAX_BYTES,WIKI_TEXT_CHUNK_TARGET_BYTES,WIKI_TEXT_CHUNK_MIN_BYTES,WIKI_TEXT_CHUNK_HARD_MAX_BYTES,WIKI_TEXT_CHUNK_STRATEGY,WIKI_TEXT_CHUNK_OPTIONS,OBSIDIAN_WIKI_REPO
+- `requested_keys`: OBSIDIAN_VAULT_PATH,OBSIDIAN_SOURCES_DIR,CLAUDE_HISTORY_PATH,QMD_WIKI_COLLECTION,QMD_PAPERS_COLLECTION,QMD_TRANSPORT,QMD_CLI_SEARCH_MODE,WIKI_TOKEN_WARN_THRESHOLD,WIKI_STAGED_WRITES,WIKI_FOLDER_INGEST_MAX_EXTRACTION_WORKERS,WIKI_TEXT_DIRECT_EXTRACT_MAX_BYTES,WIKI_TEXT_CHUNK_TARGET_BYTES,WIKI_TEXT_CHUNK_MIN_BYTES,WIKI_TEXT_CHUNK_HARD_MAX_BYTES,WIKI_TEXT_CHUNK_STRATEGY,WIKI_TEXT_CHUNK_OPTIONS,GRAPH_WIKI_REPO
 
 - `optional_reads`: existing config, vault metadata, AGENTS.md, active knowledge pack metadata, QMD collection metadata
 
@@ -191,7 +191,7 @@ config + config-report.md
 
 #### 执行
 
-根据 approved binding 和冻结的 `WRITING.md` 模板，在目标缺失时创建配置目录内的 Writing Profile（默认 `~/.obsidian-wiki`，可由 `OBSIDIAN_WIKI_CONFIG_DIR` 迁移）；目标已存在时保持原文并记录 preserved。
+根据 approved binding 和冻结的 `WRITING.md` 模板，在目标缺失时创建配置目录内的 Writing Profile。配置目录由 `GRAPH_WIKI_CONFIG_DIR`（进程环境变量或最近的 `.env`）决定；setup 从 `.env.example` 创建的 `.env` 默认设为项目内的 `.graph-wiki`，未设置时回退 `~/.graph-wiki`。目标已存在时保持原文并记录 preserved。
 
 写 `writing-profile-report.md`，记录 target 与 created/preserved 状态。
 
@@ -222,13 +222,13 @@ WRITING.md（仅缺失时）+ writing-profile-report.md
 使用 approved Knowledge Pack name、canonical vault 和 artifacts 目录运行 bundled Knowledge Pack copier：
 
 ```bash
-obsidian-wiki wiki-knowledge-pack-apply \
+graph-wiki wiki-knowledge-pack-apply \
   --knowledge-pack "<approved-knowledge-pack>" \
   --vault "<canonical-vault>" \
   --output-dir "{{artifacts_dir}}"
 ```
 
-console script 不在 PATH 时使用等价的 `python3 -m obsidian_wiki wiki-knowledge-pack-apply ...`。同名 contract refresh 仅在 approved binding 含该动作时追加 `--refresh-knowledge-pack-marker`。
+console script 不在 PATH 时使用等价的 `python3 -m graph_wiki wiki-knowledge-pack-apply ...`。同名 contract refresh 仅在 approved binding 含该动作时追加 `--refresh-knowledge-pack-marker`。
 
 copier 按 missing-only policy 生成 Vault Layout 目录、预制文件、绑定 Profile/Layout/Routing hashes 的 `_meta/knowledge-pack.json` 和 `knowledge-pack-apply-report.json`。Profile 与 Layout 在当前版本一对一发布；setup 不执行内容级领域识别。
 
@@ -287,7 +287,7 @@ approved-setup.json + setup-contract.json/md + config-report.md + writing-profil
 从已批准 config、Writing Profile、owner rules、taxonomy、当前 Knowledge Pack marker 与 bundled Knowledge Pack 生成一次稳定 compiled context。先在 artifacts_dir 写 `compiled-vault-input.json`，再运行：
 
 ```bash
-obsidian-wiki wiki-context-resolve \
+graph-wiki wiki-context-resolve \
   --input "{{artifacts_dir}}/compiled-vault-input.json" \
   --source-cwd "<approved-source-cwd>" \
   --requested-keys "<all configured stable context keys>" \

@@ -1,7 +1,7 @@
 ---
 name: vault-skill-factory
 description: >
-  Generate a portable, self-contained Agent Skill from mature, curated Obsidian wiki pages —
+  Generate a portable, self-contained Agent Skill from mature, curated Graph Wiki pages —
   turning a cluster of verified knowledge into a reusable "digital expert" (SKILL.md + references/).
   Use this skill when the user says "/vault-skill-factory", "make a skill from my wiki", "turn these
   pages into a skill", "generate an agent skill from my vault", "package my notes on X as a skill",
@@ -31,7 +31,7 @@ conversation into a page; the factory turns a body of pages into a reusable skil
 ## Before You Start
 
 1. **Resolve config** (Config Resolution Protocol in `llm-wiki/SKILL.md`): get `OBSIDIAN_VAULT_PATH`,
-   `OBSIDIAN_WIKI_REPO`, `OBSIDIAN_LINK_FORMAT`, the QMD vars, and:
+   `GRAPH_WIKI_REPO`, `OBSIDIAN_LINK_FORMAT`, the QMD vars, and:
    - `SKILL_FACTORY_OUTPUT_DIR` — where generated skills land. Default:
      `$OBSIDIAN_VAULT_PATH/_generated-skills` (a vault-level, underscore-prefixed *excluded* dir —
      like `_raw`/`_staging`/`_sources`, NOT the `skills/` knowledge category). This co-locates
@@ -102,7 +102,7 @@ one-line-install convention) — still **not** an install, just a manifest.
 
 ## Step 4: Optionally lean on skill-creator
 
-`skill-creator` ships reusable scripts (`$OBSIDIAN_WIKI_REPO/.skills/skill-creator/scripts/`):
+`skill-creator` ships reusable scripts (`$GRAPH_WIKI_REPO/.skills/skill-creator/scripts/`):
 - `improve_description.py` — tighten the generated `description` for better triggering.
 - `package_skill.py` — bundle the skill dir into a distributable archive.
 - `quick_validate.py` — sanity-check the skill's structure.
@@ -119,7 +119,7 @@ Tell the user:
   ```
   ln -s ../../.skills/<name> <repo>/.claude/skills/<name>   # after copying <name>/ into .skills/, sans SKILL_FACTORY.md
   ```
-  Note explicitly: review first; do not run `python3 setup.py` (it fans skills into global dirs); never global-install without explicit agreement.
+  Note explicitly: review first; do not run `python3 setup.py` (installing is the user's call, not part of skill generation); never global-install without explicit agreement.
 
 Do **not** install it yourself. Do not write to `.skills/`. Done.
 

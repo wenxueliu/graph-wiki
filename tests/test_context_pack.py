@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.context_pack import (
+from graph_wiki.context_pack import (
     ContextError,
     build_context_pack,
     compress_body,

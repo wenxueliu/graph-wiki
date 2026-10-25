@@ -8,10 +8,10 @@ Session brain 在这段历史之上构建一张主题图谱——包括每一份
 `history.jsonl` 中 prompt 保留下来的被修剪会话——让你能找到某件事发生在哪个会话。
 
 ```bash
-obsidian-wiki sessions-build                      # 冷启动约 3 秒，增量不到 1 秒
-obsidian-wiki sessions-query "prismor telemetry"  # 按相关性 × 新鲜度排序
-obsidian-wiki sessions-show <session-id>          # 某个会话及其最近邻居
-obsidian-wiki sessions-clusters                   # 已发现的主题
+graph-wiki sessions-build                      # 冷启动约 3 秒，增量不到 1 秒
+graph-wiki sessions-query "prismor telemetry"  # 按相关性 × 新鲜度排序
+graph-wiki sessions-show <session-id>          # 某个会话及其最近邻居
+graph-wiki sessions-clusters                   # 已发现的主题
 open ~/.claude/session-brain/graph.html           # 交互式图谱、时间滑块、搜索
 ```
 
@@ -47,7 +47,7 @@ Session brain **绝不写入你的 vault**。所有东西都落在 `~/.claude/se
 ## 调整构建
 
 ```bash
-obsidian-wiki sessions-build --k 12 --min-sim 0.12 --mutual
+graph-wiki sessions-build --k 12 --min-sim 0.12 --mutual
 ```
 
 | 参数 | 效果 |
@@ -71,8 +71,8 @@ obsidian-wiki sessions-build --k 12 --min-sim 0.12 --mutual
 ## 查询
 
 ```bash
-obsidian-wiki sessions-query "auth bug" --project my-app --top 20
-obsidian-wiki sessions-query "telemetry" --cluster 3 --since 2026-01-01 --json
+graph-wiki sessions-query "auth bug" --project my-app --top 20
+graph-wiki sessions-query "telemetry" --cluster 3 --since 2026-01-01 --json
 ```
 
 | 参数 | 效果 |

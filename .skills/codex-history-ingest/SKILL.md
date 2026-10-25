@@ -1,7 +1,7 @@
 ---
 name: codex-history-ingest
 description: >
-  Ingest Codex CLI conversation history into the Obsidian wiki. Use this skill when the user wants to mine
+  Ingest Codex CLI conversation history into the Graph Wiki. Use this skill when the user wants to mine
   their past Codex sessions for knowledge, import their ~/.codex folder, extract insights from previous coding
   sessions, or says things like "process my Codex history", "add my Codex conversations to the wiki", or
   "what have I discussed in Codex before". Also triggers when the user mentions .codex sessions, rollout files,
@@ -10,13 +10,13 @@ description: >
 
 # Codex History Ingest — Conversation Mining
 
-You are extracting knowledge from the user's past Codex sessions and distilling it into the Obsidian wiki. Session logs are rich but noisy: focus on durable knowledge, not operational telemetry.
+You are extracting knowledge from the user's past Codex sessions and distilling it into the Graph Wiki. Session logs are rich but noisy: focus on durable knowledge, not operational telemetry.
 
 This skill can be invoked directly or via the `wiki-history-ingest` router (`/wiki-history-ingest codex`).
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `CODEX_HISTORY_PATH` (defaults to `~/.codex`)
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `CODEX_HISTORY_PATH` (defaults to `~/.codex`)
 2. Read `.manifest.json` at the vault root to check what has already been ingested
 3. Read `index.md` at the vault root to understand what the wiki already contains
 

@@ -82,7 +82,7 @@ def test_setup_chain_uses_single_concise_checks() -> None:
                 assert len(match.group("check")) <= 260
 
     setup = (ROOT / "workflows" / "wiki-setup.yaml").read_text(encoding="utf-8")
-    assert "obsidian-wiki doctor" not in setup
+    assert "graph-wiki doctor" not in setup
 
 
 def test_same_basename_json_markdown_producers_use_one_canonical_batch() -> None:

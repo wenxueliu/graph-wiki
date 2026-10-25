@@ -90,14 +90,14 @@ def test_curated_folder_ingest_skill_preserves_workflow_behavior() -> None:
     for behavior in (
         "Coordinator 只持有 metadata 和 artifacts",
         "artifacts-create --workflow wiki-folder-ingest",
-        "obsidian-wiki text-ingest-plan",
+        "graph-wiki text-ingest-plan",
         "wiki-page-contract",
         "text_ingest.max_extraction_workers",
         "wiki-source-text",
         "wiki-packet-integrate",
         "所有 integration 均不并发",
         "wiki-finalize-sources",
-        "obsidian-wiki text-ingest-report",
+        "graph-wiki text-ingest-report",
         "本 skill 不调用它",
         "<promise>done</promise>",
     ):
@@ -111,7 +111,7 @@ def test_lightweight_wiki_ingest_is_skill_only() -> None:
     for behavior in (
         "本 skill 不依赖 workflow",
         "artifacts-create --workflow wiki-ingest",
-        "obsidian-wiki text-document-plan",
+        "graph-wiki text-document-plan",
         "Task",
         "wiki-ingest-document",
         "Wiki writes 严格串行",
@@ -145,7 +145,7 @@ def test_curated_source_text_skill_is_an_isolated_worker_contract() -> None:
     assert "直接调用 `/wiki-source-text`" in adapter
     assert "不得在 adapter 内降级读取 source 或执行 extraction" in adapter
     assert adapter.count("  - id:") == 1
-    assert "obsidian-wiki text-chunk-read" not in adapter
+    assert "graph-wiki text-chunk-read" not in adapter
 
 
 def test_sync_checker_reports_clean_repository_contracts() -> None:

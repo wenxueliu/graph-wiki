@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.ast_extractor import extract, extract_file, extract_directory
+from graph_wiki.ast_extractor import extract, extract_file, extract_directory
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ class TestExtractEntry:
 class TestCLI:
     def test_cli_ast_extract_file(self, tmp_py):
         proc = subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", "ast-extract", str(tmp_py)],
+            [sys.executable, "-m", "graph_wiki.cli", "ast-extract", str(tmp_py)],
             capture_output=True, text=True,
         )
         assert proc.returncode == 0
@@ -159,7 +159,7 @@ class TestCLI:
 
     def test_cli_ast_extract_pretty(self, tmp_py):
         proc = subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", "ast-extract", str(tmp_py), "--pretty"],
+            [sys.executable, "-m", "graph_wiki.cli", "ast-extract", str(tmp_py), "--pretty"],
             capture_output=True, text=True,
         )
         assert proc.returncode == 0
@@ -168,7 +168,7 @@ class TestCLI:
 
     def test_cli_missing_path_exits_nonzero(self, tmp_path):
         proc = subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", "ast-extract", str(tmp_path / "nope.py")],
+            [sys.executable, "-m", "graph_wiki.cli", "ast-extract", str(tmp_path / "nope.py")],
             capture_output=True, text=True,
         )
         assert proc.returncode != 0

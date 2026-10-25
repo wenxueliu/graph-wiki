@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.graph_analysis import (
+from graph_wiki.graph_analysis import (
     analyse_vault,
     dead_ends,
     detect_communities_greedy,
@@ -256,7 +256,7 @@ class TestAnalyseVault:
 class TestGraphAnalyseCLI:
     def test_outputs_json(self, simple_vault):
         proc = subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", "graph-analyse", str(simple_vault)],
+            [sys.executable, "-m", "graph_wiki.cli", "graph-analyse", str(simple_vault)],
             capture_output=True, text=True,
         )
         assert proc.returncode == 0
@@ -265,7 +265,7 @@ class TestGraphAnalyseCLI:
 
     def test_pretty_flag(self, simple_vault):
         proc = subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", "graph-analyse", str(simple_vault), "--pretty"],
+            [sys.executable, "-m", "graph_wiki.cli", "graph-analyse", str(simple_vault), "--pretty"],
             capture_output=True, text=True,
         )
         assert proc.returncode == 0
@@ -273,7 +273,7 @@ class TestGraphAnalyseCLI:
 
     def test_top_flag(self, simple_vault):
         proc = subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", "graph-analyse", str(simple_vault), "--top", "3"],
+            [sys.executable, "-m", "graph_wiki.cli", "graph-analyse", str(simple_vault), "--top", "3"],
             capture_output=True, text=True,
         )
         assert proc.returncode == 0
@@ -282,7 +282,7 @@ class TestGraphAnalyseCLI:
 
     def test_missing_vault_exits_nonzero(self, tmp_path):
         proc = subprocess.run(
-            [sys.executable, "-m", "obsidian_wiki.cli", "graph-analyse", str(tmp_path / "nope")],
+            [sys.executable, "-m", "graph_wiki.cli", "graph-analyse", str(tmp_path / "nope")],
             capture_output=True, text=True,
         )
         assert proc.returncode != 0

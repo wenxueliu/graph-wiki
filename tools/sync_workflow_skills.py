@@ -256,7 +256,7 @@ def render_skill(workflow_path: Path) -> str:
         (
             "进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。"
             "若父 workflow 已传入这两个值，原样继承；否则运行 "
-            f"`obsidian-wiki artifacts-create --workflow {name}`，解析其 JSON 输出后绑定。"
+            f"`graph-wiki artifacts-create --workflow {name}`，解析其 JSON 输出后绑定。"
         ),
         (
             "同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 "

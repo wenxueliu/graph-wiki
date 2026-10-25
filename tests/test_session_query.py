@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from obsidian_wiki import session_graph as sg
-from obsidian_wiki import session_query as sq
+from graph_wiki import session_graph as sg
+from graph_wiki import session_query as sq
 
 NOW = datetime(2026, 7, 25, tzinfo=timezone.utc)
 

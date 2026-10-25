@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from obsidian_wiki import config_paths
+from graph_wiki import config_paths
 
 
 def run_cli(
@@ -16,9 +16,9 @@ def run_cli(
 ) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["HOME"] = str(home)
-    env.pop("OBSIDIAN_WIKI_CONFIG_DIR", None)
+    env.pop("GRAPH_WIKI_CONFIG_DIR", None)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True,
         text=True,
         env=env,
@@ -49,7 +49,7 @@ def test_config_dir_env_override_absolute(
     monkeypatch, tmp_path: Path
 ) -> None:
     target = tmp_path / "cfg"
-    monkeypatch.setenv("OBSIDIAN_WIKI_CONFIG_DIR", str(target))
+    monkeypatch.setenv("GRAPH_WIKI_CONFIG_DIR", str(target))
     monkeypatch.chdir(tmp_path)
 
     assert config_paths.resolve_config_dir(default=tmp_path / "default") == target.resolve()
@@ -58,7 +58,7 @@ def test_config_dir_env_override_absolute(
 def test_config_dir_env_override_relative_to_cwd(
     monkeypatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("OBSIDIAN_WIKI_CONFIG_DIR", ".wiki-config")
+    monkeypatch.setenv("GRAPH_WIKI_CONFIG_DIR", ".wiki-config")
     monkeypatch.chdir(tmp_path)
 
     assert (
@@ -75,14 +75,14 @@ def test_config_dir_from_nearest_dotenv_is_dotenv_relative(
     nested = project / "a" / "b"
     nested.mkdir(parents=True)
     (project / ".env").write_text(
-        "OBSIDIAN_WIKI_CONFIG_DIR=.wiki-config\n", encoding="utf-8"
+        "GRAPH_WIKI_CONFIG_DIR=.wiki-config\n", encoding="utf-8"
     )
-    monkeypatch.delenv("OBSIDIAN_WIKI_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("GRAPH_WIKI_CONFIG_DIR", raising=False)
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.chdir(nested)
 
     assert (
-        config_paths.resolve_config_dir(default=home / ".obsidian-wiki")
+        config_paths.resolve_config_dir(default=home / ".graph-wiki")
         == (project / ".wiki-config").resolve()
     )
 
@@ -92,41 +92,41 @@ def test_process_env_beats_dotenv(monkeypatch, tmp_path: Path) -> None:
     project = home / "project"
     project.mkdir(parents=True)
     (project / ".env").write_text(
-        "OBSIDIAN_WIKI_CONFIG_DIR=from-dotenv\n", encoding="utf-8"
+        "GRAPH_WIKI_CONFIG_DIR=from-dotenv\n", encoding="utf-8"
     )
-    monkeypatch.setenv("OBSIDIAN_WIKI_CONFIG_DIR", str(tmp_path / "from-env"))
+    monkeypatch.setenv("GRAPH_WIKI_CONFIG_DIR", str(tmp_path / "from-env"))
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.chdir(project)
 
     assert config_paths.resolve_config_dir(
-        default=home / ".obsidian-wiki"
+        default=home / ".graph-wiki"
     ) == (tmp_path / "from-env").resolve()
 
 
 def test_config_dir_defaults_when_unset(monkeypatch, tmp_path: Path) -> None:
     home = tmp_path / "home"
     home.mkdir()
-    monkeypatch.delenv("OBSIDIAN_WIKI_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("GRAPH_WIKI_CONFIG_DIR", raising=False)
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.chdir(home)
 
     assert config_paths.resolve_config_dir(
-        default=home / ".obsidian-wiki"
-    ) == (home / ".obsidian-wiki").resolve()
+        default=home / ".graph-wiki"
+    ) == (home / ".graph-wiki").resolve()
 
 
 def test_cli_config_dir_walks_up_from_explicit_start(
     monkeypatch, tmp_path: Path
 ) -> None:
-    from obsidian_wiki import cli
+    from graph_wiki import cli
 
     project = tmp_path / "project"
     nested = project / "nested"
     nested.mkdir(parents=True)
     (project / ".env").write_text(
-        "OBSIDIAN_WIKI_CONFIG_DIR=.wiki-config\n", encoding="utf-8"
+        "GRAPH_WIKI_CONFIG_DIR=.wiki-config\n", encoding="utf-8"
     )
-    monkeypatch.delenv("OBSIDIAN_WIKI_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("GRAPH_WIKI_CONFIG_DIR", raising=False)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
 
     assert cli.config_dir(start=nested) == (project / ".wiki-config").resolve()
@@ -166,7 +166,7 @@ def test_context_pack_reads_named_profile_from_project_config_dir(
         "# Authentication\n\nUse short-lived access tokens.\n", encoding="utf-8"
     )
     (project / ".env").write_text(
-        "OBSIDIAN_WIKI_CONFIG_DIR=.wiki-config\n"
+        "GRAPH_WIKI_CONFIG_DIR=.wiki-config\n"
         "OBSIDIAN_VAULT_PATH=/nonexistent/ignored\n",
         encoding="utf-8",
     )
@@ -194,15 +194,15 @@ def test_doctor_reports_project_dotenv_without_global_config(
 
     assert "OBSIDIAN_VAULT_PATH is not set" not in proc.stdout
     assert str(vault) in proc.stdout
-    assert not (home / ".obsidian-wiki").exists()
+    assert not (home / ".graph-wiki").exists()
 
 
 def test_setup_writes_config_inside_project_config_dir(
     monkeypatch, tmp_path: Path
 ) -> None:
-    import obsidian_wiki.cli as cli
+    import graph_wiki.cli as cli
 
-    monkeypatch.setenv("OBSIDIAN_WIKI_CONFIG_DIR", str(tmp_path / "cfg"))
+    monkeypatch.setenv("GRAPH_WIKI_CONFIG_DIR", str(tmp_path / "cfg"))
     monkeypatch.chdir(tmp_path)
 
     target = cli.write_config(str(tmp_path / "vault"), "default")

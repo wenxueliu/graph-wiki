@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from obsidian_wiki import session_sources as ss
+from graph_wiki import session_sources as ss
 
 
 def _line(**kwargs) -> str:

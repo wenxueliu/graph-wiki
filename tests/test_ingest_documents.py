@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.ingest_documents import (
+from graph_wiki.ingest_documents import (
     commit_document,
     plan_ingest_documents,
     read_document,
 )
-from obsidian_wiki.ingest_pipeline import PipelineContractError
-from obsidian_wiki.text_chunker import SourceChangedError
+from graph_wiki.ingest_pipeline import PipelineContractError
+from graph_wiki.text_chunker import SourceChangedError
 
 
 def test_small_and_large_sources_share_one_document_model(tmp_path: Path) -> None:

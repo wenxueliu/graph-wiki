@@ -1,7 +1,7 @@
 ---
 name: openclaw-history-ingest
 description: >
-  Ingest OpenClaw agent history into the Obsidian wiki. Use this skill when the user wants to mine
+  Ingest OpenClaw agent history into the Graph Wiki. Use this skill when the user wants to mine
   their past OpenClaw sessions for knowledge, import their ~/.openclaw folder, extract insights from
   previous OpenClaw conversations, or says things like "process my OpenClaw history", "add my OpenClaw
   sessions to the wiki", "ingest ~/.openclaw", or "what have I worked on in OpenClaw". Also triggers
@@ -10,13 +10,13 @@ description: >
 
 # OpenClaw History Ingest — Session & Memory Mining
 
-You are extracting knowledge from the user's OpenClaw agent history and distilling it into the Obsidian wiki. OpenClaw stores both a structured long-term MEMORY.md and per-session JSONL transcripts — focus on durable knowledge, not operational telemetry.
+You are extracting knowledge from the user's OpenClaw agent history and distilling it into the Graph Wiki. OpenClaw stores both a structured long-term MEMORY.md and per-session JSONL transcripts — focus on durable knowledge, not operational telemetry.
 
 This skill can be invoked directly or via the `wiki-history-ingest` router (`/wiki-history-ingest openclaw`).
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `OPENCLAW_HISTORY_PATH` (defaults to `~/.openclaw`)
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `OPENCLAW_HISTORY_PATH` (defaults to `~/.openclaw`)
 2. Read `.manifest.json` at the vault root to check what has already been ingested
 3. Read `index.md` at the vault root to understand what the wiki already contains
 

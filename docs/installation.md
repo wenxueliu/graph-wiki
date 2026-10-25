@@ -2,37 +2,38 @@ English | [简体中文](installation.zh-CN.md)
 
 # Installation
 
-Four ways in. Pick one — they all end at the same place: your vault path in the config file (`~/.obsidian-wiki/config` by default) and the skills discoverable by your agent.
+Four ways in. Pick one — they all end at the same place: your vault path in the config file (`<project>/.graph-wiki/config` for setup-created projects; `~/.graph-wiki/config` when unset) and the skills discoverable by your agent.
 
-| Path | Best for | Writes global config | Agent skill targets |
+| Path | Best for | Writes config | Agent skill targets |
 |---|---|---|---|
 | [pip](#install-via-pip-recommended) | Most people | ✅ | User-selected, command-directory only |
 | [Let your agent do it](#let-your-agent-set-it-up) | No terminal required | ✅ | Current agent |
-| [git clone + `python3 setup.py`](#install-via-git-clone) | Contributors, hackers | ✅ | Legacy all-agent installer |
+| [git clone + `python3 setup.py`](#install-via-git-clone) | Contributors, hackers | ✅ | Project-local all-agent installer |
 | [Skills CLI](#install-via-skills-cli-deprecated) | Deprecated — partial install | ❌ | Current agent only |
 
 ## Install via pip (recommended)
 
 ```bash
-pip install obsidian-wiki
-obsidian-wiki setup --vault /path/to/your/digital/brain
+pip install graph-wiki-skills
+graph-wiki setup --vault /path/to/your/digital/brain
 ```
 
-`obsidian-wiki setup` writes the config to `~/.obsidian-wiki/config` (relocatable with
-`OBSIDIAN_WIKI_CONFIG_DIR`) and asks which agent skill targets to install. It has no implicit all-agent selection and never installs skills globally.
+`graph-wiki setup` writes the config to `<project>/.graph-wiki/config` by default (the shipped
+`.env.example` sets `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`; leave it empty for `~/.graph-wiki`) and asks
+which agent skill targets to install. It has no implicit all-agent selection and never installs skills globally.
 Skills and bootstrap files are written only under the directory where the command runs (or the
 explicit `--project DIR` override). Skills are symlinked to the installed package, so
-`pip install -U obsidian-wiki` upgrades the selected targets when setup is run again.
+`pip install -U graph-wiki-skills` upgrades the selected targets when setup is run again.
 
 For scripts and other non-interactive environments, select targets explicitly:
 
 ```bash
-obsidian-wiki setup --vault /path/to/brain --knowledge-pack default --agent claude --agent codex
-obsidian-wiki setup --vault /path/to/brain --knowledge-pack software-knowledge --agent claude,codex,pi
-obsidian-wiki setup --vault /path/to/brain --knowledge-pack default --agent all
+graph-wiki setup --vault /path/to/brain --knowledge-pack default --agent claude --agent codex
+graph-wiki setup --vault /path/to/brain --knowledge-pack software-knowledge --agent claude,codex,pi
+graph-wiki setup --vault /path/to/brain --knowledge-pack default --agent all
 ```
 
-Run `obsidian-wiki setup --list-agents` to see the stable project-local target names. Non-interactive setup requires an explicit selection; use `--agent none`
+Run `graph-wiki setup --list-agents` to see the stable project-local target names. Non-interactive setup requires an explicit selection; use `--agent none`
 only when intentionally configuring the vault without installing agent skills.
 
 If `--knowledge-pack` is omitted in a terminal, setup displays the available Knowledge Packs and requires
@@ -44,14 +45,14 @@ Then open that directory in your agent and say **"set up my wiki"**.
 Useful flags:
 
 ```bash
-obsidian-wiki setup --project /work/app  # override the command-directory target
-obsidian-wiki setup --copy        # copy skill files instead of symlinking
+graph-wiki setup --project /work/app  # override the command-directory target
+graph-wiki setup --copy        # copy skill files instead of symlinking
 ```
 
 For a self-contained project installation using the `software-knowledge` Pack, run:
 
 ```bash
-obsidian-wiki setup --knowledge-pack software-knowledge --copy --agent cursor
+graph-wiki setup --knowledge-pack software-knowledge --copy --agent cursor
 ```
 
 This selects the `software-knowledge` Knowledge Pack, initializes the configured vault, and
@@ -69,20 +70,20 @@ taxonomy paths, and the persistent compiled-context snapshot path. Existing `.en
 preserved except that setup fills missing or blank stable-binding keys; non-empty custom values,
 unknown fields, and comments are retained. Run setup/repair after changing these bindings.
 
-`OBSIDIAN_VAULT_PATH` is just any directory where you want your digital brain to live — a new empty folder or an existing Obsidian vault. In an interactive terminal, omit `--vault` to enter the folder; the displayed default is the current directory, accepted by pressing Enter. In a non-interactive run, pass `--vault` explicitly or use the existing value in the config file (default `~/.obsidian-wiki/config`).
+`OBSIDIAN_VAULT_PATH` is just any directory where you want your digital brain to live — a new empty folder or an existing Obsidian vault. In an interactive terminal, omit `--vault` to enter the folder; the displayed default is the current directory, accepted by pressing Enter. In a non-interactive run, pass `--vault` explicitly or use the existing value in the config file (setup-created projects default to `<project>/.graph-wiki/config`; otherwise `~/.graph-wiki/config`).
 
 The agent selection also filters generated project rules and entry files. Selecting only Claude,
 for example, creates shared `AGENTS.md`, `CLAUDE.md`, and `.claude/skills/`, without generating
 the files for other agents. Selecting several agents generates the union of their files.
 
-Run `obsidian-wiki info` to see the resolved paths and `obsidian-wiki doctor` to health-check the result. See the [CLI reference](cli.md) for everything else the package ships.
+Run `graph-wiki info` to see the resolved paths and `graph-wiki doctor` to health-check the result. See the [CLI reference](cli.md) for everything else the package ships.
 
 ## Let your agent set it up
 
 The fastest path — no commands required. Give your agent this repo and say:
 
 ```text
-https://github.com/wenxueliu/obsidian-wiki — set up my wiki
+https://github.com/wenxueliu/graph-wiki — set up my wiki
 ```
 
 The agent reads [`.skills/wiki-setup/SKILL.md`](../.skills/wiki-setup/SKILL.md) from the repo, asks where you want your vault to live, and initializes the full structure: directories, index, log, Obsidian config, and an optional auto-capture hook. The skill *is* the setup guide.
@@ -92,57 +93,53 @@ This works in any agent that can read files (Claude Code, Cursor, Windsurf, Code
 ## Install via git clone
 
 ```bash
-git clone https://github.com/wenxueliu/obsidian-wiki.git
-cd obsidian-wiki
+git clone https://github.com/wenxueliu/graph-wiki.git
+cd graph-wiki
 python3 setup.py
 ```
 
-`python3 setup.py` asks for your vault path, writes the config to `~/.obsidian-wiki/config` by default, installs skills into all your agents (copy mode on Windows, symlinks on Unix), and installs `wiki-update`, `wiki-query`, and `wiki-context-pack` globally so you can use them from any project.
+`python3 setup.py` asks for your vault path and then delegates to the installed CLI with
+`graph-wiki setup --agent all`. The config goes to `<project>/.graph-wiki/config` by default
+(the shipped `.env.example` sets `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`), and skills are installed
+into the project only (copy mode on Windows, symlinks on Unix). Nothing is written to global
+agent directories.
 
 Open the project in your agent and say **"set up my wiki"**.
 
 For local-only config, copy `.env.example` to `.env` and set `OBSIDIAN_VAULT_PATH`. A `.env` in the
-working directory (or any parent up to `$HOME`) takes precedence over the config file. To keep the
-entire configuration inside the project instead of `~/.obsidian-wiki`, also set
-`OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki`. Every vault-aware command (`query`, `context-pack`,
+working directory (or any parent up to `$HOME`) takes precedence over the config file. The template
+already sets `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`, so a copied `.env` keeps the entire configuration
+inside the project; leave that value empty to use `~/.graph-wiki`. Every vault-aware command (`query`, `context-pack`,
 `lint`, `trust-*`, `validate`, `verify`, `doctor`, `sync`) then reads the project's `.env`, and
-`@name` profiles resolve from `<project>/.obsidian-wiki/config.<name>`. See
+`@name` profiles resolve from `<project>/.graph-wiki/config.<name>`. See
 [Configuration](configuration.md#keeping-configuration-inside-a-project).
 
 ### What `python3 setup.py` wires up
 
-1. **Config** at `~/.obsidian-wiki/config` by default — `OBSIDIAN_WIKI_CONFIG_DIR` relocates it — with your vault path and the repo location. This is how skills know where to read and write.
-2. **Portable skills** — `wiki-update`, `wiki-query`, and `wiki-context-pack` symlinked into `~/.claude/skills/` so they're available from any project in Claude Code.
-3. **Global symlinks** for every agent's discovery path (legacy `python3 setup.py` behavior):
-   - `~/.gemini/skills/` — Gemini CLI (canonical)
-   - `~/.gemini/antigravity/skills/` — Google Antigravity (legacy)
-   - `~/.codex/skills/` — Codex
-   - `~/.hermes/skills/` — Hermes (default profile), plus `$HERMES_HOME/skills/` for the active named profile and `~/.hermes/profiles/*/skills/` for every named profile
-   - `~/.openclaw/skills/` — OpenClaw (managed)
-   - `~/.copilot/skills/` — GitHub Copilot CLI
-   - `~/.trae/skills/` + `~/.trae-cn/skills/` — Trae / Trae CN
-   - `~/.kiro/skills/` — Kiro CLI
-   - `~/.pi/agent/skills/` — Pi
-   - `~/.agents/skills/` — OpenCode, Aider, Factory Droid, and other `AGENTS.md`-aware agents
-4. **Project-local symlinks** — `.claude/skills/`, `.cursor/skills/`, `.windsurf/skills/`, `.agents/skills/`, `.pi/skills/`, `.cac/skills/`, `.kiro/skills/`
-5. **Always-on rule files** — `CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `.hermes.md`, `.cursor/rules/…`, `.windsurf/rules/…`, `.kiro/steering/…`, `.agent/rules/…`, `.agent/workflows/…`, `.github/copilot-instructions.md`
-6. **GitHub sync** (optional) — see [Configuration → Syncing your vault to GitHub](configuration.md#syncing-your-vault-to-github)
+`python3 setup.py` is a thin shim over the packaged CLI: it runs
+`graph-wiki setup --agent all` from the checkout, so source and pip/uv installs share one
+implementation. It writes:
 
-The two entry points use the same packaged skills and vault contracts, but their target selection
-differs: `obsidian-wiki setup` installs only explicitly selected agents, while the legacy
-`python3 setup.py` source installer still wires every supported agent path.
+1. **Config** at `<project>/.graph-wiki/config` by default (the shipped `.env.example` sets `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`; leave it empty for `~/.graph-wiki`) with your vault path and the repo location. This is how skills know where to read and write.
+2. **Project-local skill mirrors** — symlinks (or copies with `--copy`) at `.claude/skills/`, `.cursor/skills/`, `.windsurf/skills/`, `.pi/skills/`, `.cac/skills/`, `.kiro/skills/`, plus an always-copied shared `.agents/skills/`
+3. **Always-on rule files** — `CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `.hermes.md`, `.cursor/rules/…`, `.windsurf/rules/…`, `.kiro/steering/…`, `.agent/rules/…`, `.agent/workflows/…`, `.github/copilot-instructions.md`
+4. **GitHub sync** (optional) — see [Configuration → Syncing your vault to GitHub](configuration.md#syncing-your-vault-to-github)
+
+No skills are written under `~/.claude/skills`, `~/.codex/skills`, or any other user-home
+directory. `graph-wiki setup` installs only the agents you select; `setup.py` passes
+`--agent all`, which means "every agent in this project", not "every agent globally".
 
 ## Install via Skills CLI (deprecated)
 
 ```bash
-npx skills add wenxueliu/obsidian-wiki
+npx skills add wenxueliu/graph-wiki
 ```
 
-This only installs the markdown skills into the current agent. It does **not** write `~/.obsidian-wiki/config`, configure GitHub sync, or wire the project bootstrap that `obsidian-wiki setup` performs. The legacy `python3 setup.py` source installer additionally wires global agent directories.
+This only installs the markdown skills into the current agent. It does **not** write the config file (`.graph-wiki/config` or `~/.graph-wiki/config`), configure GitHub sync, or wire the project bootstrap that `graph-wiki setup` performs. The `python3 setup.py` source installer delegates to `graph-wiki setup --agent all` and remains project-local.
 
 Use this path only if you intentionally want a partial, agent-local install and are prepared to manage config yourself. For a complete setup, use pip or git clone instead.
 
-Browse the full skill list at [skills.sh/wenxueliu/obsidian-wiki](https://skills.sh/wenxueliu/obsidian-wiki).
+Browse the full skill list at [skills.sh/wenxueliu/graph-wiki](https://skills.sh/wenxueliu/graph-wiki).
 
 ## Open in Obsidian
 
@@ -150,11 +147,11 @@ Open your vault directory in Obsidian (File → Open Vault). The wiki pages, wik
 
 ## Multiple vaults
 
-Keep a default vault in the config file (default `~/.obsidian-wiki/config`), or create named configs like `~/.obsidian-wiki/config.work` with `/wiki-switch new work`.
+Keep a default vault in the config file (setup-created projects: `<project>/.graph-wiki/config`; otherwise `~/.graph-wiki/config`), or create named configs like `<config-dir>/config.work` with `/wiki-switch new work`.
 
-Profiles can also live inside a project. Set `OBSIDIAN_WIKI_CONFIG_DIR=.obsidian-wiki` in the
-project `.env` and keep `config`, `config.<name>`, and `WRITING.md` there — nothing is read from or
-written to `~/.obsidian-wiki`. Use this when one repository owns one vault and several repositories
+Profiles can also live inside a project. A `.env` created from the shipped template already sets
+`GRAPH_WIKI_CONFIG_DIR=.graph-wiki`, keeping `config`, `config.<name>`, and `WRITING.md` there —
+nothing is read from or written to `~/.graph-wiki`. Use this when one repository owns one vault and several repositories
 must stay independent. `@name` and the plain default both resolve inside that directory.
 
 Each profile points at a separate vault directory, and Obsidian treats those as independent vaults:
@@ -173,14 +170,14 @@ wiki-query @personal what do I know about MCP security
 
 The `@name` override applies **only to that request** and never changes your default vault. To change the default, use `/wiki-switch <name>` — it re-points the active symlink.
 
-All supported agents can use this syntax after `obsidian-wiki setup` or `python3 setup.py`, because the shared skills and always-on bootstrap files all point back to the same Config Resolution Protocol. Claude Code, Cursor, Windsurf, Codex, Gemini, Kiro, Hermes, OpenClaw, Copilot CLI, Pi, and the generic `AGENTS.md` agents all pick it up from the same instructions.
+All supported agents can use this syntax after `graph-wiki setup` or `python3 setup.py`, because the shared skills and always-on bootstrap files all point back to the same Config Resolution Protocol. Claude Code, Cursor, Windsurf, Codex, Gemini, Kiro, Hermes, OpenClaw, Copilot CLI, Pi, and the generic `AGENTS.md` agents all pick it up from the same instructions.
 
 The routing token works with write skills (`@work update wiki`, `@research save this`) and read skills (`wiki-query @personal what do I know about X`).
 
 ## Verifying the install
 
 ```bash
-obsidian-wiki doctor
+graph-wiki doctor
 ```
 
 `doctor` catches broken setup, stale installs, and malformed vault state. Add `--json` for machine-readable output.

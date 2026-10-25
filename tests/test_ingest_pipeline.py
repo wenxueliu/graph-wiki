@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.text_chunker import CHUNKER_VERSION, DEFAULT_CHUNK_STRATEGY
-from obsidian_wiki.ingest_pipeline import (
+from graph_wiki.text_chunker import CHUNKER_VERSION, DEFAULT_CHUNK_STRATEGY
+from graph_wiki.ingest_pipeline import (
     PipelineContractError,
     bind_inline_unit,
     build_completion_report,

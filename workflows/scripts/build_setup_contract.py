@@ -141,7 +141,7 @@ def build_core(templates_dir: Path, knowledge_packs_dir: Path, output_dir: Path)
     core = {
         "version": 1,
         "config_defaults": {
-            "OBSIDIAN_VAULT_PATH": "~/Documents/obsidian-wiki-vault",
+            "OBSIDIAN_VAULT_PATH": "~/Documents/graph-wiki-vault",
             "OBSIDIAN_SOURCES_DIR": "~/Documents",
             "CLAUDE_HISTORY_PATH": "auto-discover ~/.claude",
             "QMD_TRANSPORT": "mcp",
@@ -159,14 +159,14 @@ def build_core(templates_dir: Path, knowledge_packs_dir: Path, output_dir: Path)
             "WIKI_TEXT_CHUNK_OPTIONS": {},
         },
         "config_dir": {
-            "default": "~/.obsidian-wiki",
-            "override_env": "OBSIDIAN_WIKI_CONFIG_DIR",
-            "resolution": "process environment first, then the nearest .env walking up to $HOME; a relative value resolves against that .env's directory",
+            "default": "~/.graph-wiki",
+            "override_env": "GRAPH_WIKI_CONFIG_DIR",
+            "resolution": "process environment first, then the nearest .env walking up to $HOME; a relative value resolves against that .env's directory. The shipped .env.example sets GRAPH_WIKI_CONFIG_DIR=.graph-wiki, so a setup-created .env keeps the config directory in-tree; ~/.graph-wiki applies only when neither the environment nor a .env sets a value",
             "contents": ["config", "config.<name>", "WRITING.md"],
         },
         "writing_profile": {
-            "unix_path": "~/.obsidian-wiki/WRITING.md",
-            "windows_path": "~/.obsidian-wiki/WRITING.md",
+            "unix_path": "~/.graph-wiki/WRITING.md",
+            "windows_path": "~/.graph-wiki/WRITING.md",
             "relative_to_config_dir": True,
             "create_only_when_missing": True,
             "template": "WRITING.md",

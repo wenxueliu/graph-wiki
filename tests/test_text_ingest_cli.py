@@ -14,7 +14,7 @@ def run_cli(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki", *args],
+        [sys.executable, "-m", "graph_wiki", *args],
         cwd=cwd,
         env=env,
         text=True,
@@ -93,9 +93,9 @@ def test_recoverable_folder_workflow_and_lightweight_skill_coexist() -> None:
     lightweight = (ROOT / ".skills" / "wiki-ingest" / "SKILL.md").read_text(encoding="utf-8")
     packet = (ROOT / "workflows" / "wiki-packet-integrate.yaml").read_text(encoding="utf-8")
 
-    assert "obsidian-wiki text-ingest-plan" in workflow
-    assert "obsidian-wiki text-ingest-extract" in workflow
-    assert "obsidian-wiki text-ingest-report" in workflow
+    assert "graph-wiki text-ingest-plan" in workflow
+    assert "graph-wiki text-ingest-extract" in workflow
+    assert "graph-wiki text-ingest-report" in workflow
     assert "wiki-packet-integrate" in workflow
     assert "workflow: wiki-page-contract" in workflow
     assert workflow.count("workflow: wiki-finalize-sources") == 1
@@ -119,11 +119,11 @@ def test_recoverable_folder_workflow_and_lightweight_skill_coexist() -> None:
     assert ".cac/" not in workflow
     assert workflow.count("check_voting:") == 0
     assert "workflow: cross-linker" not in workflow
-    assert "obsidian-wiki text-ingest-plan" in skill
-    assert "obsidian-wiki text-ingest-extract" in skill
-    assert "obsidian-wiki text-ingest-report" in skill
+    assert "graph-wiki text-ingest-plan" in skill
+    assert "graph-wiki text-ingest-extract" in skill
+    assert "graph-wiki text-ingest-report" in skill
     assert "所有 integration 均不并发" in skill
-    assert "obsidian-wiki text-document-plan" in lightweight
+    assert "graph-wiki text-document-plan" in lightweight
     assert "`requested_keys` 只包含真实配置键" in lightweight
     assert "`OBSIDIAN_VAULT_PATH`" in lightweight
     assert "`WIKI_STAGED_WRITES`" in lightweight
@@ -156,7 +156,7 @@ def test_recoverable_folder_workflow_and_lightweight_skill_coexist() -> None:
     assert "Apply the Knowledge Profile" in document_worker
     assert "Select a declared page type with the frozen routing prompt" in document_worker
     assert "Expand the target with the frozen routing rules" in document_worker
-    assert "obsidian-wiki wiki-route-resolve" in document_worker
+    assert "graph-wiki wiki-route-resolve" in document_worker
     assert '--routing "<wiki-context.json>"' in document_worker
     assert "never expand `routing.rules.routes` by hand" in document_worker
     assert "workflow: wiki-context" not in packet
@@ -164,11 +164,11 @@ def test_recoverable_folder_workflow_and_lightweight_skill_coexist() -> None:
     assert "workflow: wiki-finalize-sources" not in packet
     assert "check_voting:" not in packet
     assert "resolve_wiki_route.py" not in packet
-    assert "obsidian-wiki wiki-route-resolve" in packet
-    assert "obsidian-wiki text-ingest-packet-check" in packet
-    assert "obsidian-wiki text-ingest-unit-advance" in packet
-    assert "obsidian-wiki text-ingest-inline-check" in packet
-    assert "obsidian-wiki text-ingest-inline-advance" in packet
+    assert "graph-wiki wiki-route-resolve" in packet
+    assert "graph-wiki text-ingest-packet-check" in packet
+    assert "graph-wiki text-ingest-unit-advance" in packet
+    assert "graph-wiki text-ingest-inline-check" in packet
+    assert "graph-wiki text-ingest-inline-advance" in packet
 
 
 def test_text_ingest_extract_uses_bounded_direct_claude_workers(tmp_path: Path) -> None:

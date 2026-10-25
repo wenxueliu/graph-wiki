@@ -3,17 +3,17 @@
 Source this from your shell rc file to get wiki freshness reminders on terminal open.
 
 Setup (shell-specific):
-  zsh/bash:  python3 /path/to/obsidian-wiki/scripts/wiki-notify.py
-  fish:      python3 /path/to/obsidian-wiki/scripts/wiki-notify.py
+  zsh/bash:  python3 /path/to/graph-wiki/scripts/wiki-notify.py
+  fish:      python3 /path/to/graph-wiki/scripts/wiki-notify.py
 
-State is vault-scoped under ~/.obsidian-wiki/state/<vault-id>/
+State is vault-scoped under ~/.graph-wiki/state/<vault-id>/
 Multiple vaults are supported — all stale vaults are shown.
 """
 
 import time
 from pathlib import Path
 
-STATE_BASE = Path.home() / ".obsidian-wiki" / "state"
+STATE_BASE = Path.home() / ".graph-wiki" / "state"
 
 
 def main():

@@ -7,7 +7,9 @@ that the shell prompt reads on terminal open.
 
 Config resolution order (mirrors llm-wiki/SKILL.md protocol):
   1. Walk up from CWD looking for .env with OBSIDIAN_VAULT_PATH
-  2. Fall back to ~/.obsidian-wiki/config
+  2. Fall back to <config-dir>/config, where the config directory comes from
+     GRAPH_WIKI_CONFIG_DIR (environment or nearest .env) and defaults to
+     ~/.graph-wiki
   3. Exit with error if neither found
 """
 
@@ -20,8 +22,34 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+def resolve_config_dir() -> Path:
+    """Resolve the config directory from the environment or the nearest .env."""
+    override = os.environ.get("GRAPH_WIKI_CONFIG_DIR", "").strip()
+    if override:
+        path = Path(override).expanduser()
+        return (path if path.is_absolute() else Path.cwd() / path).resolve()
+
+    cwd = Path.cwd()
+    for directory in [cwd, *cwd.parents]:
+        env_file = directory / ".env"
+        if env_file.is_file():
+            for line in env_file.read_text().splitlines():
+                stripped = line.strip()
+                if not stripped.startswith("GRAPH_WIKI_CONFIG_DIR="):
+                    continue
+                value = stripped.split("=", 1)[1].strip().strip("'\"")
+                if value:
+                    path = Path(value).expanduser()
+                    return (
+                        path if path.is_absolute() else directory / path
+                    ).resolve()
+        if directory == Path.home():
+            break
+    return (Path.home() / ".graph-wiki").resolve()
+
+
 def find_config():
-    """Walk up from CWD looking for .env, then fall back to global config."""
+    """Walk up from CWD looking for .env, then fall back to the config file."""
     cwd = Path.cwd()
     for directory in [cwd, *cwd.parents]:
         env_file = directory / ".env"
@@ -32,9 +60,9 @@ def find_config():
         if directory == Path.home():
             break
 
-    global_config = Path.home() / ".obsidian-wiki" / "config"
-    if global_config.is_file():
-        return str(global_config)
+    config_file = resolve_config_dir() / "config"
+    if config_file.is_file():
+        return str(config_file)
 
     return ""
 
@@ -101,7 +129,7 @@ def main():
 
     # Vault-scoped state dir
     vault_hash = hashlib.md5(vault_path.encode()).hexdigest()[:8]
-    state_dir = Path.home() / ".obsidian-wiki" / "state" / vault_hash
+    state_dir = Path.home() / ".graph-wiki" / "state" / vault_hash
     state_dir.mkdir(parents=True, exist_ok=True)
 
     # Write vault path

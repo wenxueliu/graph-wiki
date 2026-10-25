@@ -16,7 +16,7 @@ This is a read-only skill. It must not modify the vault, including `log.md`,
 
 1. Resolve config using the Config Resolution Protocol in
    `llm-wiki/SKILL.md`: inline `@name`, then walk up from CWD for `.env`,
-   then `~/.obsidian-wiki/config`.
+   then `~/.graph-wiki/config`.
 2. If `$OBSIDIAN_VAULT_PATH/AGENTS.md` exists, read it as trusted owner
    conventions. Do not include that file as a knowledge excerpt.
 3. Canonicalize the configured vault to a physical absolute path before
@@ -40,42 +40,42 @@ This is a read-only skill. It must not modify the vault, including `log.md`,
 Build the requested arguments, then prefer the installed executable:
 
 ```bash
-obsidian-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
+graph-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
 ```
 
 For recent activity:
 
 ```bash
-obsidian-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH" --recent --budget 8000
+graph-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH" --recent --budget 8000
 ```
 
-Append the requested flags exactly. If `obsidian-wiki` is unavailable but
-`$OBSIDIAN_WIKI_REPO/obsidian_wiki/cli.py` exists, run the same arguments from
+Append the requested flags exactly. If `graph-wiki` is unavailable but
+`$GRAPH_WIKI_REPO/graph_wiki/cli.py` exists, run the same arguments from
 that configured clone:
 
 ```bash
-python3 -m obsidian_wiki.cli context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
+python3 -m graph_wiki.cli context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
 ```
 
 Use the executable-or-clone fallback explicitly:
 
 ```bash
-if command -v obsidian-wiki >/dev/null 2>&1; then
-  obsidian-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
-elif [ -n "${OBSIDIAN_WIKI_REPO:-}" ] && [ -f "$OBSIDIAN_WIKI_REPO/obsidian_wiki/cli.py" ]; then
+if command -v graph-wiki >/dev/null 2>&1; then
+  graph-wiki context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
+elif [ -n "${GRAPH_WIKI_REPO:-}" ] && [ -f "$GRAPH_WIKI_REPO/graph_wiki/cli.py" ]; then
   (
-    cd "$OBSIDIAN_WIKI_REPO"
-    python3 -m obsidian_wiki.cli context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
+    cd "$GRAPH_WIKI_REPO"
+    python3 -m graph_wiki.cli context-pack --vault "$OBSIDIAN_VAULT_PATH" "<topic>" --budget 8000
   )
 else
-  # Tell the user to run: pip install obsidian-wiki
+  # Tell the user to run: pip install graph-wiki-skills
   # or rerun setup from a valid clone.
 fi
 ```
 
 For `--recent`, substitute `--recent` for `"<topic>"` and keep the default
 `--budget 8000`. If neither invocation route exists, give the user the
-actionable guidance `pip install obsidian-wiki` or `rerun setup from a valid
+actionable guidance `pip install graph-wiki-skills` or `rerun setup from a valid
 clone`; do not silently fall back to manually loading the whole vault.
 
 ## Return

@@ -14,7 +14,7 @@ def run_cli(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki", *args],
+        [sys.executable, "-m", "graph_wiki", *args],
         cwd=cwd,
         env=env,
         text=True,
@@ -27,7 +27,7 @@ def test_setup_workflows_do_not_use_cac_relative_script_paths() -> None:
     for name in ("wiki-setup.yaml", "wiki-setup-contract.yaml"):
         workflow = (ROOT / "workflows" / name).read_text(encoding="utf-8")
         assert ".cac/ralph-flow" not in workflow
-        assert "python3 -m obsidian_wiki" in workflow
+        assert "python3 -m graph_wiki" in workflow
 
 
 def test_setup_contract_wrapper_resolves_bundled_resources_from_any_cwd(

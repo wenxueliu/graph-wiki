@@ -1,7 +1,7 @@
 ---
 name: copilot-history-ingest
 description: >
-  Ingest GitHub Copilot CLI session history into an Obsidian wiki as distilled knowledge pages. Use this skill
+  Ingest GitHub Copilot CLI session history into a Graph Wiki as distilled knowledge pages. Use this skill
   when the user wants to capture their Copilot CLI sessions into a personal wiki — extracting architecture
   decisions, debug notes, and patterns into searchable Obsidian pages. Triggers on phrases like "ingest my
   copilot sessions into obsidian", "add my copilot history to my wiki", "pull my copilot session history into
@@ -13,13 +13,13 @@ description: >
 
 # Copilot History Ingest — Conversation Mining
 
-You are extracting knowledge from the user's past GitHub Copilot CLI conversations and distilling it into the Obsidian wiki. Conversations are rich but messy — your job is to find the signal and compile it.
+You are extracting knowledge from the user's past GitHub Copilot CLI conversations and distilling it into the Graph Wiki. Conversations are rich but messy — your job is to find the signal and compile it.
 
 This skill can be invoked directly or via the `wiki-history-ingest` router (`/wiki-history-ingest copilot`).
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH`, `COPILOT_HISTORY_PATH` (defaults to `~/.copilot/session-state`), and `COPILOT_VSCODE_STORAGE_PATH` (VS Code `workspaceStorage`; platform-specific — ask the user if absent)
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH`, `COPILOT_HISTORY_PATH` (defaults to `~/.copilot/session-state`), and `COPILOT_VSCODE_STORAGE_PATH` (VS Code `workspaceStorage`; platform-specific — ask the user if absent)
 2. Read `.manifest.json` at the vault root to check what's already been ingested
 3. Read `index.md` at the vault root to know what the wiki already contains
 

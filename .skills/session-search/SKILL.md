@@ -16,7 +16,7 @@ Answers "which of my past sessions was about X" and then pulls that session's co
 ## Step 1: Check the graph exists and is fresh
 
 ```bash
-obsidian-wiki sessions-query "<topic>" --json
+graph-wiki sessions-query "<topic>" --json
 ```
 
 If this exits 1 with "run sessions-build first", tell the user and offer `/session-brain`. If
@@ -65,7 +65,7 @@ reading the transcript directly:
 
 ```bash
 # the path is in the query result as `transcript`
-obsidian-wiki sessions-show <session-id> --pretty
+graph-wiki sessions-show <session-id> --pretty
 ```
 
 The transcript is JSONL and can be tens of MB. **Never read one whole.** Filter to the human turns

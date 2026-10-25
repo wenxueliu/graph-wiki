@@ -8,7 +8,7 @@ This is early. The skills work, but there's room to make the brain smarter: bett
 
 1. Create a folder in `.skills/your-skill-name/`
 2. Add a `SKILL.md` with YAML frontmatter (`name`, `description`) and markdown instructions
-3. Run `obsidian-wiki setup` in the project to link it into the selected agent directories
+3. Run `graph-wiki setup` in the project to link it into the selected agent directories
 4. Test by saying something to your agent that matches the description
 
 The `description` is load-bearing — it's the only thing an agent sees when deciding whether your skill is relevant. Write it as a list of the phrases a user would actually say, and state what the skill is *not* for when it's easily confused with a neighbour.
@@ -85,7 +85,7 @@ file. Reviewers assess translation quality.
 
 ## Repo conventions
 
-- `.skills/` is the source of truth. Project targets such as `.claude/skills/` and `.agents/skills/` are links created by `obsidian-wiki setup`; legacy global targets such as `~/.codex/skills/` may be created by `python3 setup.py`. Never edit a linked copy.
+- `.skills/` is the source of truth. `graph-wiki setup` links project targets such as `.claude/skills/`, while the shared `.agents/skills/` is always a real copy; `python3 setup.py` delegates to the same installer with `--agent all`, so it writes only inside the checkout. Never edit a linked or copied skill.
 - `CLAUDE.md`, `GEMINI.md`, and `.hermes.md` are symlinks to `AGENTS.md`. Edit `AGENTS.md`.
 - New config variables belong in three places: `.env.example`, [`docs/configuration.md`](configuration.md), and the skill that reads them.
 - New CLI subcommands belong in [`docs/cli.md`](cli.md).

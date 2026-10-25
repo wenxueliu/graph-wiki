@@ -1,12 +1,12 @@
-# Obsidian Wiki — Copilot Context
+# Graph Wiki — Copilot Context
 
 This project is a **skill-based framework** for building and maintaining an Obsidian knowledge base using AI coding agents. There are no scripts or dependencies — everything is markdown instructions that the agent executes directly.
 
 ## Project Overview
 
-- **Purpose:** Build and maintain an Obsidian wiki using the LLM Wiki pattern (Andrej Karpathy).
+- **Purpose:** Build and maintain a Graph Wiki using the LLM Wiki pattern (Andrej Karpathy).
 - **Tech Stack:** Markdown only. No code, no dependencies. The AI agent IS the runtime.
-- **Key Config:** Resolve config via `AGENTS.md`: inline `@name` vault override first, then `.env`, then the config file (`~/.obsidian-wiki/config` by default, relocatable with `OBSIDIAN_WIKI_CONFIG_DIR`). The resolved config supplies `OBSIDIAN_VAULT_PATH`.
+- **Key Config:** Resolve config via `AGENTS.md`: inline `@name` vault override first, then `.env`, then the config file (`~/.graph-wiki/config` by default, relocatable with `GRAPH_WIKI_CONFIG_DIR`). The resolved config supplies `OBSIDIAN_VAULT_PATH`.
 - **Skills:** `.skills/` contains skill folders, each with a `SKILL.md` defining a workflow.
 
 ## Key Concepts

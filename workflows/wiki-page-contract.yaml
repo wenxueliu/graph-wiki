@@ -22,12 +22,12 @@ steps:
       6. 原样冻结 Vault Layout 的 `routing.rules` 与 `routing.prompt`。owner rules 可以补充分类判断，但不能扩展 content_roots、placeholders 或绕过 system/skip paths。契约要求下游仅从 Knowledge Profile 的 `knowledge_types` 或 routing 明示的兼容别名中选择 `page_type`，并为每个真实新页面调用确定性路由器、记录 route evidence：
 
          ```bash
-         obsidian-wiki wiki-route-resolve \
+         graph-wiki wiki-route-resolve \
            --routing page-contract.json --page-type "<declared-type>" \
            --slug "<safe-slug>" --project "<safe-project>" --date "<YYYY-MM-DD>"
          ```
 
-         下游只传目标模板实际需要的参数；console script 不在 PATH 时使用 `python3 -m obsidian_wiki ...`。existing target 也必须位于 content_roots；链接目标必须已存在或由同一事务创建，新增链接须具备局部双向引用。
+         下游只传目标模板实际需要的参数；console script 不在 PATH 时使用 `python3 -m graph_wiki ...`。existing target 也必须位于 content_roots；链接目标必须已存在或由同一事务创建，新增链接须具备局部双向引用。
       7. 编译 mutation policy：更新页面采用 read-modify-write，保留不相关正文、owner 字段、历史 sources 与可信度信息；compatible facts 去重。所有写入先形成 candidate/temp sibling，通过下游 page acceptance gate 后原子替换。
       8. 编译 mode policy：direct 只允许写 resolver 返回的 live content target；staged 只写 `_staging` 下绑定 canonical target 的完整新页面或 patch。patch 绑定 target/base hash/job/source/unit，并包含 Additions、Deletions、Updated Fields；staged 不得修改 live/index/manifest。Profile scope mismatch 要求 staged 时不得被 direct 覆盖。
       9. 先在内存中形成唯一 canonical contract result；`page-contract.json` 完整承载 input binding、Knowledge Profile/hash/scope verdict、layout name/version/status/hash、完整 routing rules/prompt、effective fields、taxonomy、relationship allowlist、provenance、merge、mutation、mode、link 与 validation policies，以及 Writing Profile 摘要。`page-contract.md` 只从同一 result 渲染关键约束，不得独立推导或补充事实；在同一批 artifact 写入中提交二者。除这两个 contract artifacts 外不得写任何文件。

@@ -2,18 +2,18 @@
 name: wiki-research
 description: >
   Autonomously research a topic via multi-round web search, synthesize findings, and file structured
-  results into the Obsidian wiki. Use this skill when the user says "/wiki-research [topic]",
+  results into the Graph Wiki. Use this skill when the user says "/wiki-research [topic]",
   "research X", "find everything about Y", "do a deep dive on Z", "autonomous research on X",
   or wants comprehensive, web-sourced knowledge on a topic filed directly into their wiki.
 ---
 
 # Wiki Research — Autonomous Multi-Round Research
 
-You are running an autonomous research loop on a topic, synthesizing what you find, and filing the results into the Obsidian wiki as permanent knowledge.
+You are running an autonomous research loop on a topic, synthesizing what you find, and filing the results into the Graph Wiki as permanent knowledge.
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `OBSIDIAN_LINK_FORMAT` (default: `wikilink`).
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `OBSIDIAN_LINK_FORMAT` (default: `wikilink`).
 2. Read `$OBSIDIAN_VAULT_PATH/index.md` to understand what's already in the wiki — don't re-research things the wiki covers well
 3. Read `$OBSIDIAN_VAULT_PATH/hot.md` if it exists — it surfaces recent context
 4. Check `$OBSIDIAN_VAULT_PATH/references/research-config.md` if it exists — it may define source preferences, domains to skip, or confidence rules for this vault

@@ -2,7 +2,7 @@
 name: wiki-folder-ingest
 description: >
   可恢复地发现和规划本地文本来源；小文档 inline 提取，大文档隔离生成 Packet，并按
-  source/unit 顺序串行归并到 Obsidian wiki。用于 ingest 或处理本地 .md、.markdown、
+  source/unit 顺序串行归并到 Graph Wiki。用于 ingest 或处理本地 .md、.markdown、
   .mdx、.txt、.rst 文件及包含这些文件的目录。
 ---
 
@@ -17,7 +17,7 @@ finalization 阶段串行完成。
 
 ## Runtime artifacts
 
-每次顶层 invocation 先运行 `obsidian-wiki artifacts-create --workflow wiki-folder-ingest`，从 JSON
+每次顶层 invocation 先运行 `graph-wiki artifacts-create --workflow wiki-folder-ingest`，从 JSON
 绑定本次唯一 `run_id` 和绝对 `artifacts_dir`。同一次执行的步骤、重试与子 workflow 复用该绑定，
 调用 `wiki-context`、page-contract 和后续子 workflow 时显式传递两者；新的 invocation 必须重新
 创建，禁止复用 `latest` 或上一次目录。所有 `<artifacts-dir>` 都替换为该绝对路径，不得把运行
@@ -53,7 +53,7 @@ Knowledge Profile/Layout 和 writing profile。请求以下配置：
 读取已确认的 vault、write mode 和 text-ingest 配置，然后只运行 package CLI：
 
 ```bash
-obsidian-wiki text-ingest-plan "<source-root>" \
+graph-wiki text-ingest-plan "<source-root>" \
   --vault "<wiki-context.json vault_path>" \
   --write-mode "<direct-or-staged>" \
   --target-budget "<text_chunking.target_bytes>" \
@@ -66,7 +66,7 @@ obsidian-wiki text-ingest-plan "<source-root>" \
   --pretty
 ```
 
-若 console script 不在 `PATH`，使用 `python3 -m obsidian_wiki text-ingest-plan ...`。
+若 console script 不在 `PATH`，使用 `python3 -m graph_wiki text-ingest-plan ...`。
 
 CLI 独占 discovery、hash、UTF-8 validation、chunk planning、resume/replan、transport 选择和
 Job 原子写入；不要手工复现。Coordinator 只读取 `job-plan.json` 与 Job metadata，不读取
@@ -98,14 +98,14 @@ sources/units，且契约不得包含 source body。
 Packet extraction 并发硬上限，宿主资源更少时取较小值。运行：
 
 ```bash
-obsidian-wiki text-ingest-extract "<job-dir>" \
+graph-wiki text-ingest-extract "<job-dir>" \
   --max-workers "<text_ingest.max_extraction_workers>" \
   --worker-timeout-seconds 3600 \
   --output "<artifacts-dir>/packet-extraction-report.json" \
   --pretty
 ```
 
-若 console script 不在 `PATH`，使用 `python3 -m obsidian_wiki text-ingest-extract ...`。
+若 console script 不在 `PATH`，使用 `python3 -m graph_wiki text-ingest-extract ...`。
 
 1. Scheduler 恢复时对账所有 packet transport 的 `extracting` unit：已有合法 planned Packet
    的标为 `packet_ready`，否则标为 failed 供本次恢复重试。
@@ -159,13 +159,13 @@ integration reports。
 用只读的确定性 CLI 同时生成 JSON 和 Markdown，不手工统计或改写事实：
 
 ```bash
-obsidian-wiki text-ingest-report "<job-dir>" \
+graph-wiki text-ingest-report "<job-dir>" \
   --output "<artifacts-dir>/job-completion.json" \
   --markdown-output "<artifacts-dir>/folder-ingest-completion.md" \
   --pretty
 ```
 
-若 console script 不在 `PATH`，使用 `python3 -m obsidian_wiki text-ingest-report ...`。报告应
+若 console script 不在 `PATH`，使用 `python3 -m graph_wiki text-ingest-report ...`。报告应
 包含 source/unit 状态、精确恢复点、exact-hash manifest entries、失败信息和
 `live_complete`。
 

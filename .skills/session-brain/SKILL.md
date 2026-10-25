@@ -16,7 +16,7 @@ description: >
 Builds a searchable topic graph over your agent session history. The output is a **sidecar**
 at `~/.claude/session-brain/` — the vault is never touched.
 
-All the heavy lifting is deterministic Python in the `obsidian-wiki` CLI. Your only job is to
+All the heavy lifting is deterministic Python in the `graph-wiki` CLI. Your only job is to
 name the clusters, which takes exactly one turn and requires reading no transcripts.
 
 ## When to use which skill
@@ -30,7 +30,7 @@ name the clusters, which takes exactly one turn and requires reading no transcri
 ## Step 1: Build
 
 ```bash
-obsidian-wiki sessions-build --json
+graph-wiki sessions-build --json
 ```
 
 Roughly 3 seconds cold on ~1000 sessions, well under a second incrementally — it re-reads only
@@ -50,7 +50,7 @@ edges, and cluster count.
 ## Step 2: Name the unnamed clusters
 
 ```bash
-obsidian-wiki sessions-clusters --unnamed --json
+graph-wiki sessions-clusters --unnamed --json
 ```
 
 Each cluster comes with `top_terms` and `exemplars` (its three highest-degree sessions, whose
@@ -60,7 +60,7 @@ cluster — the whole design goal is that naming costs one turn regardless of co
 Write a 3–5 word `name` and a one-sentence `summary` per cluster, then:
 
 ```bash
-obsidian-wiki sessions-name --from - <<'EOF'
+graph-wiki sessions-name --from - <<'EOF'
 [{"id": 3, "name": "warden telemetry pipeline", "summary": "Building and debugging the redacted telemetry chain."}]
 EOF
 ```

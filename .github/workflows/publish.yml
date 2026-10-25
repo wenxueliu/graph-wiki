@@ -1,13 +1,15 @@
 name: publish
 
-# Build and publish obsidian-wiki to PyPI when a version tag is pushed.
+# Build and publish graph-wiki to PyPI when a version tag is pushed.
 #
 # Setup (one-time): on PyPI, add a Trusted Publisher for this repo with
 # workflow `publish.yml` and environment `pypi`. No API token needed — the
 # `id-token: write` permission below mints a short-lived OIDC credential.
 #
-# Release: bump `version` in pyproject.toml, commit, then
-#   git tag v0.1.0 && git push origin v0.1.0
+# Release: commit the release changes, then tag and push
+#   git tag v0.2.1 && git push origin v0.2.1
+# The version is derived from the tag by hatch-vcs; there is no static
+# `version` field in pyproject.toml.
 
 on:
   push:
@@ -37,8 +39,8 @@ jobs:
           twine check dist/*
           wheel=$(ls dist/*.whl)
           echo "Inspecting $wheel"
-          if ! python -m zipfile -l "$wheel" | grep -q "obsidian_wiki/_data/skills/wiki-setup/SKILL.md"; then
-            echo "::error::wheel is missing bundled skills under obsidian_wiki/_data/skills/"
+          if ! python -m zipfile -l "$wheel" | grep -q "graph_wiki/_data/skills/wiki-setup/SKILL.md"; then
+            echo "::error::wheel is missing bundled skills under graph_wiki/_data/skills/"
             exit 1
           fi
       - uses: actions/upload-artifact@v4

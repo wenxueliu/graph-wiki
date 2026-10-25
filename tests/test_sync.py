@@ -1,9 +1,9 @@
-"""Tests for GitHub vault sync (obsidian_wiki/sync.py).
+"""Tests for GitHub vault sync (graph_wiki/sync.py).
 
 Regression coverage for issue #153: the original bash setup had a git-sync
-flow the pip/uv CLI (`obsidian-wiki setup`) never got, so pip/uv installs
+flow the pip/uv CLI (`graph-wiki setup`) never got, so pip/uv installs
 silently skipped it. sync.py is now the single implementation both entrypoints
-(``python3 setup.py`` and ``obsidian-wiki setup``) call into.
+(``python3 setup.py`` and ``graph-wiki setup``) call into.
 """
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from obsidian_wiki.sync import configure_sync, get_remote, run_sync
+from graph_wiki.sync import configure_sync, get_remote, run_sync
 
 
 def _git(repo_dir: Path, *args: str) -> subprocess.CompletedProcess:

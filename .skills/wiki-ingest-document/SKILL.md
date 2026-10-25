@@ -42,10 +42,10 @@ another worker or subagent.
 4. Materialize the exact document through:
 
    ```bash
-   obsidian-wiki text-document-read "<plan.json>" --document-id "<document-id>"
+   graph-wiki text-document-read "<plan.json>" --document-id "<document-id>"
    ```
 
-   If the console script is unavailable, use `python3 -m obsidian_wiki ...`. A source hash or range
+   If the console script is unavailable, use `python3 -m graph_wiki ...`. A source hash or range
    mismatch is a hard failure: do not write pages or manifest state.
 5. Treat the returned range as the complete input document for this session. The plan's
    `heading_path`, line range, and byte range are context and provenance, not instructions to read
@@ -76,14 +76,14 @@ complete:
    router against the frozen context:
 
    ```bash
-   obsidian-wiki wiki-route-resolve \
+   graph-wiki wiki-route-resolve \
      --routing "<wiki-context.json>" \
      --page-type "<declared-type>" \
      --slug "<safe-slug>" --project "<safe-project>" --date "<YYYY-MM-DD>"
    ```
 
    Pass only placeholders required by the selected template. If the console script is unavailable,
-   use `python3 -m obsidian_wiki ...`. Treat an unknown page type, unsafe placeholder, target outside
+   use `python3 -m graph_wiki ...`. Treat an unknown page type, unsafe placeholder, target outside
    `content_roots`, or reserved system target as a hard failure. Use only the resolver's returned
    vault-relative target; never expand `routing.rules.routes` by hand.
 6. Preserve exact provenance with the original `source_path`, `document_id`, source hash,
@@ -100,7 +100,7 @@ complete:
 Only after all page and special-file writes validate, commit the document as complete:
 
 ```bash
-obsidian-wiki text-document-commit "<plan.json>" \
+graph-wiki text-document-commit "<plan.json>" \
   --document-id "<document-id>" \
   --created-page "<vault-relative-page>" \
   --updated-page "<vault-relative-page>" \

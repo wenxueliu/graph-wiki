@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from obsidian_wiki.cli import _remove_obsolete_managed_skills
+from graph_wiki.cli import _remove_obsolete_managed_skills
 
 
 LEGACY_SKILL = """---
@@ -34,12 +34,18 @@ def test_unrecognized_same_name_directory_is_preserved(tmp_path: Path) -> None:
     assert custom.is_dir()
 
 
-def test_source_and_package_installers_both_clean_legacy_skill() -> None:
+def test_package_installer_cleans_legacy_skill() -> None:
+    root = Path(__file__).resolve().parents[1]
+    package_cli = (root / "graph_wiki" / "cli.py").read_text(encoding="utf-8")
+
+    assert 'OBSOLETE_MANAGED_SKILLS = ("wiki-ingest",)' in package_cli
+    assert "name: wiki-ingest" in package_cli
+
+
+def test_source_installer_no_longer_installs_skills_directly() -> None:
     root = Path(__file__).resolve().parents[1]
     source_setup = (root / "setup.py").read_text(encoding="utf-8")
-    package_cli = (root / "obsidian_wiki" / "cli.py").read_text(encoding="utf-8")
 
-    assert 'OBSOLETE_MANAGED_SKILLS = ("wiki-ingest",)' in source_setup
-    assert 'OBSOLETE_MANAGED_SKILLS = ("wiki-ingest",)' in package_cli
-    assert "name: wiki-ingest" in source_setup
-    assert "name: wiki-ingest" in package_cli
+    assert "OBSOLETE_MANAGED_SKILLS" not in source_setup
+    assert "def install_skills" not in source_setup
+    assert "Path.home()" not in source_setup

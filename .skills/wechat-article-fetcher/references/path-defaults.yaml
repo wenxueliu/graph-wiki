@@ -1,0 +1,14 @@
+# Default paths for standalone wechat-article-fetcher execution.
+version: 1
+
+paths:
+  raw_output_dir: _raw
+  script: scripts/fetch_wechat_article.py
+  extraction_reference: references/wechat-extraction.md
+  session_default: wechat-article-fetch
+  daemon_default: http://127.0.0.1:10086
+
+artifact_targets:
+  markdown: "{raw_output_dir}/{stem}.md"
+  json: "{raw_output_dir}/{stem}.json"
+  html: "{raw_output_dir}/{stem}.html"

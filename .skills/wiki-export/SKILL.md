@@ -1,7 +1,7 @@
 ---
 name: wiki-export
 description: >
-  Export the Obsidian wiki's knowledge graph to structured formats for use in external tools.
+  Export the Graph Wiki's knowledge graph to structured formats for use in external tools.
   Use this skill when the user says "export wiki", "export graph", "export to JSON", "export to Gephi",
   "export to Neo4j", "graphml", "visualize wiki", "knowledge graph export", "export to OKF",
   "OKF bundle", "open knowledge format", "export as markdown bundle", or wants to use their
@@ -16,7 +16,7 @@ You are exporting the wiki's wikilink graph to structured formats so it can be u
 
 ## Before You Start
 
-1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.obsidian-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH`
+1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → config file (`~/.graph-wiki/config` by default) → prompt setup). This gives `OBSIDIAN_VAULT_PATH`
 2. Confirm the vault has pages to export — if fewer than 5 pages exist, warn the user and stop
 
 ## Project Filter (optional)
@@ -313,7 +313,7 @@ Run this step **only** when the user asks for OKF / a markdown bundle (phrases l
 
 The four graph files are a *lossy* projection (graph skeleton only). An **OKF bundle is the actual page bodies**, so an export→`wiki-import` round-trip through OKF preserves full content, and the bundle drops straight into MkDocs, Notion, Hugo, GitHub's renderer, or any [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) consumer.
 
-### Canonical frontmatter mapping (obsidian-wiki ⇄ OKF)
+### Canonical frontmatter mapping (graph-wiki ⇄ OKF)
 
 This table is the single source of truth for the mapping; `wiki-import` references it for the reverse direction.
 

@@ -77,8 +77,8 @@ no project scope applies. Recompute `stats.total_sources_ingested` from manifest
 retry remains idempotent.
 
 Atomically replace `.manifest.json` **last**, after every page and special-file candidate has
-validated. Then run `obsidian-wiki verify <source>` (or
-`obsidian_wiki.verify.verify_completeness`) and require no `missing_entry`, `empty_pages`, or
+validated. Then run `graph-wiki verify <source>` (or
+`graph_wiki.verify.verify_completeness`) and require no `missing_entry`, `empty_pages`, or
 `phantom_pages` findings. Repair a failed audit before marking the source or Job complete.
 
 If an error occurs before the manifest replacement, leave the permanent entry unchanged. If an

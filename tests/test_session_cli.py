@@ -30,7 +30,7 @@ def _run(home: Path, *args: str, stdin: str | None = None) -> subprocess.Complet
     env.pop("WIKI_SESSION_BRAIN_DIR", None)
     env.pop("WIKI_SKIP_PROJECTS", None)
     return subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", *args],
+        [sys.executable, "-m", "graph_wiki.cli", *args],
         capture_output=True, text=True, env=env, input=stdin,
     )
 
@@ -196,7 +196,7 @@ def test_brain_dir_env_var_is_honoured(tmp_path: Path) -> None:
     env["HOME"] = str(home)
     env["WIKI_SESSION_BRAIN_DIR"] = str(out)
     proc = subprocess.run(
-        [sys.executable, "-m", "obsidian_wiki.cli", "sessions-build",
+        [sys.executable, "-m", "graph_wiki.cli", "sessions-build",
          "--claude-dir", str(claude), "--json"],
         capture_output=True, text=True, env=env)
     assert proc.returncode == 0, proc.stderr

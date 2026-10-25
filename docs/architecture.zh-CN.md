@@ -35,7 +35,7 @@ Profile 检查来源，并遵循 Profile 的 `ask`、`stage` 或 `reject` 失配
 取一种格式，它不决定 vault 应该记住什么。
 
 内置的 pack 有 `default`、`software-knowledge` 与 `book-knowledge`。它们位于顶层
-`knowledge-packs/` 产品目录中，并作为 `obsidian_wiki/_data/knowledge-packs/` 安装进 Python 包。
+`knowledge-packs/` 产品目录中，并作为 `graph_wiki/_data/knowledge-packs/` 安装进 Python 包。
 Workflow 通过共享的 Pack loader 消费它们；它们不拥有也不内嵌 Pack 定义。
 
 ## 四个阶段
@@ -81,7 +81,7 @@ review。
 
 ## 循环
 
-1. Agent 解析 vault 路径（`@name` → `.env` → 配置目录中的 `config`，默认 `~/.obsidian-wiki`）
+1. Agent 解析 vault 路径（`@name` → `.env` → 配置目录中的 `config`；默认 `~/.graph-wiki`，当项目 `.env` 来自随附模板时为 `<project>/.graph-wiki`）
 2. Agent 读取 `.manifest.json`，知道哪些已经做过
 3. Agent 从绑定的 Knowledge Pack 加载当前生效的 Knowledge Profile 与 Vault Layout
 4. Agent 读取相关 skill 获取指令
@@ -181,7 +181,7 @@ Typed relationships 使用 24 个 Penfield 标准类型（`part_of`、`causes`�
   `^[ambiguous]`（来源互相矛盾）。frontmatter 中的 `provenance:` 块按页面汇总其构成，`wiki-lint` 会
   标出正在滑向纯推测的页面。你始终能分辨你的 wiki 知道什么、又猜了什么。
 
-- **Trust ledger。** `obsidian-wiki trust-record` / `trust-check` 会对照材料指纹记录并校验经人工批准的
+- **Trust ledger。** `graph-wiki trust-record` / `trust-check` 会对照材料指纹记录并校验经人工批准的
   置信度复核，因此 CI 可以以「确实有人检查过」作为门禁。
 
 - **显式扩展点。** PDF structure provider 与多模态/结构化数据流水线被推迟；不支持的输入会被报告其检出
@@ -219,7 +219,7 @@ OKF 往返是无损的。`graph.json` 往返则不是——它携带结构，而
 ## 仓库布局
 
 ```
-obsidian-wiki/
+graph-wiki/
 ├── .skills/                             # ← 规范 skill 定义（事实来源）
 │   └── <skill-name>/SKILL.md            #   50 个 skill——见 docs/skills.md
 │
@@ -228,7 +228,7 @@ obsidian-wiki/
 │   ├── <name>.yaml                      #   22 个 workflow
 │   ├── scripts/                         # workflow 调用的确定性辅助脚本
 │   └── templates/wiki-setup/            # vault 脚手架模板（index、log、hot、manifest、WRITING）
-├── obsidian_wiki/                       # Python 包——CLI、setup、sync、session brain
+├── graph_wiki/                       # Python 包——CLI、setup、sync、session brain
 ├── scripts/                             # 独立辅助脚本（daily-update、manifest、wiki-notify）
 ├── tools/                               # sync_workflow_skills.py、check_readme_sync.py
 ├── tests/                               # pytest 测试集
@@ -239,11 +239,11 @@ obsidian-wiki/
 ├── GEMINI.md                            # Bootstrap → Gemini CLI（→ AGENTS.md）
 ├── AGENTS.md                            # Bootstrap → Codex、OpenCode、Aider、Droid、Trae、Hermes、OpenClaw
 ├── .hermes.md                           # Bootstrap → Hermes（符号链接 → AGENTS.md）
-├── .cursor/rules/obsidian-wiki.mdc      # Always-on → Cursor（alwaysApply: true）
-├── .windsurf/rules/obsidian-wiki.md     # Always-on → Windsurf
-├── .kiro/steering/obsidian-wiki.md      # Always-on → Kiro（inclusion: always）
-├── .agent/rules/obsidian-wiki.md        # Always-on → Google Antigravity
-├── .agent/workflows/obsidian-wiki.md    # Slash-command registry → Antigravity
+├── .cursor/rules/graph-wiki.mdc      # Always-on → Cursor（alwaysApply: true）
+├── .windsurf/rules/graph-wiki.md     # Always-on → Windsurf
+├── .kiro/steering/graph-wiki.md      # Always-on → Kiro（inclusion: always）
+├── .agent/rules/graph-wiki.md        # Always-on → Google Antigravity
+├── .agent/workflows/graph-wiki.md    # Slash-command registry → Antigravity
 ├── .github/copilot-instructions.md      # Always-on → GitHub Copilot（VS Code Chat）
 │
 ├── .claude/skills/   → .skills/* 的符号链接   （由 setup 创建）
@@ -259,7 +259,7 @@ obsidian-wiki/
 └── docs/                                # 你在这里
 ```
 
-Setup 创建的全局符号链接目标列在 [Installation → What `python3 setup.py` wires up](installation.zh-CN.md#what-python3-setuppy-wires-up)。
+Setup 创建的项目本地符号链接目标列在 [Installation → What `python3 setup.py` wires up](installation.zh-CN.md#what-python3-setuppy-wires-up)。
 
 完整模式——三层架构、页面模板、项目组织——请读
 [`.skills/llm-wiki/SKILL.md`](../.skills/llm-wiki/SKILL.md)。

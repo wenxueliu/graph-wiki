@@ -17,7 +17,7 @@ description: "在 exact-hash source 完成门成立时统一更新 special files
 
 ## 运行产物隔离
 
-进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `obsidian-wiki artifacts-create --workflow wiki-finalize-sources`，解析其 JSON 输出后绑定。
+进入本 skill 时先绑定本次 invocation 的 `run_id` 与绝对 `artifacts_dir`。若父 workflow 已传入这两个值，原样继承；否则运行 `graph-wiki artifacts-create --workflow wiki-finalize-sources`，解析其 JSON 输出后绑定。
 
 同一次 invocation 的步骤、重试和子 workflow 必须复用该绑定；调用子 workflow 时显式传递 `run_id` 与 `artifacts_dir`。新的顶层 invocation 必须重新创建，禁止搜索或复用 `latest`、上一次目录或其他会话目录。
 
@@ -110,7 +110,7 @@ source-finalization-plan + 最新 index/log/hot + 父 workflow event type/run id
 1. 若 eligible_count=0，保持 manifest/Job 状态不变并生成 no-op report。
 2. 重读最新 manifest，保留其 list/dict 兼容形态、unrelated entries 和未知字段；合并 eligible source entries，重算 stats。先验证 candidate JSON、pages、index/log/hot 和 source/page counts。
 3. 使用同目录 temporary sibling + fsync/atomic replacement 写 `.manifest.json`；它必须是本事务最后一个永久 vault write。
-4. 对每个 eligible source 运行 `obsidian-wiki verify <source>` 或 package `verify_completeness`；修复 missing_entry/empty_pages/phantom_pages 后才把 source/Job 标 complete。验证失败保留可重试状态，不虚报完成。
+4. 对每个 eligible source 运行 `graph-wiki verify <source>` 或 package `verify_completeness`；修复 missing_entry/empty_pages/phantom_pages 后才把 source/Job 标 complete。验证失败保留可重试状态，不虚报完成。
 5. 只有 live Markdown 实际变化且 QMD wiki collection 已配置时，在 manifest commit 后运行 update/必要 embed，并用 ls/get 验证；QMD 失败记录 warning，不回滚 source of truth。
 6. 先形成唯一 canonical report result；`source-finalization-report.json` 完整承载逐 source 的 committed/deferred、pages、special files、manifest locator、verify、QMD、warnings 与 next action，Markdown 只从同一 result 渲染、不得独立推导或补充事实，并在同一批 artifact 写入中提交二者。事实一致后输出 `<promise>done</promise>`。
 
