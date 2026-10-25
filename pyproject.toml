@@ -8,9 +8,9 @@ dynamic = ["version"]
 description = "A skill-based framework for building and maintaining an AI-maintained Obsidian knowledge base (Karpathy's LLM Wiki pattern) across any AI coding agent."
 readme = "README.md"
 requires-python = ">=3.9"
-license = "MIT"
-license-files = ["LICENSE"]
-authors = [{ name = "Ar9av" }]
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "wenxueliu" }]
 keywords = [
   "obsidian",
   "wiki",

@@ -289,4 +289,10 @@ This is early. The skills work, but there's room to make the brain smarter — b
 
 ## License
 
-[MIT](https://github.com/wenxueliu/graph-wiki/blob/main/LICENSE)
+[Apache License 2.0](https://github.com/wenxueliu/graph-wiki/blob/main/LICENSE)
+
+See [NOTICE](https://github.com/wenxueliu/graph-wiki/blob/main/NOTICE) for upstream attribution.
+
+## Acknowledgements
+
+graph-wiki builds on the design and implementation of [obsidian-wiki](https://github.com/Ar9av/obsidian-wiki). Thank you to Ar9av for the original work.
