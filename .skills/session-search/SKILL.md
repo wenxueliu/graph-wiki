@@ -3,10 +3,11 @@ name: session-search
 description: >
   Find a past agent session by topic and load its context into the current conversation. Searches
   the session-brain topic graph, ranking by relevance, topic membership, and time decay, then
-  loads the winning transcript. Use when the user says "/wiki-sessions <topic>", "which session
+  loads the winning transcript. Use when the user says "/session-search <topic>", "which session
   did I do X in", "find the session where I fixed X", "when did I last work on Y", "what was that
-  session about Z", "load the session where I set up X", "have I done this before". Read-only —
-  never writes to the vault. Requires a graph built by the session-brain skill.
+  session about Z", "load the session where I set up X", "have I done this before". Older notes may
+  say "/wiki-sessions <topic>"; treat that as the same request. Read-only — never writes to the
+  vault. Requires a graph built by the session-brain skill.
 ---
 
 # Session Search

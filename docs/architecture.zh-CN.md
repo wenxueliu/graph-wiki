@@ -162,7 +162,7 @@ Typed relationships 使用 24 个 Penfield 标准类型（`part_of`、`causes`�
   区间。Agent 历史保留各自的专用摄取 skill；其他格式则等待显式的 structure provider，而不是使用不安全
   的通用兜底。
 
-- **跨 agent 的定向搜索。** 在 Claude Code 里执行 `/wiki-codex "rust ownership"`，就能找到你在该主题
+- **跨 agent 的定向搜索。** 在 Claude Code 里执行 `/wiki-agent codex "rust ownership"`，就能找到你在该主题
   上的 Codex 会话，提取相关片段，蒸馏成页面，并返回一个综合答案。它主题优先，而不是会话优先。每个
   agent 有自己的提取策略。配合 `/memory-bridge diff` 就能看到每个工具独有的贡献。
 

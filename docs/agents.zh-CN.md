@@ -21,7 +21,7 @@
 | **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** | `GEMINI.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`、`/wiki-query` 等 |
 | **[Google Antigravity](https://antigravity.google)** | `.agent/rules/` + `.agent/workflows/` | `.agents/skills/` | ✅ 通过 workflows registry |
 | **[Kiro IDE/CLI](https://kiro.dev)** | `.kiro/steering/graph-wiki.md` | `.kiro/skills/` | ✅ `/wiki-folder-ingest`、`/wiki-status` 等 |
-| **[Hermes](https://hermes-agent.nousresearch.com)** | `.hermes.md` | `.agents/skills/` | ✅ `/hermes-history-ingest`、`/wiki-hermes <topic>` |
+| **[Hermes](https://hermes-agent.nousresearch.com)** | `.hermes.md` | `.agents/skills/` | ✅ `/hermes-history-ingest`、`/wiki-agent hermes <topic>` |
 | **[OpenClaw](https://openclaw.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`、`/wiki-history-ingest openclaw` 等 |
 | **[OpenCode](https://opencode.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`、`/wiki-query` 等 |
 | **[Aider](https://aider.chat)** | `AGENTS.md` | `.agents/skills/` | 在对话中描述意图 |
@@ -122,11 +122,11 @@ cd /path/to/graph-wiki && hermes "set up my wiki"
 # 批量摄取 ~/.hermes 的记忆与会话：
 /hermes-history-ingest
 # 把某个主题上的 Hermes 知识拉进 vault：
-/wiki-hermes <topic>
+/wiki-agent hermes <topic>
 ```
 
 `hermes-history-ingest` 与其他批量历史 skill 一致：读取 `~/.hermes`（或 `$HERMES_HOME`），按主题合并
-记忆与会话，并通过 `.manifest.json` 做增量运行。只需要回答一个问题时，使用 `/wiki-hermes <topic>`。
+记忆与会话，并通过 `.manifest.json` 做增量运行。只需要回答一个问题时，使用 `/wiki-agent hermes <topic>`。
 </details>
 
 <details>

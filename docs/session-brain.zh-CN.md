@@ -22,7 +22,7 @@ open ~/.claude/session-brain/graph.html           # 交互式图谱、时间滑�
 | 你想要 | 使用 | 写入位置 |
 |---|---|---|
 | 把知识永久保存为页面 | `/wiki-history-ingest` | 写入 vault |
-| 找到某件事发生在哪个会话 | `/session-brain` + `/wiki-sessions` | 仅写入 sidecar |
+| 找到某件事发生在哪个会话 | `/session-brain` + `/session-search` | 仅写入 sidecar |
 
 Session brain **绝不写入你的 vault**。所有东西都落在 `~/.claude/session-brain/`（用
 `WIKI_SESSION_BRAIN_DIR` 覆盖）。
@@ -40,7 +40,7 @@ Session brain **绝不写入你的 vault**。所有东西都落在 `~/.claude/se
 | 命令 | 作用 |
 |---|---|
 | `/session-brain` | 构建图谱，并为已发现的主题簇命名 |
-| `/wiki-sessions <topic>` | 找到匹配的会话，并把它的 transcript 载入当前对话 |
+| `/session-search <topic>` | 找到匹配的会话，并把它的 transcript 载入当前对话 |
 
 通过 `/session-brain` 分配的簇名是持久的——它们能跨重建保留，并与生成的图谱分开存储。
 

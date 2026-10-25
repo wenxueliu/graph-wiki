@@ -21,7 +21,7 @@ This is the distinction that matters:
 | You want | Use | Writes to |
 |---|---|---|
 | Knowledge preserved as permanent pages | `/wiki-history-ingest` | The vault |
-| To find the session where something happened | `/session-brain` + `/wiki-sessions` | A sidecar only |
+| To find the session where something happened | `/session-brain` + `/session-search` | A sidecar only |
 
 The session brain **never writes to your vault**. Everything lands in `~/.claude/session-brain/` (override with `WIKI_SESSION_BRAIN_DIR`).
 
@@ -36,7 +36,7 @@ Ranking applies an exponential 90-day time decay with a floor, so recent work su
 | Command | What it does |
 |---|---|
 | `/session-brain` | Build the graph and name the discovered topic clusters |
-| `/wiki-sessions <topic>` | Find the matching session and load its transcript into the current conversation |
+| `/session-search <topic>` | Find the matching session and load its transcript into the current conversation |
 
 Cluster names assigned via `/session-brain` are durable — they survive rebuilds, stored separately from the generated graph.
 

@@ -1,14 +1,15 @@
 ---
 name: wiki-agent
 description: >
-  Query-driven targeted ingest from a specific AI agent's raw history. Use this skill when the user
-  invokes /wiki-claude, /wiki-codex, /wiki-hermes, /wiki-openclaw, /wiki-copilot, /wiki-pi — with or without a
-  search topic. Different from wiki-history-ingest (which bulk-ingests everything new): this skill finds
-  sessions about a SPECIFIC TOPIC in a specific agent's history and ingests just those, then returns a
+  Query-driven targeted ingest from a specific AI agent's raw history. Invoke as
+  `/wiki-agent <agent> [query]`, where agent is claude, codex, hermes, openclaw, copilot, or pi.
+  Also trigger on "what did I work on in codex about X", "search my claude sessions for Y",
+  "pull in hermes knowledge about Z", and "find that conversation where I did X in codex".
+  Different from wiki-history-ingest (which bulk-ingests everything new): this skill finds sessions
+  about a SPECIFIC TOPIC in a specific agent's history and ingests just those, then returns a
   synthesized answer immediately usable in the current session. Primary use case: you're working in
-  agent A and want to pull in how you solved X in agent B's history. Cross-referencing, not archiving.
-  Also trigger on: "what did I work on in codex about X", "search my claude sessions for Y",
-  "pull in hermes knowledge about Z", "find that conversation where I did X in codex".
+  agent A and want to pull in how you solved X in agent B's history. Cross-referencing, not
+  archiving.
 ---
 
 # Wiki Agent — Targeted Cross-Agent History Search + Ingest
@@ -19,16 +20,20 @@ This is not bulk ingest. You find sessions about a specific topic, extract the r
 
 ## Command Routing
 
-Parse the invocation to determine the target agent and optional query:
+Parse the invocation: the first argument names the target agent, and the rest is the optional query.
 
-| Command | Target | Example |
+| Invocation | Target | Example |
 |---|---|---|
-| `/wiki-claude [query]` | Claude Code history | `/wiki-claude "how did I set up auth middleware"` |
-| `/wiki-codex [query]` | Codex CLI history | `/wiki-codex "rust ownership patterns"` |
-| `/wiki-hermes [query]` | Hermes agent history | `/wiki-hermes "memory architecture"` |
-| `/wiki-openclaw [query]` | OpenClaw history | `/wiki-openclaw "project planning approach"` |
-| `/wiki-copilot [query]` | Copilot chat history | `/wiki-copilot "test strategy for API routes"` |
-| `/wiki-pi [query]` | Pi agent history | `/wiki-pi "how did I refactor the auth module"` |
+| `/wiki-agent claude [query]` | Claude Code history | `/wiki-agent claude "how did I set up auth middleware"` |
+| `/wiki-agent codex [query]` | Codex CLI history | `/wiki-agent codex "rust ownership patterns"` |
+| `/wiki-agent hermes [query]` | Hermes agent history | `/wiki-agent hermes "memory architecture"` |
+| `/wiki-agent openclaw [query]` | OpenClaw history | `/wiki-agent openclaw "project planning approach"` |
+| `/wiki-agent copilot [query]` | Copilot chat history | `/wiki-agent copilot "test strategy for API routes"` |
+| `/wiki-agent pi [query]` | Pi agent history | `/wiki-agent pi "how did I refactor the auth module"` |
+
+If an older note or prompt contains a legacy `/wiki-<agent>` form — for example `/wiki-codex "X"` —
+treat it as `/wiki-agent codex "X"`. Those per-agent names were never registered slash commands; do
+not present them as working commands.
 
 If no query is given, default to **recent sessions mode**: ingest the last 5 unprocessed sessions from that agent and return a summary of what was found. This is equivalent to a focused `wiki-history-ingest` for that agent only.
 
@@ -266,22 +271,22 @@ Update `hot.md` with a one-line summary of what was ingested.
 These are the primary use cases this skill is designed for:
 
 **"I'm on Codex. What did I figure out about X in Claude?"**
-→ `/wiki-claude "X"` — finds Claude sessions about X, ingests them, returns the answer
+→ `/wiki-agent claude "X"` — finds Claude sessions about X, ingests them, returns the answer
 
 **"I solved a bug in Hermes last week. I need that context now in Claude Code."**
-→ `/wiki-hermes "bug description"` — surfaces and ingests the Hermes session
+→ `/wiki-agent hermes "bug description"` — surfaces and ingests the Hermes session
 
 **"What are all the approaches I've tried for X across all my tools?"**
-→ Run `/wiki-claude "X"`, `/wiki-codex "X"`, `/wiki-hermes "X"` in sequence — each ingests its slice, the wiki accumulates the cross-agent picture, then `/memory-bridge diff` shows what each tool uniquely contributed
+→ Run `/wiki-agent claude "X"`, `/wiki-agent codex "X"`, and `/wiki-agent hermes "X"` in sequence — each ingests its slice, the wiki accumulates the cross-agent picture, then `/memory-bridge diff` shows what each tool uniquely contributed
 
 **No query — just "catch me up on recent Codex work"**
-→ `/wiki-codex` — ingests last 5 Codex sessions and returns a summary
+→ `/wiki-agent codex` — ingests last 5 Codex sessions and returns a summary
 
 **"I'm on Claude Code. What did I figure out about X in Pi?"**
-→ `/wiki-pi "X"` — finds Pi sessions about X, ingests them, returns the answer
+→ `/wiki-agent pi "X"` — finds Pi sessions about X, ingests them, returns the answer
 
 **No query — just "catch me up on recent Pi work"**
-→ `/wiki-pi` — ingests last 5 Pi sessions and returns a summary
+→ `/wiki-agent pi` — ingests last 5 Pi sessions and returns a summary
 
 ## QMD Refresh After Vault Writes
 

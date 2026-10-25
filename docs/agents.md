@@ -21,7 +21,7 @@ project path for agents that previously had only global targets. It never writes
 | **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** | `GEMINI.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-query`, etc. |
 | **[Google Antigravity](https://antigravity.google)** | `.agent/rules/` + `.agent/workflows/` | `.agents/skills/` | ✅ via workflows registry |
 | **[Kiro IDE/CLI](https://kiro.dev)** | `.kiro/steering/graph-wiki.md` | `.kiro/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-status`, etc. |
-| **[Hermes](https://hermes-agent.nousresearch.com)** | `.hermes.md` | `.agents/skills/` | ✅ `/hermes-history-ingest`, `/wiki-hermes <topic>` |
+| **[Hermes](https://hermes-agent.nousresearch.com)** | `.hermes.md` | `.agents/skills/` | ✅ `/hermes-history-ingest`, `/wiki-agent hermes <topic>` |
 | **[OpenClaw](https://openclaw.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-history-ingest openclaw`, etc. |
 | **[OpenCode](https://opencode.ai)** | `AGENTS.md` | `.agents/skills/` | ✅ `/wiki-folder-ingest`, `/wiki-query`, etc. |
 | **[Aider](https://aider.chat)** | `AGENTS.md` | `.agents/skills/` | Describe intent in chat |
@@ -117,12 +117,12 @@ cd /path/to/graph-wiki && hermes "set up my wiki"
 # Bulk-ingest ~/.hermes memories and sessions:
 /hermes-history-ingest
 # Pull Hermes knowledge on one topic into the vault:
-/wiki-hermes <topic>
+/wiki-agent hermes <topic>
 ```
 
 `hermes-history-ingest` mirrors the other bulk history skills: it reads `~/.hermes` (or
 `$HERMES_HOME`), merges memories and sessions by topic, and honors `.manifest.json` for incremental
-runs. Use `/wiki-hermes <topic>` when you only need one question answered.
+runs. Use `/wiki-agent hermes <topic>` when you only need one question answered.
 </details>
 
 <details>

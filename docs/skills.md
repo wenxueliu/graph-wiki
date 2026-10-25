@@ -36,6 +36,7 @@ call them directly.
 | `wiki-capture` | Save the current conversation as a structured wiki note; `--quick` stages findings to `_raw/` in under 60 seconds | `/wiki-capture` |
 | `wiki-update` | Incrementally distill architecture decisions and reusable knowledge from the project you're standing in | `/wiki-update` |
 | `wiki-research` | Autonomous multi-round web research, synthesized and filed straight into the vault | `/wiki-research [topic]` |
+| `wechat-article-fetcher` | Fetch a WeChat Official Account article through your logged-in browser and archive it to `_raw/` as Markdown, JSON, and HTML — requires `kimi-webbridge` | `/wechat-article-fetcher` |
 | `wiki-history-ingest` | Router for bulk agent-history ingest | `/wiki-history-ingest <agent>` |
 | `claude-history-ingest` | Mine Claude CLI and Desktop sessions into traceable wiki knowledge | `/claude-history-ingest` |
 | `codex-history-ingest` | Mine `~/.codex` sessions and rollout logs | `/codex-history-ingest` |
@@ -43,11 +44,12 @@ call them directly.
 | `copilot-history-ingest` | Mine GitHub Copilot CLI sessions (`~/.copilot/session-state`) | `/copilot-history-ingest` |
 | `openclaw-history-ingest` | Mine `~/.openclaw` `MEMORY.md` and sessions | `/openclaw-history-ingest` |
 | `pi-history-ingest` | Mine `~/.pi/agent/sessions` JSONL history | `/pi-history-ingest` |
-| `wiki-agent` | Topic-first ingest from one agent's raw history, returning a synthesized answer for the current session | `/wiki-claude`, `/wiki-codex`, `/wiki-hermes`, `/wiki-openclaw`, `/wiki-copilot`, `/wiki-pi` |
+| `wiki-agent` | Topic-first ingest from one agent's raw history, returning a synthesized answer for the current session | `/wiki-agent <agent> [query]` |
 
 `wiki-history-ingest` routes `claude`, `copilot`, `codex`, `hermes`, `openclaw`, and `pi` for bulk
-history. `/wiki-hermes <topic>` remains the topic-targeted alternative: it ingests only the Hermes
-sessions relevant to one question and returns a synthesized answer through `wiki-agent`.
+history. Use `/wiki-agent <agent> [query]` for the topic-targeted alternative — for example,
+`/wiki-agent hermes "deployment bug"` ingests only the Hermes sessions relevant to that question and
+returns a synthesized answer.
 
 Text ingest V1 accepts UTF-8 `.md`, `.markdown`, `.mdx`, `.txt`, and `.rst` only. PDFs, Office
 documents, structured data, logs/transcripts, HTML/URLs, media, archives, and source code are
@@ -73,7 +75,7 @@ These two build a retrieval index over your raw agent sessions. They write a sid
 | Skill | What it does | Slash command |
 |---|---|---|
 | `session-brain` | Build and maintain a topic graph over your agent session history | `/session-brain` |
-| `session-search` | Find a past session by topic and load its context into the current conversation | `/wiki-sessions <topic>` |
+| `session-search` | Find a past session by topic and load its context into the current conversation | `/session-search <topic>` |
 
 > **Ingest vs. retrieve.** If you want knowledge preserved as permanent vault pages, use
 > `wiki-history-ingest`. If you want to find the session where something happened, use these.

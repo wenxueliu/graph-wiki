@@ -102,9 +102,11 @@ live in `docs/skills.md`.
 | Initialize or repair a vault | `wiki-setup` |
 | Lightweight ingest of local UTF-8 Markdown, text, or reStructuredText | `wiki-ingest` |
 | Import Claude, Codex, Copilot, OpenClaw, or Pi history | `wiki-history-ingest` and its available agent-specific skill |
+| Pull one topic from another agent's history | `wiki-agent` |
 | Save the current conversation or quickly stage a finding | `wiki-capture` |
 | Sync reusable knowledge from the current project | `wiki-update` |
 | Research a topic on the web and file the result | `wiki-research` |
+| Fetch and archive a WeChat Official Account article | `wechat-article-fetcher` |
 | Answer a question from the vault | `wiki-query` |
 | Produce a bounded downstream context slice | `wiki-context-pack` |
 | Create a cited briefing, explanation, or lecture | `wiki-narrate` |
@@ -134,7 +136,7 @@ An inline vault selector composes with any applicable vault skill, for example `
   vault knowledge.
 - `wiki-agent` finds and ingests a topic-specific slice from supported agent histories.
 - `session-brain` and `session-search` retrieve raw sessions through a sidecar and never write vault
-  knowledge. `/wiki-sessions <topic>` routes to `session-search`.
+  knowledge. `/session-search <topic>` loads one session's context.
 - `memory-bridge` compares already compiled vault knowledge by originating AI tool.
 
 If the user wants knowledge preserved, ingest it. If they want to locate or reopen a past session,

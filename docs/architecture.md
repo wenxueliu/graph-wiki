@@ -172,7 +172,7 @@ The [original gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519
   partitioned into exact byte ranges. Agent histories retain dedicated ingest skills; other formats
   wait for explicit structure providers instead of unsafe generic fallbacks.
 
-- **Cross-agent targeted search.** `/wiki-codex "rust ownership"` from inside Claude Code finds your Codex sessions on that topic, extracts the relevant blobs, distills them into pages, and returns a synthesized answer. Topic-first, not session-first. Each agent has its own extraction strategy. Pair with `/memory-bridge diff` to see what each tool uniquely contributed.
+- **Cross-agent targeted search.** `/wiki-agent codex "rust ownership"` from inside Claude Code finds your Codex sessions on that topic, extracts the relevant blobs, distills them into pages, and returns a synthesized answer. Topic-first, not session-first. Each agent has its own extraction strategy. Pair with `/memory-bridge diff` to see what each tool uniquely contributed.
 
 - **Audit and lint.** Orphaned pages, broken wikilinks, stale content, contradictions, missing frontmatter — plus a dashboard of what's ingested vs. pending.
 

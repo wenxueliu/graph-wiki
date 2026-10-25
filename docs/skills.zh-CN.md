@@ -35,6 +35,7 @@ agent 中，直接描述你的需求即可。
 | `wiki-capture` | 把当前对话保存为结构化的 wiki 笔记；`--quick` 会在 60 秒内把发现落到 `_raw/` | `/wiki-capture` |
 | `wiki-update` | 从你当前所在的项目增量蒸馏架构决策与可复用知识 | `/wiki-update` |
 | `wiki-research` | 自主多轮网络研究，综合后直接归档进 vault | `/wiki-research [topic]` |
+| `wechat-article-fetcher` | 通过你已登录的浏览器抓取微信公众号文章，并以 Markdown、JSON、HTML 归档到 `_raw/`——依赖 `kimi-webbridge` | `/wechat-article-fetcher` |
 | `wiki-history-ingest` | 批量 agent 历史摄取的路由器 | `/wiki-history-ingest <agent>` |
 | `claude-history-ingest` | 挖掘 Claude CLI 与 Desktop 会话，蒸馏为可追溯的 wiki 知识 | `/claude-history-ingest` |
 | `codex-history-ingest` | 挖掘 `~/.codex` 会话与 rollout 日志 | `/codex-history-ingest` |
@@ -42,11 +43,11 @@ agent 中，直接描述你的需求即可。
 | `copilot-history-ingest` | 挖掘 GitHub Copilot CLI 会话（`~/.copilot/session-state`） | `/copilot-history-ingest` |
 | `openclaw-history-ingest` | 挖掘 `~/.openclaw` 的 `MEMORY.md` 与会话 | `/openclaw-history-ingest` |
 | `pi-history-ingest` | 挖掘 `~/.pi/agent/sessions` 的 JSONL 历史 | `/pi-history-ingest` |
-| `wiki-agent` | 针对某个 agent 原始历史的主题优先摄取，并返回可直接用于当前会话的综合答案 | `/wiki-claude`、`/wiki-codex`、`/wiki-hermes`、`/wiki-openclaw`、`/wiki-copilot`、`/wiki-pi` |
+| `wiki-agent` | 针对某个 agent 原始历史的主题优先摄取，并返回可直接用于当前会话的综合答案 | `/wiki-agent <agent> [query]` |
 
 `wiki-history-ingest` 可对 `claude`、`copilot`、`codex`、`hermes`、`openclaw` 与 `pi` 做批量历史摄取。
-`/wiki-hermes <topic>` 仍是主题定向的替代方案：它只摄取与该问题相关的 Hermes 会话，并通过
-`wiki-agent` 返回综合答案。
+主题定向请用 `/wiki-agent <agent> [query]`：例如 `/wiki-agent hermes "部署问题"` 只摄取与该问题
+相关的 Hermes 会话，并返回综合答案。
 
 Text ingest V1 只接受 UTF-8 的 `.md`、`.markdown`、`.mdx`、`.txt` 与 `.rst`。PDF、Office 文档、
 结构化数据、日志/对话记录、HTML/URL、媒体、压缩包与源代码都会被显式报告，而不会被当作通用文本处理。
@@ -70,7 +71,7 @@ Agent 历史与网络研究仍使用上表中各自的专用 skill。
 | Skill | 作用 | Slash command |
 |---|---|---|
 | `session-brain` | 在 agent 会话历史之上构建并维护主题图谱 | `/session-brain` |
-| `session-search` | 按主题找到过去的会话，并把它的上下文载入当前对话 | `/wiki-sessions <topic>` |
+| `session-search` | 按主题找到过去的会话，并把它的上下文载入当前对话 | `/session-search <topic>` |
 
 > **摄取 vs. 检索。** 如果你要的是把知识永久保存为 vault 页面，用 `wiki-history-ingest`；如果你想
 > 找到某件事发生在哪个会话，用这两个。

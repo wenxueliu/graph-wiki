@@ -36,7 +36,7 @@ class SkillFilesTest(unittest.TestCase):
         text = AGENTS_MD.read_text(encoding="utf-8")
         self.assertIn("`session-brain`", text)
         self.assertIn("`session-search`", text)
-        self.assertIn("/wiki-sessions", text)
+        self.assertIn("/session-search", text)
 
     def test_ingest_versus_retrieve_is_disambiguated(self) -> None:
         """Three skills read the same caches for different reasons; without an
