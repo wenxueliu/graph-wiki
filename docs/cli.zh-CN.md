@@ -13,6 +13,40 @@ graph-wiki --version
 
 不带子命令运行 `graph-wiki` 时，默认执行 `setup`。
 
+## Windows：提示找不到 `graph-wiki`
+
+Windows 没有无扩展名的启动器。`pip` 会把 `graph-wiki.exe` 写进当前解释器的 `Scripts`
+目录，只有该目录在 `PATH` 上时命令才能被找到。安装成功也可能出现这种情况，此时 pip 会打印：
+
+```
+WARNING: The script graph-wiki.exe is installed in '...\Python3xx\Scripts' which is not on PATH.
+```
+
+这条警告就是原因，安装本身并没有失败。在 PowerShell 中定位脚本：
+
+```powershell
+python -m pip show graph-wiki-skills
+python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+```
+
+如果该目录里确实有 `graph-wiki.exe`，把这个目录加入用户 `PATH` 后新开一个终端；或者用模块形式
+绕过 `PATH`，它执行的是同一个入口：
+
+```powershell
+python -m graph_wiki --help
+python -m graph_wiki setup --vault C:\Users\you\brain
+```
+
+两个 Windows 特有的坑：
+
+- 虚拟环境的 `Scripts` 目录只在环境激活期间位于 `PATH` 上。在 venv 里安装、再在别处运行命令，
+  会找不到它。
+- Microsoft Store 版 Python 的脚本位于 `%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3*\LocalCache\local-packages\...`
+  而不是 `%LOCALAPPDATA%\Programs\Python`。请从 `sysconfig` 读取实际路径，不要凭习惯拼。
+
+如果 `python -m pip show` 查不到任何东西，说明 `pip` 和 `python` 不是同一个解释器——用
+`python -m pip install graph-wiki-skills` 重装，让两者指向同一个解释器。
+
 ## 安装与检查
 
 | 命令 | 作用 |

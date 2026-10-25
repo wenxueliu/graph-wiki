@@ -12,6 +12,42 @@ graph-wiki --version
 
 Running `graph-wiki` with no subcommand defaults to `setup`.
 
+## Windows: "graph-wiki is not recognized"
+
+Windows has no extensionless launcher. `pip` writes `graph-wiki.exe` into the active
+interpreter's `Scripts` directory, so the command is only found when that directory is on
+`PATH`. A successful install can still fail this way; pip warns during install:
+
+```
+WARNING: The script graph-wiki.exe is installed in '...\Python3xx\Scripts' which is not on PATH.
+```
+
+That warning is the cause, not a failed install. Locate the script in PowerShell:
+
+```powershell
+python -m pip show graph-wiki-skills
+python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+```
+
+If `graph-wiki.exe` is in that directory, either add it to the user `PATH` and open a new
+terminal, or bypass `PATH` with the module form, which runs the same entry point:
+
+```powershell
+python -m graph_wiki --help
+python -m graph_wiki setup --vault C:\Users\you\brain
+```
+
+Two Windows-specific traps:
+
+- A virtual environment's `Scripts` directory is on `PATH` only while the environment is
+  activated. Installing inside a venv and then running the command elsewhere will not find it.
+- Microsoft Store Python keeps scripts under
+  `%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3*\LocalCache\local-packages\...`,
+  not `%LOCALAPPDATA%\Programs\Python`. Read the path from `sysconfig` instead of assuming it.
+
+If `python -m pip show` reports nothing, `pip` and `python` are different interpreters —
+reinstall with `python -m pip install graph-wiki-skills` so both refer to the same one.
+
 ## Setup & inspection
 
 | Command | What it does |
