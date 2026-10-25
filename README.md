@@ -37,7 +37,7 @@ Every skill here is a markdown file that any agent — Claude Code, Cursor, Code
 ```bash
 pip install graph-wiki-skills
 cd /path/to/your/project
-graph-wiki setup --vault ~/brain
+graph-wiki setup
 ```
 
 Setup installs skills only in the current project. Open that project in your agent and say **"set up my wiki"**.

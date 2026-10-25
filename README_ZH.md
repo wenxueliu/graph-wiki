@@ -37,7 +37,7 @@
 ```bash
 pip install graph-wiki-skills
 cd /path/to/your/project
-graph-wiki setup --vault ~/brain
+graph-wiki setup
 ```
 
 Setup 只会把 skills 安装到当前项目。接着在你的 agent 里打开该项目，说 **"set up my wiki"**。
