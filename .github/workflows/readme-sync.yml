@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.12"
 
       - name: Test README sync checker
         run: python -m unittest discover -s tests -p 'test_readme_sync.py' -v
