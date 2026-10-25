@@ -290,8 +290,6 @@ flowchart LR
 
 [Apache License 2.0](https://github.com/wenxueliu/graph-wiki/blob/main/LICENSE)
 
-上游归属说明见 [NOTICE](https://github.com/wenxueliu/graph-wiki/blob/main/NOTICE)。
-
 ## 致谢
 
 graph-wiki 建立在 [obsidian-wiki](https://github.com/Ar9av/obsidian-wiki) 的设计与实现之上。感谢 Ar9av 的原创工作。
