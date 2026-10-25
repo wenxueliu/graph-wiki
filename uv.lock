@@ -9,7 +9,7 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "graph-wiki"
+name = "graph-wiki-skills"
 source = { editable = "." }
 
 [package.optional-dependencies]
