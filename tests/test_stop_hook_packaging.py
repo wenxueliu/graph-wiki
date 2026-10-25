@@ -1,10 +1,9 @@
 """Regression guard for issue #143.
 
 The wiki-setup skill wires a Claude Code Stop hook that runs
-``wiki-stop-capture.sh``. That script lives under ``.claude/hooks/`` in the repo,
-which the sdist prunes — so it was silently missing from the published wheel and
-the installed hook pointed at a nonexistent path. These tests pin the packaging
-config that force-includes the script and the skill instructions that resolve it.
+``wiki-stop-capture.sh``. That script lives under ``hooks/`` in the repo. These
+tests pin the packaging config that bundles the script into the wheel and the
+skill instructions that resolve it.
 """
 
 from __future__ import annotations
@@ -19,7 +18,7 @@ except ModuleNotFoundError:  # Python < 3.11
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOK_SRC = ROOT / ".claude" / "hooks" / "wiki-stop-capture.sh"
+HOOK_SRC = ROOT / "hooks" / "wiki-stop-capture.sh"
 PACKAGED_HOOK_DEST = "graph_wiki/_data/hooks/wiki-stop-capture.sh"
 
 
@@ -34,19 +33,19 @@ class StopHookPackagingTest(unittest.TestCase):
     def test_wheel_force_includes_hook(self) -> None:
         mapping = self.pyproject["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
         self.assertEqual(
-            mapping.get(".claude/hooks/wiki-stop-capture.sh"),
+            mapping.get("hooks/wiki-stop-capture.sh"),
             PACKAGED_HOOK_DEST,
             "wheel must force-include the Stop hook under _data/hooks/",
         )
 
-    def test_sdist_reincludes_hook_despite_claude_exclusion(self) -> None:
-        # The wheel is built from the sdist, and the sdist prunes /.claude — so
-        # the one hook script must be force-included back or the wheel copy fails.
+    def test_sdist_includes_hook(self) -> None:
+        # The wheel is built from the sdist, so the hook scripts must survive
+        # the sdist walk under their canonical hooks/ path.
         sdist = self.pyproject["tool"]["hatch"]["build"]["targets"]["sdist"]
         self.assertIn("/.claude", sdist["exclude"])
         self.assertEqual(
-            sdist["force-include"].get(".claude/hooks/wiki-stop-capture.sh"),
-            ".claude/hooks/wiki-stop-capture.sh",
+            sdist["force-include"].get("hooks/wiki-stop-capture.sh"),
+            "hooks/wiki-stop-capture.sh",
         )
 
 
@@ -63,7 +62,7 @@ class WikiSetupSkillTest(unittest.TestCase):
 
     def test_skill_offers_github_fallback(self) -> None:
         self.assertIn(
-            "raw.githubusercontent.com/wenxueliu/graph-wiki/main/.claude/hooks/wiki-stop-capture.sh",
+            "raw.githubusercontent.com/wenxueliu/graph-wiki/main/hooks/wiki-stop-capture.sh",
             self.integrations,
         )
 

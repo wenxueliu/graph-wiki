@@ -19,7 +19,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOK = ROOT / ".claude" / "hooks" / "wiki-stop-capture.sh"
+HOOK = ROOT / "hooks" / "wiki-stop-capture.sh"
 
 
 def _bash_entry(command):
