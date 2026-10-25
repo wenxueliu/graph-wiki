@@ -147,7 +147,7 @@ Open your vault directory in Obsidian (File → Open Vault). The wiki pages, wik
 
 ## Multiple vaults
 
-Keep a default vault in the config file (setup-created projects: `<project>/.graph-wiki/config`; otherwise `~/.graph-wiki/config`), or create named configs like `<config-dir>/config.work` with `/wiki-switch new work`.
+Keep a default vault in the config file (setup-created projects: `<project>/.graph-wiki/config`; otherwise `~/.graph-wiki/config`), or create named configs by copying it to `<config-dir>/config.work` and changing `OBSIDIAN_VAULT_PATH`.
 
 Profiles can also live inside a project. A `.env` created from the shipped template already sets
 `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`, keeping `config`, `config.<name>`, and `WRITING.md` there —
@@ -168,7 +168,7 @@ From any directory, route one request to a named vault with `@name`:
 wiki-query @personal what do I know about MCP security
 ```
 
-The `@name` override applies **only to that request** and never changes your default vault. To change the default, use `/wiki-switch <name>` — it re-points the active symlink.
+The `@name` override applies **only to that request** and never changes your default vault. To change the default, re-run `graph-wiki setup --vault <path>`, or copy the profile you want over the active `config` file.
 
 All supported agents can use this syntax after `graph-wiki setup` or `python3 setup.py`, because the shared skills and always-on bootstrap files all point back to the same Config Resolution Protocol. Claude Code, Cursor, Windsurf, Codex, Gemini, Kiro, Hermes, OpenClaw, Copilot CLI, Pi, and the generic `AGENTS.md` agents all pick it up from the same instructions.
 

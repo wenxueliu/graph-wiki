@@ -100,7 +100,6 @@ live in `docs/skills.md`.
 | User intent | Skill |
 |---|---|
 | Initialize or repair a vault | `wiki-setup` |
-| Switch, list, or create named vault profiles | `wiki-switch` |
 | Lightweight ingest of local UTF-8 Markdown, text, or reStructuredText | `wiki-ingest` |
 | Import Claude, Codex, Copilot, OpenClaw, or Pi history | `wiki-history-ingest` and its available agent-specific skill |
 | Save the current conversation or quickly stage a finding | `wiki-capture` |

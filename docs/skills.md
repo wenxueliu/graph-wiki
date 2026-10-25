@@ -17,7 +17,6 @@ call them directly.
 | Skill | What it does | Slash command |
 |---|---|---|
 | `wiki-setup` | Initialize or safely repair the vault's config, Knowledge Pack, core files, and optional integrations | `/wiki-setup` |
-| `wiki-switch` | Manage multiple named vault profiles and switch the active one | `/wiki-switch <name>` |
 | `daily-update` | Vault-scoped daily maintenance: source freshness, index, hot cache, state files, independent verification, log | `/daily-update` |
 | `daily-update-setup` | Install or verify the daily 09:00 schedule, vault-scoped state, and optional terminal reminder after approval | `/daily-update-setup` |
 | `wiki-context` | internal — resolve the vault from config and build the shared runtime context every other skill reads | — |

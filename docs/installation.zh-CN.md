@@ -151,8 +151,8 @@ npx skills add wenxueliu/graph-wiki
 
 ## 多个 vault
 
-在配置文件（由 setup 创建的项目为 `<project>/.graph-wiki/config`；否则 `~/.graph-wiki/config`）中保持一个默认生效的 vault，或者用 `/wiki-switch new work`
-创建命名配置，例如 `<config-dir>/config.work`。
+在配置文件（由 setup 创建的项目为 `<project>/.graph-wiki/config`；否则 `~/.graph-wiki/config`）中保持一个默认生效的 vault；需要命名配置时，把它复制为
+`<config-dir>/config.work` 并修改其中的 `OBSIDIAN_VAULT_PATH`。
 
 Profile 也可以放在项目内：由随附模板创建的 `.env` 已设置 `GRAPH_WIKI_CONFIG_DIR=.graph-wiki`，把
 `config`、`config.<name>` 与 `WRITING.md` 留在该目录——不会读写 `~/.graph-wiki`。当一个仓库拥有一个 vault、
@@ -171,8 +171,8 @@ Profile 也可以放在项目内：由随附模板创建的 `.env` 已设置 `GR
 wiki-query @personal what do I know about MCP security
 ```
 
-`@name` 覆盖 **只对该请求生效**，绝不改变你的默认 vault。要改变默认值，使用 `/wiki-switch <name>`
-——它会重新指向当前生效的符号链接。
+`@name` 覆盖 **只对该请求生效**，绝不改变你的默认 vault。要改变默认值，重新运行
+`graph-wiki setup --vault <path>`，或把想用的 profile 覆盖到当前生效的 `config` 文件。
 
 在 `graph-wiki setup` 或 `python3 setup.py` 之后，所有受支持的 agent 都能使用这个语法，因为共享的
 skill 与 always-on bootstrap 文件都指回同一套 Config Resolution Protocol。Claude Code、Cursor、

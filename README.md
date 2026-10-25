@@ -11,7 +11,6 @@
   <a href="https://pypi.org/project/graph-wiki-skills/"><img src="https://img.shields.io/pypi/v/graph-wiki-skills?color=blue" alt="PyPI" /></a>
   <a href="https://deepwiki.com/wenxueliu/graph-wiki"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
   <a href="https://github.com/wenxueliu/graph-wiki/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
-  <a href="https://x.com/_ar9av"><img src="https://img.shields.io/badge/@__ar9av-black?logo=x&logoColor=white" alt="X" /></a>
 </p>
 
 <p align="center">
