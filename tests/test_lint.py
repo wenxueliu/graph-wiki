@@ -124,6 +124,29 @@ def test_lint_vault_warns_on_duplicates_missing_summaries_and_orphans(tmp_path: 
     assert "references/beta.md" in report["findings"]["orphan_pages"]
 
 
+def test_lint_warns_on_oversized_page_and_reports_metrics(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    _page(vault, "concepts/alpha.md", links=["big"])
+    _page(vault, "concepts/big.md", links=["alpha"])
+    big = vault / "concepts/big.md"
+    big.write_text(big.read_text() + "\n" + "x" * 25_000 + "\n", encoding="utf-8")
+    ledger = build_trust_ledger(vault, reviewed_at="2026-07-12T17:38:39+07:00")
+    write_trust_ledger(vault / "_meta" / "trust-ledger.json", ledger, vault=vault)
+
+    report = lint_vault(vault)
+
+    assert report["status"] == "warn"
+    oversized = report["findings"]["oversized_pages"]
+    assert [item["page"] for item in oversized] == ["concepts/big.md"]
+    assert oversized[0]["tokens"] > 5000
+    assert oversized[0]["limit"] == 5000
+    metrics = report["stats"]["metrics"]
+    assert metrics["oversized_pages"] == 1
+    assert metrics["total_tokens"] > 5000
+    assert metrics["duplicate_title_groups"] == 0
+    assert metrics["index_consistency"]["configured"] is False
+
+
 def test_lint_cli_uses_configured_vault_and_strict_mode(tmp_path: Path) -> None:
     home = tmp_path / "home"
     vault = tmp_path / "vault"

@@ -13,6 +13,7 @@ from typing import Any, Iterable
 DEFAULT_BUDGET = 8_000
 MIN_BUDGET = 256
 MAX_BUDGET = 100_000
+from graph_wiki.index import search_visibility
 from graph_wiki.knowledge_pack import iter_content_pages
 SKIP_FILES = frozenset({"AGENTS.md", "CLAUDE.md", "GEMINI.md", "hot.md", "index.md", "log.md", "_insights.md"})
 BLOCKED_PUBLIC_TAGS = frozenset({"visibility/internal", "visibility/pii"})
@@ -41,6 +42,7 @@ class PageRecord:
     tier: str
     updated: str
     lifecycle: str
+    operational_state: str
     base_confidence: str
     body: str
 
@@ -134,6 +136,20 @@ def _frontmatter_values(frontmatter: str) -> dict[str, Any]:
     return values
 
 
+def _operational_state(frontmatter: str) -> str:
+    """Return ``operational_status.state`` from a nested frontmatter mapping."""
+    in_block = False
+    for line in frontmatter.splitlines():
+        if not line.startswith((" ", "\t")):
+            in_block = line.rstrip().endswith(":") and line.split(":", 1)[0].strip() == "operational_status"
+            continue
+        if in_block:
+            key, _, value = line.strip().partition(":")
+            if key == "state":
+                return _without_yaml_comment(value).strip().strip("'\"")
+    return ""
+
+
 def _as_tuple(value: Any) -> tuple[str, ...]:
     if isinstance(value, tuple):
         return tuple(str(item) for item in value if str(item))
@@ -182,7 +198,7 @@ def _page_from_path(path: Path, vault: Path) -> PageRecord:
     summary = str(values.get("summary", "")).strip() or _first_paragraph(_without_sources(body))
     updated = str(values.get("updated", "")).strip() or datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
     tier = str(values.get("tier", "supporting")).strip().lower()
-    return PageRecord(path.relative_to(vault).as_posix(), title, _as_tuple(values.get("aliases", ())), _as_tuple(values.get("tags", ())), summary, tier if tier in TIER_ORDER else "supporting", updated, str(values.get("lifecycle", "")).strip(), str(values.get("base_confidence", "")).strip(), body.strip())
+    return PageRecord(path.relative_to(vault).as_posix(), title, _as_tuple(values.get("aliases", ())), _as_tuple(values.get("tags", ())), summary, tier if tier in TIER_ORDER else "supporting", updated, str(values.get("lifecycle", "")).strip().lower(), _operational_state(frontmatter), str(values.get("base_confidence", "")).strip(), body.strip())
 
 
 def load_pages(vault: Path, *, public_only: bool = False) -> list[PageRecord]:
@@ -217,12 +233,20 @@ def _topic_score(page: PageRecord, topic: str, terms: Iterable[str]) -> float:
 
 
 def rank_pages(pages: list[PageRecord], topic: str, *, recent: bool = False, limit: int = 20) -> list[tuple[PageRecord, float]]:
+    visible = [
+        (page, search_visibility(page.lifecycle, page.operational_state))
+        for page in pages
+    ]
+    visible = [(page, weight) for page, weight in visible if weight > 0]
     if recent:
-        ordered = sorted(pages, key=lambda page: (page.updated, -TIER_ORDER.get(page.tier, 1), page.path), reverse=True)
+        ordered = sorted((page for page, _ in visible), key=lambda page: (page.updated, -TIER_ORDER.get(page.tier, 1), page.path), reverse=True)
         return [(page, 1.0) for page in ordered[:limit]]
     if not topic.strip():
         raise ContextError("missing_topic", "topic is required unless --recent is used")
-    ranked = [(page, _topic_score(page, topic, _terms(topic))) for page in pages]
+    ranked = [
+        (page, _topic_score(page, topic, _terms(topic)) * weight)
+        for page, weight in visible
+    ]
     ranked = [item for item in ranked if item[1] > 0]
     ranked.sort(key=lambda item: (-item[1], TIER_ORDER.get(item[0].tier, 1), item[0].path))
     return ranked[:limit]
@@ -299,6 +323,8 @@ def _page_block(page: PageRecord, content: str) -> str:
         metadata.append(f"Updated: {page.updated}")
     if page.lifecycle:
         metadata.append(f"Lifecycle: {page.lifecycle}")
+    if page.operational_state:
+        metadata.append(f"Operational status: {page.operational_state}")
     if page.base_confidence:
         metadata.append(f"Base confidence: {page.base_confidence}")
     if page.summary:

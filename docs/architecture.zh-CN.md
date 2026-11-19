@@ -59,7 +59,7 @@ subagent 覆盖同一个规范页面。
 在可恢复的 `wiki-folder-ingest` 路径中，小来源使用 inline 归并，而较大的区间通过有界隔离 worker 提取
 为已验证的 Packet。持久化 Job 负责续跑、排序、staged review 与来源级完成。
 
-每个页面在写入时，frontmatter 中还会得到 1–2 句 `summary:`——之后的查询用它在不打开页面的情况下预览。
+每个页面在写入时，frontmatter 中还会得到 1–2 句 `summary:`——之后的查询用它在不打开页面的情况下预览。查询会隐藏 `archived`/`sunset` 页面，并把 `draft`、`disputed`、`deprecated` 知识排在成熟页面之后——分歧仍然可见，但不会主导结果。
 
 ### 3. Merge（归并）
 

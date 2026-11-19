@@ -70,7 +70,7 @@ In the recoverable `wiki-folder-ingest` path, small sources use inline integrati
 ranges are extracted through bounded isolated workers into validated Packets. The durable Job owns
 resume, ordering, staged review, and source-level completion.
 
-Each page also gets a 1–2 sentence `summary:` in its frontmatter at write time — later queries use this to preview pages without opening them.
+Each page also gets a 1–2 sentence `summary:` in its frontmatter at write time — later queries use this to preview pages without opening them. Queries hide `archived`/`sunset` pages and rank `draft`, `disputed`, and `deprecated` knowledge below settled pages, so disagreement stays visible without dominating results.
 
 ### 3. Merge
 

@@ -30,7 +30,8 @@ def vault(tmp_path):
 def _page(vault: Path, name: str, *, title: str = "", summary: str = "",
           tags: list[str] | None = None, links: list[str] | None = None,
           relationships: list[tuple[str, str]] | None = None,
-          tier: str = "supporting", category: str = "concepts") -> Path:
+          tier: str = "supporting", category: str = "concepts",
+          lifecycle: str = "", operational_state: str = "") -> Path:
     lines = ["---", f"title: {title or name}"]
     if summary:
         lines.append(f"summary: {summary}")
@@ -38,6 +39,10 @@ def _page(vault: Path, name: str, *, title: str = "", summary: str = "",
         lines.append(f"tags: [{', '.join(tags)}]")
     lines.append(f"tier: {tier}")
     lines.append(f"category: {category}")
+    if lifecycle:
+        lines.append(f"lifecycle: {lifecycle}")
+    if operational_state:
+        lines.extend(["operational_status:", f"  state: {operational_state}", "  replacement: null"])
     if relationships:
         lines.append("relationships:")
         for target, relation in relationships:
@@ -187,6 +192,36 @@ class TestRankCandidates:
         idx = build_index(simple_vault)
         result = rank_candidates(idx, ["deep-learning"], top_n=1)
         assert len(result) <= 1
+
+    def test_archived_page_is_hidden(self, vault):
+        _page(vault, "retired", title="Transformer Architecture",
+              summary="Retired notes.", lifecycle="archived")
+        _page(vault, "current", title="Transformer Overview",
+              summary="Current notes.", lifecycle="verified")
+        result = rank_candidates(build_index(vault), ["transformer"])
+        assert [c["slug"] for c in result] == ["current"]
+
+    def test_sunset_page_is_hidden(self, vault):
+        _page(vault, "old-service", title="Billing Service",
+              summary="Retired service.", operational_state="sunset")
+        _page(vault, "billing", title="Billing",
+              summary="Active billing knowledge.")
+        result = rank_candidates(build_index(vault), ["billing"])
+        assert [c["slug"] for c in result] == ["billing"]
+
+    def test_draft_ranks_below_settled(self, vault):
+        _page(vault, "settled", title="Rate Limiting", summary="Reviewed.", lifecycle="reviewed")
+        _page(vault, "draft", title="Rate Limiting Draft", summary="Draft.", lifecycle="draft")
+        result = rank_candidates(build_index(vault), ["rate", "limiting"])
+        assert result[0]["slug"] == "settled"
+
+    def test_query_stats_report_visibility_and_read_cost(self, vault):
+        _page(vault, "alpha", title="Alpha", summary="Alpha knowledge.",
+              links=["beta"], lifecycle="verified")
+        _page(vault, "beta", title="Beta", summary="Beta knowledge.")
+        result = query(vault, "alpha")
+        assert result["stats"]["searchable_pages"] == 2
+        assert result["stats"]["estimated_read_tokens"] >= 0
 
 
 # ---------------------------------------------------------------------------

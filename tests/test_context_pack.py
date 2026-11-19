@@ -64,6 +64,23 @@ def test_load_pages_skips_control_and_staging_paths(tmp_path: Path) -> None:
     assert [page.path for page in load_pages(vault)] == ["AI/kept.md"]
 
 
+def test_rank_pages_hides_archived_and_sunset(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    write_note(vault, "live.md", "---\ntitle: Rate Limiting\nlifecycle: reviewed\n---\n# Rate Limiting\n\nToken bucket.\n")
+    write_note(vault, "archived.md", "---\ntitle: Rate Limiting Archived\nlifecycle: archived\n---\n# Archived\n\nOld token bucket.\n")
+    write_note(vault, "sunset.md", "---\ntitle: Rate Limiting Service\noperational_status:\n  state: sunset\n  replacement: null\n---\n# Sunset\n\nRetired service.\n")
+    ranked = rank_pages(load_pages(vault), "rate limiting")
+    assert [page.path for page, _ in ranked] == ["live.md"]
+
+
+def test_rank_pages_deprioritises_draft(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    write_note(vault, "settled.md", "---\ntitle: Rate Limiting\nlifecycle: reviewed\n---\n# Rate Limiting\n\nToken bucket.\n")
+    write_note(vault, "draft.md", "---\ntitle: Rate Limiting Draft\nlifecycle: draft\n---\n# Draft\n\nToken bucket notes.\n")
+    ranked = rank_pages(load_pages(vault), "rate limiting")
+    assert [page.path for page, _ in ranked][0] == "settled.md"
+
+
 def test_public_only_filters_before_ranking(tmp_path: Path) -> None:
     vault = tmp_path / "vault"
     write_note(vault, "internal.md", "---\ntitle: Internal\ntags: [visibility/internal]\nsummary: Secret launch plan.\n---\n# Internal\n")

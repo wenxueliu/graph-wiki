@@ -45,8 +45,27 @@ _CATEGORY_RE = re.compile(r"^category:\s*(\w+)", re.MULTILINE)
 _TIER_RE = re.compile(r"^tier:\s*(\w+)", re.MULTILINE)
 _BLOCK_SCALAR_RE = re.compile(r"^[>|][+-]?\d*$")
 
-INDEX_VERSION = 3
+INDEX_VERSION = 4
 INDEX_FILENAME = "frontmatter-index.json"
+
+# Retrieval visibility policy shared by graphrag and context-pack. Retired
+# knowledge is hidden; unfinished, deprecated, and disputed knowledge stays
+# retrievable but ranks below settled pages so disagreement is never hidden by
+# omission. Missing fields keep the pre-policy behaviour (visible, full weight).
+_HIDDEN_LIFECYCLES = frozenset({"archived"})
+_HIDDEN_OPERATIONAL_STATES = frozenset({"sunset"})
+_DEPRIORITISED_LIFECYCLES = frozenset({"draft", "disputed"})
+_DEPRIORITISED_OPERATIONAL_STATES = frozenset({"deprecated"})
+
+
+def search_visibility(lifecycle: str, operational_state: str) -> float:
+    """Return 0 (hidden), 0.5 (deprioritised), or 1.0 (normal) for retrieval."""
+    if lifecycle in _HIDDEN_LIFECYCLES or operational_state in _HIDDEN_OPERATIONAL_STATES:
+        return 0.0
+    if lifecycle in _DEPRIORITISED_LIFECYCLES or operational_state in _DEPRIORITISED_OPERATIONAL_STATES:
+        return 0.5
+    return 1.0
+
 
 def _slug(s: str) -> str:
     return s.strip().lower().replace(" ", "-")
@@ -81,6 +100,24 @@ def _extract_scalar(front: str, key: str) -> str:
                     break
             return " ".join(block_lines).strip()
         return rest.strip("\"'")
+    return ""
+
+
+def _extract_child_scalar(front: str, parent: str, child: str) -> str:
+    """Extract one scalar nested under a top-level mapping key."""
+    lines = front.splitlines()
+    pattern = re.compile(rf"^{re.escape(parent)}:\s*$")
+    child_pattern = re.compile(rf"^\s+{re.escape(child)}:\s*(.*)$")
+    in_parent = False
+    for line in lines:
+        if not line.startswith((" ", "\t")):
+            in_parent = bool(pattern.match(line))
+            continue
+        if not in_parent:
+            continue
+        match = child_pattern.match(line)
+        if match:
+            return match.group(1).strip().strip("\"'")
     return ""
 
 
@@ -288,6 +325,8 @@ def _parse_page(path: Path, vault: Path, known_slugs: set[str], mtime_ns: int, s
         "category": category,
         "tags": _parse_tags(front),
         "summary": _extract_scalar(front, "summary"),
+        "lifecycle": _extract_scalar(front, "lifecycle").lower(),
+        "operational_state": _extract_child_scalar(front, "operational_status", "state").lower(),
         "tier": tier,
         "path": str(path.relative_to(vault)),
         "edges": _build_edges(out_links, relationships),
@@ -376,3 +415,35 @@ def load_index(vault: Path, *, force: bool = False) -> dict[str, dict[str, Any]]
     if changed:
         _save_cache(vault, result)
     return result
+
+
+def cache_consistency(vault: Path) -> dict[str, Any]:
+    """Compare the cached index with live files without rebuilding it.
+
+    ``stale`` counts cached entries whose mtime/size no longer match disk;
+    ``missing_from_cache`` counts live pages absent from the cache. A cache
+    written by an older index version reads as empty, so ``rebuild_required``
+    distinguishes that case from a vault that was never indexed.
+    """
+    vault = Path(vault)
+    cache_path = _index_path(vault)
+    files = list(iter_pages(vault))
+    live = {str(p.relative_to(vault)): p.stat() for p in files}
+    cache = _load_cache(vault)
+    live_paths = set(live)
+    cached_paths = set(cache)
+    stale = sum(
+        1
+        for rel in live_paths & cached_paths
+        if cache[rel].get("mtime_ns") != live[rel].st_mtime_ns
+        or cache[rel].get("size") != live[rel].st_size
+    )
+    return {
+        "configured": cache_path.exists(),
+        "rebuild_required": cache_path.exists() and not cache,
+        "live_pages": len(live_paths),
+        "cached_pages": len(cached_paths),
+        "stale": stale,
+        "missing_from_cache": len(live_paths - cached_paths),
+        "orphaned_cache_entries": len(cached_paths - live_paths),
+    }

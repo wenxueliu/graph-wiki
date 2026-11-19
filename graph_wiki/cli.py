@@ -2398,6 +2398,20 @@ def _print_lint(report: dict[str, object]) -> None:
     print(f"pages: {stats['pages']}  links: {stats['link_count']}")
     for name, count in stats["findings"].items():
         print(f"{name}: {count}")
+    metrics = stats.get("metrics", {})
+    if metrics:
+        print(
+            f"tokens: {metrics['total_tokens']}  avg: {metrics['average_tokens']}"
+            f"  oversized: {metrics['oversized_pages']}"
+        )
+        consistency = metrics.get("index_consistency", {})
+        if consistency.get("configured"):
+            state = (
+                "rebuild required"
+                if consistency["rebuild_required"]
+                else f"stale {consistency['stale']}, missing {consistency['missing_from_cache']}"
+            )
+            print(f"index: {state}")
 
 
 def _schema_csv(config: dict[str, str], key: str) -> list[str]:

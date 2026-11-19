@@ -28,6 +28,7 @@ to open, replacing the current approach of opening 10+ pages speculatively.
 
 from __future__ import annotations
 
+import math
 import re
 from pathlib import Path
 from typing import Any
@@ -37,7 +38,13 @@ from typing import Any
 # Index building
 # ---------------------------------------------------------------------------
 
-from graph_wiki.index import _slug, entry_edges, find_index_path, load_index
+from graph_wiki.index import (
+    _slug,
+    entry_edges,
+    find_index_path,
+    load_index,
+    search_visibility,
+)
 
 
 def build_index(vault: Path) -> dict[str, dict]:
@@ -56,6 +63,9 @@ def build_index(vault: Path) -> dict[str, dict]:
             "summary": entry["summary"],
             "category": entry["category"],
             "tier": entry["tier"],
+            "lifecycle": entry.get("lifecycle", ""),
+            "operational_state": entry.get("operational_state", ""),
+            "size": entry.get("size", 0),
             "path": entry["path"],
             "edges": edges,
             # Compatibility projection used for degree ranking.
@@ -79,6 +89,12 @@ _TIER_WEIGHT = {"core": 1.3, "supporting": 1.0, "peripheral": 0.7}
 
 
 def _score(slug: str, entry: dict, terms: list[str]) -> float:
+    visibility = search_visibility(
+        entry.get("lifecycle", ""), entry.get("operational_state", "")
+    )
+    if visibility == 0.0:
+        return 0.0
+
     score = 0.0
     title_lower = entry["title"].lower()
     summary_lower = entry["summary"].lower()
@@ -100,6 +116,7 @@ def _score(slug: str, entry: dict, terms: list[str]) -> float:
         degree = len(entry["in_links"]) + len(entry["out_links"])
         score += min(degree * 0.1, 2.0)
         score *= _TIER_WEIGHT.get(entry.get("tier", "supporting"), 1.0)
+        score *= visibility
     return score
 
 
@@ -222,7 +239,8 @@ def query(
     term_set = {t.lower() for t in terms}
     god_relevant = [
         index[s]["path"] for s in god_slugs
-        if any(t in index[s]["title"].lower() or t in " ".join(index[s]["tags"]).lower() for t in term_set)
+        if search_visibility(index[s].get("lifecycle", ""), index[s].get("operational_state", "")) > 0
+        and any(t in index[s]["title"].lower() or t in " ".join(index[s]["tags"]).lower() for t in term_set)
     ][:5]
 
     path_result: list[str] = []
@@ -289,6 +307,19 @@ def query(
         "index_only": index_only,
         "stats": {
             "indexed_pages": len(index),
+            "searchable_pages": sum(
+                1
+                for entry in index.values()
+                if search_visibility(
+                    entry.get("lifecycle", ""), entry.get("operational_state", "")
+                )
+                > 0
+            ),
+            "estimated_read_tokens": sum(
+                math.ceil(entry.get("size", 0) / 4)
+                for entry in index.values()
+                if entry["path"] in should_read
+            ),
             "query_terms": terms,
         },
     }

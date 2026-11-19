@@ -134,7 +134,7 @@ marker hashes; it cannot switch Pack names, which requires a content-aware migra
 | Command | What it does |
 |---|---|
 | `query <question>` | Answer a question from the configured vault's index |
-| `lint [vault]` | Find missing frontmatter, broken links, duplicates, and orphans |
+| `lint [vault]` | Find missing frontmatter, broken links, duplicates, orphans, and oversized pages |
 
 ```bash
 graph-wiki query "what do I know about MCP security?"

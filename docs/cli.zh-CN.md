@@ -128,7 +128,7 @@ Pack 不会绕过迁移安全：setup 会直接失败，而不是切换契约。
 | 命令 | 作用 |
 |---|---|
 | `query <question>` | 从已配置 vault 的索引回答问题 |
-| `lint [vault]` | 发现缺失的 frontmatter、失效链接、重复页面与孤立页面 |
+| `lint [vault]` | 发现缺失的 frontmatter、失效链接、重复页面、孤立页面与超大页面 |
 
 ```bash
 graph-wiki query "what do I know about MCP security?"

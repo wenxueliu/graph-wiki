@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 from collections.abc import Collection
@@ -13,6 +14,7 @@ from graph_wiki.relationships import (
     parse_flat_relationships,
     parse_inline_relationships,
 )
+from graph_wiki.index import cache_consistency
 from graph_wiki.knowledge_pack import iter_content_pages
 from graph_wiki.trust import (
     ALLOWED_LIFECYCLES,
@@ -39,6 +41,9 @@ TRUST_REQUIRED_FRONTMATTER = (
     "lifecycle",
 )
 RESERVED_PAGE_STEMS = frozenset({"index", "log", "hot", "_insights"})
+# Initial Knowledge-Unit ceiling from the retrieval evaluation; a warning, not a
+# hard limit, because semantic completeness still decides where a page splits.
+MAX_KNOWLEDGE_TOKENS = 5000
 _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---", re.DOTALL)
 _FIELD_RE = re.compile(r"^([A-Za-z_][\w-]*):", re.MULTILINE)
 _WIKILINK_RE = re.compile(r"\[\[([^\]|#]+?)(?:[|#][^\]]*?)?\]\]")
@@ -176,6 +181,7 @@ def _parse_page(
         "slug": _slug(path.stem),
         "title": values.get("title", "").strip() or path.stem,
         "summary": values.get("summary", "").strip(),
+        "tokens": math.ceil(len(text) / 4),
         "fields": fields,
         "links": links,
         "relationships": _parse_relationships(frontmatter),
@@ -263,6 +269,26 @@ def lint_vault(
         if page["slug"] not in RESERVED_PAGE_STEMS
         and ("summary" not in page["fields"] or not page["summary"])
     ]
+
+    oversized_pages = [
+        {
+            "page": page["path"],
+            "tokens": page["tokens"],
+            "limit": MAX_KNOWLEDGE_TOKENS,
+        }
+        for page in pages
+        if page["slug"] not in RESERVED_PAGE_STEMS
+        and page["tokens"] > MAX_KNOWLEDGE_TOKENS
+    ]
+
+    total_tokens = sum(page["tokens"] for page in pages)
+    metrics = {
+        "total_tokens": total_tokens,
+        "average_tokens": round(total_tokens / len(pages), 1) if pages else 0,
+        "duplicate_title_groups": len(duplicate_titles),
+        "oversized_pages": len(oversized_pages),
+        "index_consistency": cache_consistency(vault),
+    }
 
     orphan_pages = []
     for page in pages:
@@ -400,6 +426,7 @@ def lint_vault(
         "missing_frontmatter": missing_frontmatter,
         "duplicate_titles": duplicate_titles,
         "missing_summaries": sorted(missing_summaries),
+        "oversized_pages": oversized_pages,
         "orphan_pages": sorted(orphan_pages),
         "typed_relationship_issues": typed_relationship_issues,
         "confidence_missing_fields": confidence_missing_fields,
@@ -444,7 +471,13 @@ def lint_vault(
     elif (
         any(
             counts[name]
-            for name in ("duplicate_titles", "missing_summaries", "orphan_pages", "typed_relationship_issues")
+            for name in (
+                "duplicate_titles",
+                "missing_summaries",
+                "orphan_pages",
+                "oversized_pages",
+                "typed_relationship_issues",
+            )
         )
         or trust_findings_present
     ):
@@ -464,6 +497,7 @@ def lint_vault(
             "pages": len(pages),
             "link_count": sum(len(page["links"]) for page in pages),
             "findings": counts,
+            "metrics": metrics,
             "trust": trust_report["counts"] if trust_report else {"ledger": "not_configured"},
         },
         "findings": findings,

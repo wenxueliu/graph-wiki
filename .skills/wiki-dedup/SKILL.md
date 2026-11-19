@@ -207,6 +207,8 @@ Read both pages. Update the canonical page:
 - **`sources:`** — merge both source lists (deduplicate)
 - **`relationships:`** — merge both relationship lists (deduplicate by target, prefer typed entries over untyped)
 - **`base_confidence`** — recompute using the union of sources and the formula from `llm-wiki/SKILL.md`
+- **`lifecycle:`** — keep the stronger maturity (`verified` > `reviewed` > `draft`). If either page is `disputed`, keep `disputed` and record the conflict instead of silently picking a side.
+- **`operational_status:`** — keep the canonical page's value unless both pages describe retired objects. `lifecycle` and `operational_status.state` are independent axes; never derive one from the other.
 - **`updated`** — set to now
 - **`summary:`** — rewrite to cover the merged scope if the secondary page added new ground
 - **Body content** — merge unique sections and bullets from the secondary page. Do not blindly append — integrate the content. Avoid duplicating claims already present in the canonical page. Use `^[inferred]` markers where synthesis is needed.
@@ -221,6 +223,10 @@ redirects_to: "[[<canonical node_id>]]"
 aliases: [<secondary aliases>]
 category: <secondary category>
 tags: []
+lifecycle: archived
+operational_status:
+  state: sunset
+  replacement: "[[<canonical node_id>]]"
 created: <secondary original created>
 updated: <ISO timestamp now>
 ---

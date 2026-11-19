@@ -47,7 +47,7 @@ steps:
       基于 lint-context.md，按共享 context 的 retrieval order 从 index/frontmatter/rg 开始执行以下确定性检查：
 
       - 1 Orphaned Pages；2 Broken Wikilinks；3 Missing Frontmatter；3a Missing Summary（仅 soft warning）
-      - 4 Stale Content；6 Index Consistency；8 Fragmented Tag Clusters；9 Visibility Tag Consistency
+      - 4 Stale Content；6 Index Consistency；7 Oversized Pages（>5000 estimated tokens，仅建议按语义边界拆分）；8 Fragmented Tag Clusters；9 Visibility Tag Consistency
       - 10 Misc Promotion Candidates；12 Confidence and Lifecycle Schema；13 Typed Relationships Validity
 
       明确执行要求：
@@ -93,7 +93,9 @@ steps:
     do: |
       将 structural-findings.json 与 semantic-findings.json 去重合并，在产出目录写 wiki-health-report.md 和 lint-summary.json。
 
-      报告采用固定结构，逐节给出：orphans、broken links、missing frontmatter、stale、contradictions、index issues、missing summary（soft）、provenance、fragmented clusters、visibility、promotion candidates、confidence/lifecycle、typed relationships、synthesis gaps。每节即使为 0 也保留计数。
+      报告采用固定结构，逐节给出：orphans、broken links、missing frontmatter、stale、contradictions、index issues、missing summary（soft）、oversized pages、provenance、fragmented clusters、visibility、promotion candidates、confidence/lifecycle、typed relationships、synthesis gaps。每节即使为 0 也保留计数。
+
+      oversized pages 只给拆分建议：按语义边界拆成独立页面，保留 sources/provenance，新页建立 `derived_from` 关系，旧页转为 redirect 或 `archived`；不得仅按 token 数机械切分，也不得原地删除内容。
 
       lint-summary.json 必须包含 audit_id、canonical vault、schema source、mode=check、每类 counts、issues_found 总数、hard_errors、warnings、soft_warnings、trust-check 状态、扫描页数、排除项、命令与生成时间。issues_found 的计数口径必须明确且可由 findings 重算。
 
@@ -102,7 +104,7 @@ steps:
     output: wiki-health-report.md + lint-summary.json
     check_voting:
       - check: 从两个 findings JSON 重算每节和总计，确认报告无遗漏、无重复、severity 与 soft warning 口径一致，所有路径和 locator 可定位
-      - check: 对照 wiki-lint Output Format、effective schema 与 trust-check 结果，确认 13 类检查均有呈现，修复建议没有越过 human-only lifecycle/confidence 边界
+      - check: 对照 wiki-lint Output Format、effective schema 与 trust-check 结果，确认 14 类检查均有呈现，修复建议没有越过 human-only lifecycle/confidence 边界
       - check: 确认 report/summary 只写 artifacts，未修改 vault，未运行 QMD；报告清楚区分事实 findings、语义判断与建议
     on_pass: record_lint
     on_fail: render_report
