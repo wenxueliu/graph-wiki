@@ -456,11 +456,20 @@ def _zvec_search(
         )
         _ZVEC_COLLECTIONS[key] = collection
     try:
-        search = zvec.Query(
-            field_name="search_text",
-            fts=zvec.Fts(match_string=query),
-            param=zvec.FtsQueryParam(default_operator="OR" if operator.upper() == "OR" else "AND"),
-        )
+        # zvec's match_string + default_operator disagrees with query_string for
+        # three or more CJK terms, so multi-token queries use explicit boolean
+        # operators. A single token keeps match_string's Jieba analysis.
+        tokens = [token for token in query.split() if token]
+        if len(tokens) > 1:
+            joiner = " OR " if operator.upper() == "OR" else " AND "
+            fts = zvec.Fts(query_string=joiner.join(tokens))
+            parameter = None
+        else:
+            fts = zvec.Fts(match_string=query)
+            parameter = zvec.FtsQueryParam(
+                default_operator="OR" if operator.upper() == "OR" else "AND"
+            )
+        search = zvec.Query(field_name="search_text", fts=fts, param=parameter)
         docs = collection.query(
             queries=search,
             topk=max(topk * 5, topk),

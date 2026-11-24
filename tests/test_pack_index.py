@@ -125,6 +125,24 @@ def test_expired_pages_are_excluded_by_default(tmp_path: Path) -> None:
     assert included["results"]
 
 
+def test_zvec_three_term_and_query(tmp_path: Path) -> None:
+    pytest.importorskip("zvec")
+    vault = tmp_path / "vault"
+    write_page(
+        vault,
+        "concepts/idempotency.md",
+        title="幂等与重试",
+        summary="幂等、去重与重试安全。",
+        body="## 重试 幂等 去重\n\n重试必须幂等，使用去重键保证安全。",
+    )
+    manifest = build_pack(vault, store=tmp_path / "store")
+    pack_dir = tmp_path / "store" / manifest["vault_id"] / f"v{manifest['version']}"
+    build_index(pack_dir, "zvec")
+
+    result = search_index(pack_dir, "重试 幂等 去重", engine="zvec")
+    assert "concepts/idempotency.md" in [item["path"] for item in result["results"]]
+
+
 def test_zvec_index_matches_the_sqlite_candidate(tmp_path: Path) -> None:
     pytest.importorskip("zvec")
     pack_dir, _manifest = make_pack(tmp_path)
