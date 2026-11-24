@@ -129,6 +129,23 @@ After an intentional contract update to the currently active Knowledge Pack, pas
 `--refresh-knowledge-pack-marker` together with that same Pack's `--knowledge-pack` name. This only refreshes the
 marker hashes; it cannot switch Pack names, which requires a content-aware migration.
 
+## Viewing the graph
+
+| Command | What it does |
+|---|---|
+| `serve` | Start a read-only local HTTP graph viewer (`http://127.0.0.1:8765/` by default) |
+
+```bash
+graph-wiki serve --vault ~/brain
+graph-wiki serve --vault ~/brain --port 0 --open
+graph-wiki serve @research --host 0.0.0.0   # exposes the vault to your network; no auth
+```
+
+The page is for humans: it draws the wikilink graph, filters by category/tag/search, and shows a
+page's summary, links, and raw Markdown. It only reads the vault. For AI retrieval, keep using
+`pack search --engine zvec`, `context-pack`, `graph-query`, and `graph-analyse`. See
+[Graph Viewer](viewer.md).
+
 ## Querying & linting
 
 | Command | What it does |

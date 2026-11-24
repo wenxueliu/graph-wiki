@@ -257,6 +257,8 @@ Open the vault in Obsidian and hit the graph view (Cmd/Ctrl+P → "Open graph vi
 
 Or export the whole graph to `graph.json`, GraphML (Gephi/yEd), Neo4j Cypher, or a self-contained interactive `graph.html`.
 
+Prefer a browser? `graph-wiki serve --vault ~/brain` starts a read-only local graph viewer with search, category/tag filters, and page details. Nothing leaves your machine.
+
 Need a reproducible read model? `graph-wiki pack build` turns a committed vault into an immutable Content Pack with SQLite FTS5 and optional zvec indexes; `pack verify`, `pack search`, and `pack eval` version and benchmark retrieval.
 
 ## Why this and not a notes folder
@@ -283,6 +285,7 @@ These docs are available in English and Simplified Chinese.
 | **[Configuration](https://github.com/wenxueliu/graph-wiki/blob/main/docs/configuration.md)** | Config vars, QMD semantic search, `_raw/` staging, GitHub sync |
 | **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.md)** | The four ingest stages, vault structure, what we added to Karpathy's pattern |
 | **[Session Brain](https://github.com/wenxueliu/graph-wiki/blob/main/docs/session-brain.md)** | Topic graph over your agent session history |
+| **[Graph Viewer](https://github.com/wenxueliu/graph-wiki/blob/main/docs/viewer.md)** | Local read-only browser graph with search, filters, and page details |
 | **[Contributing](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.md)** | Adding skills, keeping the English and Chinese docs in sync |
 
 ## Contributing

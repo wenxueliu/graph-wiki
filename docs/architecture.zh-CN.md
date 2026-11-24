@@ -214,6 +214,9 @@ Typed relationships 使用 24 个 Penfield 标准类型（`part_of`、`causes`�
 - **图谱导出与导入。** `wiki-export` 把 wikilink 图谱转换成 `graph.json`、`graph.graphml`
   （Gephi/yEd）、`cypher.txt`（Neo4j）、自包含的交互式 `graph.html`，或一个 OKF bundle。
   `wiki-import` 能把它们读回来。
+- **本地图谱查看器。** `graph-wiki serve` 启动只读的本地服务，把同一份页面/关系索引渲染成可交互的
+  浏览器图谱，支持搜索、category/tag 过滤与页面详情。页面自带一个小型 `/api/graph` + `/api/page`
+  后端；AI 检索仍然走现有的 zvec/CLI 路径。见[图谱查看器](viewer.zh-CN.md)。
 
 - **分层检索。** `wiki-query` 先读标题、标签与摘要，只有当这个低成本过程无法回答时才打开页面正文。
   说「quick answer」可以强制只走索引。查询成本从 20 个页面到 2000 个页面基本持平。

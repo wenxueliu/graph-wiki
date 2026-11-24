@@ -2818,6 +2818,35 @@ def cmd_context_pack(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_serve(args: argparse.Namespace) -> int:
+    """Serve the read-only graph viewer on a local HTTP port."""
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    if not 0 <= args.port <= 65535:
+        print("error: --port must be between 0 and 65535", file=sys.stderr)
+        return 1
+    if args.host not in ("127.0.0.1", "localhost", "::1", "[::1]"):
+        print(
+            f"warning: binding to {args.host} exposes the vault to your network; "
+            "the viewer has no authentication",
+            file=sys.stderr,
+        )
+    from graph_wiki.server import run_server
+
+    try:
+        return run_server(
+            vault,
+            host=args.host,
+            port=args.port,
+            open_browser=args.open,
+            verbose=args.verbose,
+        )
+    except RuntimeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+
 def cmd_list(args: argparse.Namespace) -> int:
     for name in list_skills():
         print(name)
@@ -2938,6 +2967,26 @@ def build_parser() -> argparse.ArgumentParser:
 
     ip = sub.add_parser("info", help="show install paths, version, and config")
     ip.set_defaults(func=cmd_info)
+
+    sv = sub.add_parser(
+        "serve",
+        help="serve a read-only graph viewer for this vault on localhost",
+    )
+    sv.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH for this viewer")
+    sv.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="bind host (default: 127.0.0.1; use 0.0.0.0 to expose to your network)",
+    )
+    sv.add_argument(
+        "--port",
+        type=int,
+        default=8765,
+        help="bind port (default: 8765; 0 chooses a free port)",
+    )
+    sv.add_argument("--open", action="store_true", help="open the viewer in the default browser")
+    sv.add_argument("--verbose", action="store_true", help="log every HTTP request")
+    sv.set_defaults(func=cmd_serve)
 
     gq = sub.add_parser(
         "graph-query",
@@ -4216,9 +4265,10 @@ def main(argv: list[str] | None = None) -> int:
     if not getattr(args, "func", None):
         parser.print_help()
         return 0
-    # Warn about stale installs on every command except `setup` (which fixes it)
-    # and `info` (which calls _check_stale itself with richer output).
-    if getattr(args, "command", None) not in ("setup", "info", "doctor", None):
+    # Warn about stale installs on every command except `setup` (which fixes it),
+    # `info` (which calls _check_stale itself with richer output), `doctor`, and
+    # `serve` (which does not use the installed skills).
+    if getattr(args, "command", None) not in ("setup", "info", "doctor", "serve", None):
         _check_stale()
     try:
         return args.func(args)

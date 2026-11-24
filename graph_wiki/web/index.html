@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Graph Wiki</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <header id="toolbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Graph Wiki</span>
+      </div>
+
+      <div class="controls">
+        <label class="search">
+          <span class="sr-only">Search pages</span>
+          <input id="search" type="search" placeholder="Search title, tag, summary…"
+                 autocomplete="off" spellcheck="false">
+        </label>
+
+        <label class="select">
+          <span class="sr-only">Category</span>
+          <select id="category-filter">
+            <option value="">All categories</option>
+          </select>
+        </label>
+
+        <label class="select">
+          <span class="sr-only">Tag</span>
+          <select id="tag-filter">
+            <option value="">All tags</option>
+          </select>
+        </label>
+
+        <label class="toggle">
+          <input id="typed-only" type="checkbox">
+          <span>Typed only</span>
+        </label>
+
+        <label class="toggle">
+          <input id="edge-labels" type="checkbox" checked>
+          <span>Labels</span>
+        </label>
+
+        <button id="fit" type="button" class="button ghost">Fit</button>
+        <button id="refresh" type="button" class="button">Refresh</button>
+      </div>
+
+      <div id="stats" class="stats" aria-live="polite">Loading…</div>
+    </header>
+
+    <main>
+      <section id="graph-wrap" aria-label="Knowledge graph">
+        <div id="graph"></div>
+        <div id="loading" class="overlay">Laying out the graph…</div>
+        <div id="empty" class="overlay" hidden>
+          <strong>No pages found</strong>
+          <span>Point the viewer at a vault with Markdown pages.</span>
+        </div>
+        <div id="error" class="banner" role="alert" hidden></div>
+      </section>
+
+      <aside id="sidebar" aria-label="Page details">
+        <div id="detail">
+          <div class="detail-empty">
+            <h2>Select a page</h2>
+            <p>Click a node to see its summary, tags, and connections. Use the
+              search and filters above to narrow the graph.</p>
+          </div>
+        </div>
+        <div id="legend" class="legend" aria-label="Legend"></div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="/static/vis-network.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

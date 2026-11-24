@@ -14,6 +14,7 @@
 | [架构](architecture.zh-CN.md) | 四个摄取阶段、vault 结构、我们在 Karpathy 模式之上加的东西 |
 | [Text Ingest Pipeline V1](ingest-pipeline-redesign.zh-CN.md) | 已交付的纯文本范围、独立分区、有界 Packet、可续跑归并 |
 | [Session Brain](session-brain.zh-CN.md) | 在你的 agent 会话历史之上构建的主题图谱 |
+| [图谱查看器](viewer.zh-CN.md) | 本地只读的浏览器图谱，含页面详情与小型 JSON 后端 |
 | [贡献指南](contributing.zh-CN.md) | 新增 skill、保持中英双语文档同步 |
 
 第一次来？先读 [安装](installation.zh-CN.md)，再读 [Skills 参考](skills.zh-CN.md)。

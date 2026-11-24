@@ -256,6 +256,8 @@ flowchart LR
 
 你也可以把整个图谱导出成 `graph.json`、GraphML（Gephi/yEd）、Neo4j Cypher，或一个自带所有资源的交互式 `graph.html`。
 
+想直接在浏览器里看？`graph-wiki serve --vault ~/brain` 会启动只读的本地图谱查看器，支持搜索、category/tag 过滤与页面详情。数据不会离开你的机器。
+
 需要可复现的读模型？`graph-wiki pack build` 把已提交的 vault 转成不可变的 Content Pack，附带 SQLite FTS5 与可选 zvec 索引；`pack verify`、`pack search` 与 `pack eval` 负责版本校验与检索评测。
 
 ## 为什么不是一个笔记文件夹就好
@@ -282,6 +284,7 @@ flowchart LR
 | **[Configuration](https://github.com/wenxueliu/graph-wiki/blob/main/docs/configuration.zh-CN.md)** | 设置变量、QMD 语义搜索、`_raw/` 暂存区、GitHub 同步 |
 | **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.zh-CN.md)** | 四个导入阶段、vault 结构、我们在 Karpathy 模式上加了什么 |
 | **[Session Brain](https://github.com/wenxueliu/graph-wiki/blob/main/docs/session-brain.zh-CN.md)** | 建立在 agent session 历史之上的主题图谱 |
+| **[图谱查看器](https://github.com/wenxueliu/graph-wiki/blob/main/docs/viewer.zh-CN.md)** | 本地只读的浏览器图谱，支持搜索、过滤与页面详情 |
 | **[Contributing](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.zh-CN.md)** | 新增 skill、维持中英双语文档同步 |
 
 ## 参与贡献

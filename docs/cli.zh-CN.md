@@ -123,6 +123,22 @@ Pack 不会绕过迁移安全：setup 会直接失败，而不是切换契约。
 同一个 Pack 的 `--knowledge-pack` 名称一起传入。它只刷新标记哈希；它无法切换 Pack 名称，切换需要
 内容感知的迁移。
 
+## 查看图谱
+
+| 命令 | 作用 |
+|---|---|
+| `serve` | 启动只读的本地 HTTP 图谱查看器（默认 `http://127.0.0.1:8765/`） |
+
+```bash
+graph-wiki serve --vault ~/brain
+graph-wiki serve --vault ~/brain --port 0 --open
+graph-wiki serve @research --host 0.0.0.0   # 会把 vault 暴露到你的网络；没有鉴权
+```
+
+页面是给人看的：它绘制 wikilink 图谱，支持按 category/tag/搜索过滤，并显示页面的摘要、链接与原始
+Markdown。它只读取 vault。给 AI 检索时，继续使用 `pack search --engine zvec`、`context-pack`、
+`graph-query` 与 `graph-analyse`。见[图谱查看器](viewer.zh-CN.md)。
+
 ## 查询与 lint
 
 | 命令 | 作用 |

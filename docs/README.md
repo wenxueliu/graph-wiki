@@ -15,6 +15,7 @@ Simplified Chinese; the links below point at the English originals.
 | [Architecture](architecture.md) | The four ingest stages, vault structure, what we added to Karpathy's pattern |
 | [Text Ingest Pipeline V1](ingest-pipeline-redesign.md) | Shipped text-only scope, independent partitioning, bounded Packets, resumable integration |
 | [Session Brain](session-brain.md) | Topic graph over your agent session history |
+| [Graph Viewer](viewer.md) | Local read-only browser graph with page details and a small JSON backend |
 | [Contributing](contributing.md) | Adding skills, keeping the English and Chinese docs in sync |
 
 New here? Read [Installation](installation.md), then [Skills Reference](skills.md).
