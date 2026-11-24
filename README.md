@@ -267,7 +267,7 @@ Need a reproducible read model? `graph-wiki pack build` turns a committed vault 
 - **It only reads what changed.** A manifest tracks every source ingested, so the second run processes the delta — not your whole library again.
 - **You can tell knowledge from guessing.** Every claim is tagged `extracted`, `^[inferred]`, or `^[ambiguous]`, and lint flags pages drifting into speculation.
 - **Queries stay cheap as it grows.** Titles, tags, and summaries get read before page bodies. 20 pages or 2000, roughly the same cost.
-- **Quality is enforceable.** `graph-wiki quality` aggregates structure, provenance, trust, coverage, and freshness into one gate-ready report, and `page-check` blocks contract violations and duplicate pages before they are written.
+- **Quality is enforceable.** `graph-wiki quality` aggregates structure, provenance, trust, coverage, and freshness into one gate-ready report with review SLAs and daily deltas, and `page-check` blocks contract violations and duplicate pages before they are written.
 - **It's yours.** Plain markdown in a folder. Push it to a private repo, open it in Obsidian, grep it, delete it. No service, no lock-in, nothing leaves your machine.
 - **Works where you already work.** One bundled `.skills/` directory, linked into each selected agent under your project.
 

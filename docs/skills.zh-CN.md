@@ -16,7 +16,7 @@ agent 中，直接描述你的需求即可。
 | Skill | 作用 | Slash command |
 |---|---|---|
 | `wiki-setup` | 初始化或安全修复 vault 的配置、Knowledge Pack、核心文件与可选集成 | `/wiki-setup` |
-| `daily-update` | vault 范围内的每日维护：来源新鲜度、index、hot cache、状态文件、独立验证与日志 | `/daily-update` |
+| `daily-update` | vault 范围内的每日维护：来源新鲜度、index、hot cache、质量 delta、状态文件、独立验证与日志 | `/daily-update` |
 | `daily-update-setup` | 经人工批准后安装或验证每日 09:00 调度、vault 范围状态与可选终端提醒 | `/daily-update-setup` |
 | `wiki-context` | internal — 按配置解析 vault，并构建其他所有 skill 共用的运行时上下文 | — |
 | `wiki-setup-contract` | internal — 由 workflow 本地模板渲染带 hash 的核心 setup 契约，再合并可选集成与验收契约 | — |

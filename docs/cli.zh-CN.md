@@ -173,12 +173,16 @@ graph-wiki quality /path/to/vault --json --pretty
 graph-wiki quality @research --strict   # warning 也让退出码非零
 graph-wiki quality --require-trust-ledger   # 发布门禁：没有台账即失败
 graph-wiki quality --strict-trust --schema-source /path/to/vault/AGENTS.md
+graph-wiki quality --baseline "$state/quality-latest.json" \
+  --save "$state/quality-latest.json"   # 输出 delta 并保存下一轮基线
 ```
 
 `quality` 是只读命令。它复用 `lint`、`verify` 与 trust ledger，再补充来源、provenance 与
-lifecycle 覆盖。报告按维度区分 `pass`、`warn`、`fail` 与 `not_measured`；`not_measured` 不会
-被悄悄当成通过。`pass`（以及未加 `--strict` 的 `warn`）退出码为 `0`，`fail` 或
-`warn --strict` 为 `1`。维度模型与 CI 示例见 [知识质量](quality.zh-CN.md)。
+lifecycle 覆盖、lifecycle/置信度复核 SLA、矛盾登记与重复候选。报告按维度区分 `pass`、`warn`、
+`fail` 与 `not_measured`；`not_measured` 不会被悄悄当成通过。`--baseline` 读取上一轮报告并
+加入 `delta` 块（`first_run`、`stable`、`improved`、`regressed`）；`--save` 写入本轮报告供下轮
+比较。`pass`（以及未加 `--strict` 的 `warn`）退出码为 `0`，`fail` 或 `warn --strict` 为 `1`。
+维度模型、复核策略与 CI 示例见 [知识质量](quality.zh-CN.md)。
 
 ## 写入前页面门禁
 

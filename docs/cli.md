@@ -179,13 +179,18 @@ graph-wiki quality /path/to/vault --json --pretty
 graph-wiki quality @research --strict   # warnings also exit non-zero
 graph-wiki quality --require-trust-ledger   # release gate: no ledger means fail
 graph-wiki quality --strict-trust --schema-source /path/to/vault/AGENTS.md
+graph-wiki quality --baseline "$state/quality-latest.json" \
+  --save "$state/quality-latest.json"   # add a delta and save the next baseline
 ```
 
 `quality` is read-only. It reuses `lint`, `verify`, and the trust ledger, then adds source,
-provenance, and lifecycle coverage. The report separates `pass`, `warn`, `fail`, and
-`not_measured` per dimension; `not_measured` is never silently treated as a pass. Exit codes are
-`0` for `pass` (and `warn` without `--strict`) and `1` for `fail` or `warn --strict`. See
-[Knowledge Quality](quality.md) for the dimension model and CI gate examples.
+provenance, and lifecycle coverage, lifecycle/confidence review SLAs, a contradiction register,
+and duplicate-candidate pairs. The report separates `pass`, `warn`, `fail`, and `not_measured` per
+dimension; `not_measured` is never silently treated as a pass. `--baseline` reads a previous
+report and adds a `delta` block (`first_run`, `stable`, `improved`, `regressed`); `--save` writes
+the current report for the next run. Exit codes are `0` for `pass` (and `warn` without `--strict`)
+and `1` for `fail` or `warn --strict`. See [Knowledge Quality](quality.md) for the dimension
+model, review policy, and CI gate examples.
 
 ## Pre-write page gate
 

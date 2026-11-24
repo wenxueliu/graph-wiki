@@ -107,7 +107,7 @@ def _field_list(records: dict[str, list[str]], key: str) -> list[str]:
     return items
 
 
-def _normalise(text: str) -> str:
+def normalise_identity(text: str) -> str:
     return _NORMALISE_RE.sub("", unicodedata.normalize("NFKC", text).casefold())
 
 
@@ -115,7 +115,7 @@ def _slug(text: str) -> str:
     return _NORMALISE_RE.sub("-", unicodedata.normalize("NFKC", text).casefold()).strip("-")
 
 
-def _tokens(text: str) -> set[str]:
+def identity_tokens(text: str) -> set[str]:
     if not text.strip():
         return set()
     normalised = unicodedata.normalize("NFKC", text).casefold()
@@ -132,7 +132,7 @@ def _jaccard(left: set[str], right: set[str]) -> float:
     return len(left & right) / len(union)
 
 
-def _identity(text: str, *, fallback_title: str) -> dict[str, Any]:
+def page_identity(text: str, *, fallback_title: str) -> dict[str, Any]:
     match = _FRONTMATTER_RE.match(text)
     if match is None:
         return {"title": fallback_title, "aliases": [], "tags": [], "summary": "", "category": ""}
@@ -182,16 +182,16 @@ def _similar_pages(
     planned: dict[str, Any],
     existing: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    planned_title = _normalise(planned["title"])
-    planned_title_tokens = _tokens(planned["title"])
-    planned_summary_tokens = _tokens(planned["summary"])
+    planned_title = normalise_identity(planned["title"])
+    planned_title_tokens = identity_tokens(planned["title"])
+    planned_summary_tokens = identity_tokens(planned["summary"])
     candidates: list[dict[str, Any]] = []
     for page in existing:
-        title = _normalise(page["title"])
+        title = normalise_identity(page["title"])
         if not title or title == planned_title:
             continue
-        title_score = _jaccard(planned_title_tokens, _tokens(page["title"]))
-        summary_score = _jaccard(planned_summary_tokens, _tokens(page["summary"]))
+        title_score = _jaccard(planned_title_tokens, identity_tokens(page["title"]))
+        summary_score = _jaccard(planned_summary_tokens, identity_tokens(page["summary"]))
         reason = ""
         score = 0.0
         if (
@@ -242,7 +242,7 @@ def check_page(
         mode = "update" if target_exists else "create"
 
     validation = validate_text(content, path=relative)
-    planned = _identity(content, fallback_title=Path(relative).stem)
+    planned = page_identity(content, fallback_title=Path(relative).stem)
 
     existing: list[dict[str, Any]] = []
     if problem is None:
@@ -253,21 +253,21 @@ def check_page(
             if path.resolve() == target_resolved:
                 continue
             text = path.read_text(encoding="utf-8", errors="replace")
-            identity = _identity(text, fallback_title=path.stem)
+            identity = page_identity(text, fallback_title=path.stem)
             identity["path"] = path.relative_to(vault).as_posix()
             existing.append(identity)
 
-    planned_title = _normalise(planned["title"])
-    planned_aliases = [_normalise(alias) for alias in planned["aliases"] if _normalise(alias)]
+    planned_title = normalise_identity(planned["title"])
+    planned_aliases = [normalise_identity(alias) for alias in planned["aliases"] if normalise_identity(alias)]
     duplicate_titles = [
         {"path": page["path"], "title": page["title"]}
         for page in existing
-        if planned_title and _normalise(page["title"]) == planned_title
+        if planned_title and normalise_identity(page["title"]) == planned_title
     ]
     alias_collisions: list[dict[str, str]] = []
     for page in existing:
-        page_title = _normalise(page["title"])
-        page_aliases = {_normalise(alias) for alias in page["aliases"] if _normalise(alias)}
+        page_title = normalise_identity(page["title"])
+        page_aliases = {normalise_identity(alias) for alias in page["aliases"] if normalise_identity(alias)}
         for alias in planned_aliases:
             if alias == page_title or alias in page_aliases:
                 alias_collisions.append(

@@ -56,6 +56,8 @@ graph-wiki quality --require-trust-ledger   # 发布门禁：没有台账即失�
 graph-wiki quality --strict-trust      # schema 缺口与过期复核按失败处理
 graph-wiki quality --allow-lifecycle active \
   --schema-source /path/to/vault/AGENTS.md
+graph-wiki quality --baseline "$state/quality-latest.json" \
+  --save "$state/quality-latest.json"  # 每日 delta
 ```
 
 退出码：`pass` 为 `0`（`warn` 在未加 `--strict` 时也是 `0`）；`fail` 或 `--strict` 下的
@@ -81,8 +83,21 @@ graph-wiki quality --allow-lifecycle active \
     "traceability": {"status": "warn", "signals": {"missing_provenance": 3}, "notes": ["..."]},
     "trust": {"status": "not_measured", "signals": {"ledger_configured": 0}, "notes": ["..."]}
   },
-  "metrics": {"lifecycle": {"draft": 4, "reviewed": 38}, "provenance": {"...": "..."}},
-  "findings": {"broken_links": [], "traceability": {"missing_sources": []}, "coverage": {}}
+  "metrics": {
+    "lifecycle": {"draft": 4, "reviewed": 38},
+    "provenance": {"...": "..."},
+    "review": {"tracked": 42, "overdue": 2, "due_soon": 1},
+    "contradictions": 1,
+    "duplicate_candidates": 3
+  },
+  "findings": {
+    "broken_links": [],
+    "traceability": {"missing_sources": []},
+    "coverage": {},
+    "review_overdue": [],
+    "contradictions": [],
+    "duplicate_candidates": []
+  }
 }
 ```
 
@@ -114,6 +129,65 @@ graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --
 轻量 `wiki-ingest` 路径与可恢复 packet 归并中的 direct 写入会在替换 live 页面前调用该门禁。
 staged artifact 由人工在提升前复核；把同一门禁接入 stage promotion 是下一个集成点。
 
+## 复核 SLA
+
+复核过的页面不会永久保持“已复核”。报告根据 lifecycle、人工复核的置信度和 trust ledger 的
+`reviewed_at` 推导到期日：
+
+| Lifecycle | confidence 为 0.5 时的基础间隔 |
+|---|---|
+| `draft` | 30 天 |
+| `reviewed` | 180 天 |
+| `verified` | 365 天 |
+| `disputed` | 14 天 |
+
+有效间隔为 `max(7, round(base × (0.5 + confidence)))`：证据越强，复核窗口越长；证据越弱，复核越早。
+距离到期 14 天内为 `due_soon`，超过到期日为 `overdue`。`archived` 页面与没有台账条目的页面不会排期，
+未复核状态由 trust 维度单独报告。
+
+结果出现在 `findings.review_overdue`、`findings.review_due_soon` 与
+`metrics.review.{tracked,overdue,due_soon}`。存在过期复核时 freshness 维度会警告。
+
+## 矛盾登记与重复候选
+
+consistency 维度提供两份确定性登记：
+
+- **矛盾（Contradictions）**——所有显式 `contradicts` 或 `disputes` 关系边，以及 lifecycle 为
+  `disputed` 的页面。这是 vault 已记录的分歧清单，不是 LLM 判定两段文字冲突；语义检测仍由
+  `wiki-lint` workflow 负责。
+- **重复候选（Duplicate candidates）**——规范化标题相同、标题/别名冲突或标题高度相似的页面对。
+  它们是 `wiki-dedup` 的合并候选，不证明两个页面必须合并。
+
+两者都是信息信号：会出现在 `findings` 与 `metrics` 中，但不会自动让质量门禁失败。
+
+## 质量 delta
+
+每日维护应报告“变化”，而不只是当前状态。传入上一轮快照即可得到确定性 delta：
+
+```bash
+state="$HOME/.graph-wiki/state/<vault-id>"
+graph-wiki quality "$VAULT" \
+  --baseline "$state/quality-latest.json" \
+  --save "$state/quality-latest.json" \
+  --json > quality-report.json
+```
+
+`--baseline` 读取上一轮报告；`--save` 原子写入本轮报告（不含临时 delta 块），供下一轮比较。内嵌的
+`delta` 块包含：
+
+- `status`：`first_run`、`stable`、`improved` 或 `regressed`；
+- `status_change` 与 `dimension_changes`；
+- 页面数、token、findings、复核、矛盾与候选的数量变化；
+- `new_findings` / `resolved_findings`，按 finding 类别分组；
+- `totals.new` 与 `totals.resolved`。
+
+出现新警告或失败且没有修复项时标记为 `regressed`；只有修复、没有新增时标记为 `improved`。快照必须位于
+vault 之外（`--save` 会拒绝 vault 内路径），因此命令对知识页面保持只读。
+
+`daily-update` workflow 在 index 与 hot cache 处理完成后执行该比较，把 `quality-report.json`、
+`quality-delta.json`、`quality-delta.md` 写入本轮 artifacts，并在 completion 报告中记录新的过期复核、
+矛盾与重复候选。
+
 ## 严重级别策略
 
 | 维度 | 失败条件 | 警告条件 |
@@ -122,7 +196,7 @@ staged artifact 由人工在提升前复核；把同一门禁接入 stage promot
 | 可溯源性 | — | 缺少 sources、provenance 块缺失或非法、provenance 漂移 |
 | 一致性 | — | 重复标题组、孤儿页、关系问题 |
 | 覆盖 | manifest 条目没有页面，或页面在磁盘上不存在 | — |
-| 时效 | — | 缺少 lifecycle、复核早于页面的材料指纹 |
+| 时效 | — | 缺少 lifecycle、材料指纹变化后的过期复核、复核 SLA 过期 |
 | 可信 | trust 元数据非法、台账损坏、分数不一致 | 缺少 trust 字段、复核过期或未复核 |
 | 检索 | — | —（在接入 pack 评估前为 `not_measured`） |
 
@@ -163,14 +237,17 @@ graph-wiki trust-check --strict
 - 来源、provenance、lifecycle 的聚合；
 - trust ledger 与 manifest 覆盖门禁；
 - `--strict`、`--strict-trust`、`--require-trust-ledger` 三种门禁模式；
-- 面向契约与 canonical 身份的 `page-check` 写入前门禁。
+- 面向契约与 canonical 身份的 `page-check` 写入前门禁；
+- 按 lifecycle/置信度计算的复核 SLA，以及 overdue/due-soon findings；
+- 确定性的矛盾登记与重复候选报告；
+- `--baseline` / `--save` 质量 delta 及其 `daily-update` 集成。
 
 后续计划：
 
 - 引用 locator 解析（来源路径加行号或锚点）；
 - 将同一写入前门禁接入 staged promotion；
-- 与 `wiki-lint` workflow 共享语义重复与矛盾信号；
+- 与 `wiki-lint` workflow 共享语义矛盾检测；
 - 在检索指标之外增加答案落地（answer grounding）评估；
-- 按 vault 覆盖阈值，并建立趋势基线。
+- 按 vault 覆盖阈值，并建立长期趋势看板。
 
 `quality` 是闸门，不是评分。它用于拦住已知的坏状态、暴露缺失的证据，而不是宣布某个页面正确。

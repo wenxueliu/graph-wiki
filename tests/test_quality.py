@@ -6,9 +6,11 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from graph_wiki.quality import assess_quality
+from graph_wiki.quality_delta import compare_quality
 from graph_wiki.trust import build_trust_ledger, write_trust_ledger
 
 ROOT = Path(__file__).parents[1]
@@ -23,6 +25,7 @@ def _page(
     provenance: bool = True,
     lifecycle: str = "reviewed",
     links: list[str] | None = None,
+    extra: str = "",
 ) -> Path:
     path = vault / relpath
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -50,6 +53,7 @@ def _page(
             "base_confidence: 0.80",
             f"lifecycle: {lifecycle}",
             "lifecycle_changed: 2026-07-01",
+            *extra.splitlines(),
             "---",
             f"# {title or path.stem}",
         ]
@@ -248,3 +252,96 @@ def test_quality_cli_requires_trust_ledger_for_release_gate(tmp_path: Path) -> N
     report = json.loads(result.stdout)
     assert report["status"] == "fail"
     assert report["dimensions"]["trust"]["status"] == "fail"
+
+
+def test_quality_review_sla_marks_overdue_reviews(tmp_path: Path) -> None:
+    vault = _clean_vault(tmp_path)
+    ledger = build_trust_ledger(vault, reviewed_at="2025-01-02T00:00:00+00:00")
+    write_trust_ledger(vault / "_meta" / "trust-ledger.json", ledger, vault=vault)
+
+    report = assess_quality(
+        vault,
+        now=datetime(2026, 11, 24, tzinfo=timezone.utc),
+    )
+
+    assert report["dimensions"]["freshness"]["status"] == "warn"
+    assert report["dimensions"]["freshness"]["signals"]["review_overdue"] == 2
+    assert len(report["findings"]["review_overdue"]) == 2
+    assert report["findings"]["review_overdue"][0]["days_overdue"] > 0
+    assert report["metrics"]["review"]["overdue"] == 2
+
+
+def test_quality_registers_contradictions_and_duplicate_candidates(
+    tmp_path: Path,
+) -> None:
+    vault = tmp_path / "vault"
+    _page(
+        vault,
+        "concepts/alpha.md",
+        extra='relationships:\n  - type: contradicts\n    target: "[[beta]]"',
+    )
+    _page(vault, "concepts/beta.md", extra="aliases:\n  - Alpha")
+
+    report = assess_quality(vault)
+
+    assert report["findings"]["contradictions"] == [
+        {"source": "concepts/alpha.md", "target": "beta", "kind": "relationship"}
+    ]
+    assert report["findings"]["duplicate_candidates"][0]["reason"] == (
+        "alias_matches_title"
+    )
+    assert report["dimensions"]["consistency"]["signals"]["contradictions"] == 1
+    assert report["dimensions"]["consistency"]["signals"]["duplicate_candidates"] == 1
+
+
+def test_compare_quality_reports_new_and_resolved_findings(tmp_path: Path) -> None:
+    vault = _clean_vault(tmp_path)
+    before = assess_quality(vault)
+
+    _page(vault, "concepts/beta.md", title="Beta", links=["ghost"])
+    after = assess_quality(vault)
+    regressed = compare_quality(before, after)
+
+    assert regressed["status"] == "regressed"
+    assert "broken_links" in regressed["new_findings"]
+    assert regressed["totals"]["new"] >= 1
+
+    _page(vault, "concepts/beta.md", title="Beta", links=["alpha"])
+    recovered = assess_quality(vault)
+    improved = compare_quality(after, recovered)
+
+    assert improved["status"] == "improved"
+    assert "broken_links" in improved["resolved_findings"]
+
+
+def test_quality_cli_baseline_and_save(tmp_path: Path) -> None:
+    vault = _clean_vault(tmp_path)
+    snapshot = tmp_path / "state" / "quality.json"
+
+    first = _run(vault, "--json", "--save", str(snapshot))
+    assert first.returncode == 0
+    assert snapshot.is_file()
+
+    _page(vault, "concepts/beta.md", title="Beta", links=["ghost"])
+    second = _run(
+        vault,
+        "--json",
+        "--baseline",
+        str(snapshot),
+        "--save",
+        str(snapshot),
+    )
+
+    assert second.returncode == 1
+    report = json.loads(second.stdout)
+    assert report["delta"]["status"] == "regressed"
+    assert "broken_links" in report["delta"]["new_findings"]
+
+
+def test_quality_cli_rejects_snapshot_inside_vault(tmp_path: Path) -> None:
+    vault = _clean_vault(tmp_path)
+
+    result = _run(vault, "--json", "--save", str(vault / "quality.json"))
+
+    assert result.returncode == 1
+    assert not (vault / "quality.json").exists()

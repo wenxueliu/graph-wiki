@@ -2443,6 +2443,14 @@ def _print_quality(report: dict[str, object]) -> None:
         print(f"failed dimension: {name}")
     for name in report["gate"]["warned_dimensions"]:
         print(f"warning dimension: {name}")
+    delta = report.get("delta")
+    if isinstance(delta, dict):
+        totals = delta.get("totals", {})
+        print(
+            f"delta: {delta.get('status')}"
+            f"  new={totals.get('new', 0)}"
+            f"  resolved={totals.get('resolved', 0)}"
+        )
 
 
 def _print_page_check(report: dict[str, object]) -> None:
@@ -2690,6 +2698,33 @@ def cmd_quality(args: argparse.Namespace) -> int:
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    if args.baseline:
+        from graph_wiki.quality_delta import compare_quality, load_quality_report
+
+        baseline_path = Path(args.baseline)
+        before = load_quality_report(baseline_path)
+        if before is None and baseline_path.exists():
+            print(
+                f"warning: baseline is not a readable quality report: {baseline_path}",
+                file=sys.stderr,
+            )
+        report["delta"] = compare_quality(before, report)
+    if args.save:
+        from graph_wiki.quality_delta import save_quality_report
+
+        vault_root = vault.resolve()
+        destination = Path(args.save).expanduser().resolve()
+        if destination == vault_root or vault_root in destination.parents:
+            print(
+                "error: quality snapshots must be stored outside the vault",
+                file=sys.stderr,
+            )
+            return 1
+        try:
+            save_quality_report(destination, report)
+        except OSError as exc:
+            print(f"error: cannot save quality snapshot: {exc}", file=sys.stderr)
+            return 1
     if args.json:
         if args.pretty:
             print(json.dumps(report, indent=2))
@@ -3606,6 +3641,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--require-trust-ledger",
         action="store_true",
         help="fail when the vault has no approved trust ledger (release-gate mode)",
+    )
+    ql.add_argument(
+        "--baseline",
+        metavar="FILE",
+        help="compare against a saved quality report and add a delta block",
+    )
+    ql.add_argument(
+        "--save",
+        metavar="FILE",
+        help="atomically save the current report for the next --baseline comparison",
     )
     ql.add_argument(
         "--allow-lifecycle",

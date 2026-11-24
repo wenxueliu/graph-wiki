@@ -189,8 +189,8 @@ Typed relationships 使用 24 个 Penfield 标准类型（`part_of`、`causes`�
 - **审计与 lint。** 孤立页面、失效 wikilink、过期内容、矛盾、缺失 frontmatter——外加一个「已摄取 vs.
   待处理」的仪表盘。
 
-- **质量闸门。** `graph-wiki quality` 把结构、可溯源性、可信、覆盖与时效聚合为一份只读报告，并提供
-  `--strict` 与 `--require-trust-ledger` 两种 CI 门禁模式。
+- **质量闸门。** `graph-wiki quality` 把结构、可溯源性、可信、覆盖、时效、复核 SLA 与矛盾/重复登记
+  聚合为一份只读报告，并提供 `--strict`、`--require-trust-ledger` 与每日 delta 等 CI 门禁模式。
 
 - **身份消解。** `wiki-dedup` 找出同一概念的不同命名页面（「RSC」vs.「React Server Components」）并
   合并它们。

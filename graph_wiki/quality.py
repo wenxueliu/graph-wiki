@@ -13,15 +13,22 @@ can fail on data-integrity problems without pretending to grade prose.
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter, defaultdict
 from collections.abc import Collection
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from graph_wiki.knowledge_pack import iter_content_pages
 from graph_wiki.lint import lint_vault
+from graph_wiki.page_check import (
+    identity_tokens,
+    normalise_identity,
+    page_identity,
+)
+from graph_wiki.relationships import collect_typed_relationships
 from graph_wiki.trust import TRUST_LEDGER_RELATIVE_PATH
 from graph_wiki.verify import verify_completeness
 
@@ -31,6 +38,17 @@ RESERVED_PAGE_STEMS = frozenset({"index", "log", "hot", "_insights"})
 PROVENANCE_AMBIGUOUS_WARN = 0.15
 PROVENANCE_INFERRED_WARN = 0.40
 PROVENANCE_SUM_TOLERANCE = 0.02
+# Review cadence by lifecycle at confidence 0.5. The effective interval grows
+# with confidence and shrinks when the vault has weaker evidence.
+REVIEW_SLA_DAYS = {
+    "draft": 30,
+    "reviewed": 180,
+    "verified": 365,
+    "disputed": 14,
+}
+REVIEW_DUE_SOON_DAYS = 14
+REVIEW_MIN_DAYS = 7
+DUPLICATE_CANDIDATE_LIMIT = 25
 
 _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---", re.DOTALL)
 _TOP_FIELD_RE = re.compile(r"^([A-Za-z_][\w-]*):(.*)$")
@@ -54,7 +72,11 @@ def _parse_fraction(raw: str) -> float | None:
     return value
 
 
-def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
+def _parse_page(
+    path: Path,
+    vault: Path,
+    relationship_types: Collection[str],
+) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8", errors="replace")
     frontmatch = _FRONTMATTER_RE.match(text)
     frontmatter = frontmatch.group(1) if frontmatch else ""
@@ -109,10 +131,29 @@ def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
         any(value is None for value in provenance.values())
         or provenance_sum > 1.0 + PROVENANCE_SUM_TOLERANCE
     )
+    identity = page_identity(text, fallback_title=path.stem)
+    try:
+        confidence: float | None = float(values.get("base_confidence", ""))
+    except ValueError:
+        confidence = None
+    contradictions = sorted(
+        {
+            relationship["target"]
+            for relationship in collect_typed_relationships(text, relationship_types)
+            if relationship["relation"] in {"contradicts", "disputes"}
+        }
+    )
 
     return {
         "path": path.relative_to(vault).as_posix(),
         "lifecycle": values.get("lifecycle", ""),
+        "confidence": confidence,
+        "title": identity["title"],
+        "aliases": identity["aliases"],
+        "tags": identity["tags"],
+        "category": identity["category"],
+        "summary": identity["summary"],
+        "contradicts": contradictions,
         "has_sources": has_sources,
         "has_provenance": bool(provenance),
         "provenance": provenance,
@@ -133,6 +174,161 @@ def _mean_fractions(pages: list[dict[str, Any]]) -> dict[str, float]:
         key: round(sum(values) / len(values), 3)
         for key, values in sorted(totals.items())
     }
+
+
+def _parse_iso(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _load_review_ledger(vault: Path) -> dict[str, Any]:
+    path = vault / TRUST_LEDGER_RELATIVE_PATH
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    pages = data.get("pages") if isinstance(data, dict) else None
+    return pages if isinstance(pages, dict) else {}
+
+
+def _review_sla(
+    pages: list[dict[str, Any]],
+    ledger: dict[str, Any],
+    now: datetime,
+) -> list[dict[str, Any]]:
+    reviews: list[dict[str, Any]] = []
+    for page in pages:
+        lifecycle = page["lifecycle"]
+        base = REVIEW_SLA_DAYS.get(lifecycle)
+        if base is None:
+            continue
+        entry = ledger.get(page["path"])
+        if not isinstance(entry, dict):
+            continue
+        reviewed_at = _parse_iso(entry.get("reviewed_at"))
+        if reviewed_at is None:
+            continue
+        confidence = entry.get("reviewed_confidence", page["confidence"])
+        if isinstance(confidence, bool) or not isinstance(confidence, (int, float)):
+            confidence = page["confidence"]
+        if not isinstance(confidence, (int, float)):
+            continue
+        interval = max(
+            REVIEW_MIN_DAYS,
+            round(base * (0.5 + float(confidence))),
+        )
+        due = reviewed_at + timedelta(days=interval)
+        days_overdue = (now - due).days
+        if due < now:
+            state = "overdue"
+        elif (due - now).days <= REVIEW_DUE_SOON_DAYS:
+            state = "due_soon"
+        else:
+            state = "current"
+        reviews.append(
+            {
+                "page": page["path"],
+                "lifecycle": lifecycle,
+                "base_confidence": confidence,
+                "reviewed_at": reviewed_at.isoformat(),
+                "due": due.date().isoformat(),
+                "days_overdue": max(days_overdue, 0),
+                "state": state,
+            }
+        )
+    reviews.sort(key=lambda item: (-item["days_overdue"], item["page"]))
+    return reviews
+
+
+def _duplicate_candidates(pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    candidates: dict[tuple[str, str], dict[str, Any]] = {}
+    by_title: dict[str, list[str]] = defaultdict(list)
+    by_alias: dict[str, list[str]] = defaultdict(list)
+    for page in pages:
+        title_key = normalise_identity(page["title"])
+        if title_key:
+            by_title[title_key].append(page["path"])
+        for alias in page["aliases"]:
+            alias_key = normalise_identity(alias)
+            if alias_key:
+                by_alias[alias_key].append(page["path"])
+
+    def add(left: str, right: str, reason: str, score: float) -> None:
+        pair = tuple(sorted((left, right)))
+        if pair[0] == pair[1] or pair in candidates:
+            return
+        candidates[pair] = {
+            "left": pair[0],
+            "right": pair[1],
+            "reason": reason,
+            "score": round(score, 3),
+        }
+
+    for paths in by_title.values():
+        for index, left in enumerate(paths):
+            for right in paths[index + 1:]:
+                add(left, right, "duplicate_title", 1.0)
+    for title_key, paths in by_title.items():
+        for alias_path in by_alias.get(title_key, []):
+            for path in paths:
+                if path != alias_path:
+                    add(path, alias_path, "alias_matches_title", 1.0)
+    for paths in by_alias.values():
+        for index, left in enumerate(paths):
+            for right in paths[index + 1:]:
+                add(left, right, "duplicate_alias", 1.0)
+
+    token_index: dict[str, set[int]] = defaultdict(set)
+    page_tokens: dict[int, set[str]] = {}
+    for index, page in enumerate(pages):
+        tokens = identity_tokens(page["title"])
+        page_tokens[index] = tokens
+        for token in tokens:
+            token_index[token].add(index)
+    for index, page in enumerate(pages):
+        tokens = page_tokens[index]
+        if not tokens:
+            continue
+        neighbours: set[int] = set()
+        for token in tokens:
+            neighbours |= token_index[token]
+        for other in neighbours:
+            if other <= index:
+                continue
+            other_tokens = page_tokens[other]
+            union = tokens | other_tokens
+            if not union:
+                continue
+            score = len(tokens & other_tokens) / len(union)
+            if score >= 0.60:
+                add(page["path"], pages[other]["path"], "similar_title", score)
+
+    ordered = sorted(
+        candidates.values(),
+        key=lambda item: (-item["score"], item["left"], item["right"]),
+    )
+    return ordered[:DUPLICATE_CANDIDATE_LIMIT]
+
+
+def _contradiction_register(
+    pages: list[dict[str, Any]],
+) -> tuple[list[dict[str, str]], list[str]]:
+    edges = [
+        {"source": page["path"], "target": target, "kind": "relationship"}
+        for page in pages
+        for target in page["contradicts"]
+    ]
+    disputed = [page["path"] for page in pages if page["lifecycle"] == "disputed"]
+    return edges, disputed
 
 
 def _signals(counts: dict[str, int]) -> dict[str, int]:
@@ -230,7 +426,12 @@ def _traceability_dimension(pages: list[dict[str, Any]]) -> dict[str, Any]:
     )
 
 
-def _consistency_dimension(lint: dict[str, Any]) -> dict[str, Any]:
+def _consistency_dimension(
+    lint: dict[str, Any],
+    contradictions: list[dict[str, str]],
+    disputed: list[str],
+    duplicate_candidates: list[dict[str, Any]],
+) -> dict[str, Any]:
     counts = lint["stats"]["findings"]
     total = (
         counts["duplicate_titles"]
@@ -244,11 +445,16 @@ def _consistency_dimension(lint: dict[str, Any]) -> dict[str, Any]:
                 "duplicate_title_groups": counts["duplicate_titles"],
                 "orphan_pages": counts["orphan_pages"],
                 "relationship_issues": counts["typed_relationship_issues"],
+                "contradictions": len(contradictions),
+                "disputed_pages": len(disputed),
+                "duplicate_candidates": len(duplicate_candidates),
             }
         ),
         notes=[
-            "semantic duplicate and contradiction detection is agent-driven; "
-            "run the wiki-lint workflow for that pass"
+            "contradictions come from explicit `contradicts`/`disputes` edges and "
+            "disputed pages; semantic detection remains agent-driven in wiki-lint",
+            "duplicate_candidates are deterministic merge candidates, not proof "
+            "that two pages must be merged",
         ],
     )
 
@@ -282,16 +488,25 @@ def _coverage_dimension(vault: Path) -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def _freshness_dimension(
-    pages: list[dict[str, Any]], lint: dict[str, Any]
+    pages: list[dict[str, Any]],
+    lint: dict[str, Any],
+    reviews: list[dict[str, Any]],
 ) -> dict[str, Any]:
     lifecycle = Counter(page["lifecycle"] or "(missing)" for page in pages)
     missing = lifecycle.get("(missing)", 0)
     stale_reviews = len(lint["findings"]["confidence_review_stale"])
-    status = "warn" if missing or stale_reviews else "pass"
+    overdue = [review for review in reviews if review["state"] == "overdue"]
+    due_soon = [review for review in reviews if review["state"] == "due_soon"]
+    status = "warn" if missing or stale_reviews or overdue else "pass"
     notes = []
     if stale_reviews:
         notes.append(
             f"{stale_reviews} page(s) changed materially since their last review"
+        )
+    if overdue:
+        notes.append(
+            f"{len(overdue)} reviewed page(s) are past their lifecycle/confidence "
+            "review interval"
         )
     if lifecycle.get("disputed"):
         notes.append(
@@ -306,6 +521,9 @@ def _freshness_dimension(
             signals[key] = lifecycle[key]
     signals["missing_lifecycle"] = missing
     signals["stale_reviews"] = stale_reviews
+    signals["review_tracked"] = len(reviews)
+    signals["review_overdue"] = len(overdue)
+    signals["review_due_soon"] = len(due_soon)
     return _dimension(status, signals=_signals(signals), notes=notes)
 
 
@@ -396,6 +614,7 @@ def assess_quality(
     allowed_relationship_types: Collection[str] | None = None,
     required_trust_fields: Collection[str] | None = None,
     schema_source: str = "framework-defaults",
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     """Return one gate-ready quality report for *vault*."""
     vault = Path(vault)
@@ -408,19 +627,28 @@ def assess_quality(
         required_trust_fields=required_trust_fields,
         schema_source=schema_source,
     )
+    relationship_types = lint["schema"]["allowed_relationship_types"]
     pages = [
-        _parse_page(path, vault)
+        _parse_page(path, vault, relationship_types)
         for path in iter_content_pages(vault)
         if path.stem not in RESERVED_PAGE_STEMS
     ]
+    current_time = now or datetime.now(timezone.utc)
+    if current_time.tzinfo is None:
+        current_time = current_time.replace(tzinfo=timezone.utc)
+    reviews = _review_sla(pages, _load_review_ledger(vault), current_time)
+    contradictions, disputed = _contradiction_register(pages)
+    duplicate_candidates = _duplicate_candidates(pages)
 
     coverage_dimension, coverage_report = _coverage_dimension(vault)
     dimensions = {
         "structure": _structure_dimension(lint),
         "traceability": _traceability_dimension(pages),
-        "consistency": _consistency_dimension(lint),
+        "consistency": _consistency_dimension(
+            lint, contradictions, disputed, duplicate_candidates
+        ),
         "coverage": coverage_dimension,
-        "freshness": _freshness_dimension(pages, lint),
+        "freshness": _freshness_dimension(pages, lint, reviews),
         "trust": _trust_dimension(
             vault,
             lint,
@@ -446,10 +674,19 @@ def assess_quality(
         "provenance_drift": _provenance_drift_pages(pages),
     }
     findings["coverage"] = coverage_report["findings"]
+    findings["review_overdue"] = [
+        review for review in reviews if review["state"] == "overdue"
+    ]
+    findings["review_due_soon"] = [
+        review for review in reviews if review["state"] == "due_soon"
+    ]
+    findings["contradictions"] = contradictions
+    findings["disputed_pages"] = disputed
+    findings["duplicate_candidates"] = duplicate_candidates
 
     return {
         "status": status,
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": current_time.isoformat(timespec="seconds"),
         "vault": str(vault),
         "schema": lint["schema"],
         "gate": {
@@ -496,6 +733,16 @@ def assess_quality(
                     page["ambiguous_markers"] for page in pages
                 ),
             },
+            "review": {
+                "tracked": len(reviews),
+                "overdue": sum(1 for review in reviews if review["state"] == "overdue"),
+                "due_soon": sum(
+                    1 for review in reviews if review["state"] == "due_soon"
+                ),
+            },
+            "contradictions": len(contradictions),
+            "disputed_pages": len(disputed),
+            "duplicate_candidates": len(duplicate_candidates),
             "duplicate_title_groups": lint["stats"]["metrics"][
                 "duplicate_title_groups"
             ],

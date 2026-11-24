@@ -1,4 +1,4 @@
-description: 运行 vault-scoped 的每日 Wiki 维护：source freshness、index、hot cache、状态文件、独立验证与日志
+description: 运行 vault-scoped 的每日 Wiki 维护：source freshness、index、hot cache、质量 delta、状态文件、独立验证与日志
 
 auto_reset: true
 artifacts_dir: invocation
@@ -74,24 +74,44 @@ steps:
       - check: 复算 hot age；<=48h 确认字节不变，过期时确认约500字、required headings、last-3、语义内容与10个最近 live pages一致且无 staged 声称
       - check: 检查 .last_update 为最近 epoch、.pending_delta 为 freshness stale_count 非负整数、.vault_path 为 canonical vault，STATE_DIR vault-id 正确
       - check: 审计写入只限 hot.md（必要时）和当前 vault state files，source/pages/manifest/index/log/QMD 未被越权修改
-    on_pass: validate_cycle
+    on_pass: assess_quality_delta
     on_fail: refresh_hot_and_state
     max_fail_count: 4
+
+  - id: assess_quality_delta
+    desc: 计算质量快照并输出相对上一轮的 delta
+    do: |
+      1. 复用 refresh_hot_and_state 已确定的 STATE_DIR（`$HOME/.graph-wiki/state/<vault-id>`）；只写 STATE_DIR 与 artifacts，不写 vault。
+      2. 按 wiki-context.json 的 owner schema 传入与 wiki-lint 相同的 `--allow-lifecycle`、`--allow-relationship-type`、`--required-trust-field`、`--schema-source`，然后运行：
+         `graph-wiki quality "<vault>" --baseline "$STATE_DIR/quality-latest.json" --save "$STATE_DIR/quality-latest.json" --json > quality-report.json`
+         若 console script 不在 PATH，使用 `python3 -m graph_wiki ...`。命令只读 vault；`--save` 以原子替换把本轮快照写到 STATE_DIR。退出码 1 表示质量 fail，报告仍然有效；保留并解析 JSON，不得因非零退出跳过 delta。
+      3. 从 quality-report.json 的 delta 写 quality-delta.json：status、baseline/current generated_at、status_change、dimension_changes、counts、new_findings、resolved_findings、totals。再写 quality-delta.md，逐项呈现本轮新增/修复、review overdue、contradictions、duplicate candidates、review due soon 与建议动作。
+      4. delta.status=first_run 必须明确写成“首轮基线”，不得伪装成 stable。不得修改 vault、index、hot、manifest、log 或 QMD。
+    input: wiki-context.json + 最新 vault 状态 + STATE_DIR
+    output: quality-report.json + quality-delta.json + quality-delta.md + STATE_DIR/quality-latest.json
+    check_voting:
+      - check: 重读 quality-report.json 与 delta，确认 vault、status、new/resolved totals 可从 findings 重算，first_run 未被标成 stable
+      - check: 确认状态快照只位于 STATE_DIR、内容为本轮 report，vault 字节未变化
+      - check: 确认 review overdue、contradictions、duplicate candidates 与 due soon 在 Markdown 中逐项呈现且有建议动作
+    on_pass: validate_cycle
+    on_fail: assess_quality_delta
+    max_fail_count: 3
 
   - id: validate_cycle
     desc: 调用 impl-validator 复核维护产物并修复 FAIL
     workflow: impl-validator
-    input: freshness/index/hot-state artifacts 与实际 vault/state files
+    input: freshness/index/hot-state/quality artifacts 与实际 vault/state files
     output: impl-validation.md（结构化 verdict，必须无 FAIL）
     inputs:
-      goal: Daily wiki maintenance — index reconciled, hot.md refreshed when stale, vault-scoped state written
-      artifacts: index.md、hot.md、STATE_DIR/.last_update、.pending_delta、.vault_path、freshness/index/hot-state reports
+      goal: Daily wiki maintenance — index reconciled, hot.md refreshed when stale, vault-scoped state and quality delta written
+      artifacts: index.md、hot.md、STATE_DIR/.last_update、.pending_delta、.vault_path、STATE_DIR/quality-latest.json、freshness/index/hot-state/quality reports
       checks: |
         - .last_update 是 60 秒内 Unix timestamp
         - .pending_delta 是与 stale_count 相等的非负整数
         - hot.md 若本轮刷新则 updated 为今天；未刷新则原时间<=48h
         - index.md 精确覆盖 live knowledge page inventory，而非仅“至少一样多”
         - vault path/state scope 与 cycle report 一致
+        - quality delta 的 status/new/resolved 与 quality-report.json 可重算，first_run 未伪装成 stable
     on_pass: log_refresh_report
     on_fail: validate_cycle
     max_fail_count: 3
@@ -101,13 +121,13 @@ steps:
     do: |
       1. impl-validator 无 FAIL 后，向 log.md 幂等追加一条带 cycle_id 的 parseable `DAILY-UPDATE fresh=N stale=N missing=N index_added=N hot_refreshed=true|false`；重试时同 cycle_id 只保留一条。
       2. 若本 workflow 写过 vault Markdown 且 QMD_WIKI_COLLECTION 配置、CLI 可用，则运行 `${QMD_CLI:-qmd} update`；只在提示 vectors stale/missing 时 embed，再 qmd ls/get 验证。未配置/不可用/失败按 daily-update 标准状态报告，QMD 失败不回滚 vault。
-      3. 写 daily-update-completion.md：source counts、index total/added/removed/updated、hot refreshed/up-to-date、state paths、impl verdict、stale paths及对应 wiki-history-ingest/wiki-folder-ingest 建议、QMD 状态。
+      3. 写 daily-update-completion.md：source counts、index total/added/removed/updated、hot refreshed/up-to-date、state paths、quality delta status/new/resolved/review overdue、impl verdict、stale paths及对应 wiki-history-ingest/wiki-folder-ingest 建议、QMD 状态。
       4. 本 workflow 不 ingest stale sources，不更新 permanent manifest，不安装 cron/notification；安装请使用 `wiki/daily-update-setup`。
       5. 磁盘事实一致后输出 <promise>done</promise>。
     input: 已验证的 cycle artifacts + log.md + QMD config
     output: 唯一 DAILY-UPDATE log + daily-update-completion.md + 可选 QMD refresh
     check_voting:
-      - check: 核对 log 中 cycle_id 恰好一次且 counts 与 freshness/index/hot reports 一致，completion 报告逐项可复算
+      - check: 核对 log 中 cycle_id 恰好一次且 counts 与 freshness/index/hot/quality reports 一致，completion 报告逐项可复算
       - check: 确认 stale source 仅报告未摄取、missing 未删除、manifest 未改变，cron/rc/scheduler 未被修改
       - check: QMD guard/update/embed/verify 与标准状态正确，失败未回滚 vault；最终 impl verdict 无 FAIL
     on_pass: done
