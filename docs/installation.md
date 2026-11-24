@@ -145,6 +145,20 @@ Browse the full skill list at [skills.sh/wenxueliu/graph-wiki](https://skills.sh
 
 Open your vault directory in Obsidian (File → Open Vault). The wiki pages, wikilinks, and graph view all work natively. Nothing about the vault is proprietary — it's markdown files with YAML frontmatter.
 
+## Browse the graph in a browser
+
+Obsidian's native graph view is the default. For a browser surface that does not require Obsidian,
+start the read-only local viewer:
+
+```bash
+graph-wiki serve --vault ~/brain
+# http://127.0.0.1:8765/
+```
+
+It reads the same vault, supports search and category/tag filters, and shows page details; it never
+writes. Use `--port 0` if 8765 is busy, and `--open` to launch the browser. See
+[Graph Viewer](viewer.md).
+
 ## Multiple vaults
 
 Keep a default vault in the config file (setup-created projects: `<project>/.graph-wiki/config`; otherwise `~/.graph-wiki/config`), or create named configs by copying it to `<config-dir>/config.work` and changing `OBSIDIAN_VAULT_PATH`.
@@ -187,3 +201,4 @@ graph-wiki doctor
 - [Skills Reference](skills.md) — what you can actually ask for
 - [Configuration](configuration.md) — every config variable, QMD, GitHub sync
 - [Agent Compatibility](agents.md) — per-agent details and manual setup
+- [Graph Viewer](viewer.md) — browse the vault in a browser

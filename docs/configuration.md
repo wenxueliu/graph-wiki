@@ -46,6 +46,12 @@ Every vault-aware command uses the same order: `query`, `context-pack`, `lint`, 
 relocated directory too, so `config.work` next to the project `.env` is what
 `--vault @work` reads.
 
+## Local graph viewer
+
+`graph-wiki serve` uses the same vault resolution as every other command (`--vault`, `@name`, the
+nearest `.env`, then the config directory). It does not require new environment variables. Bind
+address and port are per-invocation flags; see [Graph Viewer](viewer.md#quick-start).
+
 ## Knowledge Packs and vault layouts
 
 A Knowledge Pack is selected during setup and its stable binding is recorded as

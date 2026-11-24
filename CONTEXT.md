@@ -20,6 +20,14 @@ _Avoid_: Relationship format, duplicate edge
 The effective allowlist of relationship types for a vault, consisting of the framework vocabulary plus owner-declared extensions.
 _Avoid_: Link types
 
+**Graph Viewer**:
+The read-only local browser surface that renders the vault graph and serves page details. It is a display layer, not a retrieval engine.
+_Avoid_: Dashboard, Web UI, AI API
+
+**Viewer Page Backend**:
+The read-only `/api/graph` and `/api/page` routes the Graph Viewer's browser page fetches. It is not a public AI retrieval contract.
+_Avoid_: AI API, search API
+
 **Knowledge Pack**:
 A bundled, versioned knowledge-domain contract that combines one Knowledge Profile with one Vault Layout and their supporting schema and routing guidance. Packs are public product resources, independent of any workflow that consumes them.
 _Avoid_: Layout, Domain

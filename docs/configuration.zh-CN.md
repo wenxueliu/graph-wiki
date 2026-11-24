@@ -45,6 +45,12 @@ graph-wiki context-pack authentication            # 读取同一个项目 .env
 `trust-check`、`validate`、`verify`、`doctor` 与 `sync`。`@name` profile 也在迁移后的目录内解析，
 因此 `--vault @work` 读取的是项目 `.env` 旁边的 `config.work`。
 
+## 本地图谱查看器
+
+`graph-wiki serve` 使用与其他命令相同的 vault 解析顺序（`--vault`、`@name`、最近的 `.env`、配置
+目录）。它不需要新的环境变量。绑定地址与端口是每次调用时的参数；见
+[图谱查看器](viewer.zh-CN.md#快速开始)。
+
 ## Knowledge Pack 与 vault 布局
 
 Knowledge Pack 在 setup 时选定，其稳定绑定以 `OBSIDIAN_KNOWLEDGE_PACK` 记录在解析后的配置中。

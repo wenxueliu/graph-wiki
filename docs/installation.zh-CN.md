@@ -149,6 +149,19 @@ npx skills add wenxueliu/graph-wiki
 在 Obsidian 中打开你的 vault 目录（File → Open Vault）。wiki 页面、wikilink 与 graph view 都能原生
 工作。vault 没有任何专有之处——它就是带 YAML frontmatter 的 markdown 文件。
 
+## 在浏览器里浏览图谱
+
+Obsidian 原生 graph view 是默认方式。若想要一个不依赖 Obsidian 的浏览器界面，可以启动只读的本地
+查看器：
+
+```bash
+graph-wiki serve --vault ~/brain
+# http://127.0.0.1:8765/
+```
+
+它读取同一个 vault，支持搜索、category/tag 过滤与页面详情；不会写入任何内容。8765 被占用时用
+`--port 0`，加 `--open` 可自动打开浏览器。见[图谱查看器](viewer.zh-CN.md)。
+
 ## 多个 vault
 
 在配置文件（由 setup 创建的项目为 `<project>/.graph-wiki/config`；否则 `~/.graph-wiki/config`）中保持一个默认生效的 vault；需要命名配置时，把它复制为
@@ -195,3 +208,4 @@ graph-wiki doctor
 - [Skills 参考](skills.zh-CN.md) —— 你实际能要求什么
 - [Configuration](configuration.zh-CN.md) —— 每个配置变量、QMD、GitHub 同步
 - [Agent 兼容性](agents.zh-CN.md) —— 每个 agent 的细节与手动设置
+- [图谱查看器](viewer.zh-CN.md) —— 在浏览器里浏览 vault
