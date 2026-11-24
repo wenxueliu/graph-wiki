@@ -90,6 +90,26 @@ review。
 7. 所选完成边界要么提交一个已验证 document，要么提交一个完整来源
 8. 输出是标准的、Obsidian 兼容的 markdown，带 frontmatter 与 `[[wikilinks]]`
 
+## Content Pack 与检索索引
+
+vault 是写模型。**Content Pack**（内容包）是从一个已提交的 vault 状态构建出的不可变读模型：
+`manifest.json`、`inventory.jsonl`、`edges.jsonl`，以及 `<配置目录>/packs/<vault-id>/vN/`
+下的内容寻址正文存储。`pack_id` 对页面内容、当前 Knowledge Pack 契约、visibility 过滤与
+freshness 策略取哈希；时间戳和检索索引不参与计算，因此内容未变时重建是空操作，内容 id 保持稳定。
+
+`graph-wiki pack build` 会在 `indexes/<engine>/` 下构建一个或多个**检索索引**：
+
+- `sqlite` —— 标准库 FTS5，英文词 + 中文二元组。
+- `sqlite-simple` —— FTS5 的 simple 分词器（英文词 + 中文单字）。
+- `zvec` —— 可选的本地 BM25 + Jieba 分词。
+
+每个索引记录自己的 `content_pack_id` 并拥有独立 `index_id`；更换引擎或分词器只重建 sidecar，
+不会产生新的知识版本。索引以只读方式打开。
+
+`pack verify` 仅用标准库重新计算内容 id 与正文哈希；`pack materialize` 写出只读页面树供 grep；
+`pack eval` 回放 JSON 查询集，对比各引擎的 recall@k、MRR、nDCG 与延迟。Content Pack 不是
+Knowledge Pack：后者是领域契约，前者是从 vault 派生的发布件。
+
 ## Vault 结构
 
 以下是 `default` Knowledge Pack 的布局。其他 Pack 提供不同的内容根目录；运行时 workflow 会枚举当前

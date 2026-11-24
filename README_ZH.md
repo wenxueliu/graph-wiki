@@ -256,6 +256,8 @@ flowchart LR
 
 你也可以把整个图谱导出成 `graph.json`、GraphML（Gephi/yEd）、Neo4j Cypher，或一个自带所有资源的交互式 `graph.html`。
 
+需要可复现的读模型？`graph-wiki pack build` 把已提交的 vault 转成不可变的 Content Pack，附带 SQLite FTS5 与可选 zvec 索引；`pack verify`、`pack search` 与 `pack eval` 负责版本校验与检索评测。
+
 ## 为什么不是一个笔记文件夹就好
 
 - **它会编译，而不是堆积。** 新知识会合并进既有页面，矛盾会被标记出来，内容不会重复。

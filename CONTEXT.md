@@ -24,6 +24,14 @@ _Avoid_: Link types
 A bundled, versioned knowledge-domain contract that combines one Knowledge Profile with one Vault Layout and their supporting schema and routing guidance. Packs are public product resources, independent of any workflow that consumes them.
 _Avoid_: Layout, Domain
 
+**Content Pack**:
+An immutable, content-addressed release derived from one committed vault state: manifest, inventory, typed edges, and a body CAS. Identified by `pack_id`; retrieval indexes are rebuildable sidecars.
+_Avoid_: Knowledge Pack, snapshot, bundle
+
+**Retrieval Index**:
+A rebuildable, engine-specific sidecar over a Content Pack, identified by `index_id` and bound to its `content_pack_id`.
+_Avoid_: index cache, vector store
+
 **Knowledge Profile**:
 The semantic contract for a vault: its purpose, scope, knowledge types, extraction policy, evidence requirements, freshness triggers, and retrieval priorities.
 _Avoid_: Domain detector, Named Vault Profile, Writing Profile

@@ -257,6 +257,8 @@ Open the vault in Obsidian and hit the graph view (Cmd/Ctrl+P → "Open graph vi
 
 Or export the whole graph to `graph.json`, GraphML (Gephi/yEd), Neo4j Cypher, or a self-contained interactive `graph.html`.
 
+Need a reproducible read model? `graph-wiki pack build` turns a committed vault into an immutable Content Pack with SQLite FTS5 and optional zvec indexes; `pack verify`, `pack search`, and `pack eval` version and benchmark retrieval.
+
 ## Why this and not a notes folder
 
 - **It compiles, it doesn't accumulate.** New knowledge merges into existing pages. Contradictions get flagged. Nothing gets duplicated.

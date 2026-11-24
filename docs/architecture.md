@@ -104,6 +104,32 @@ retains durable Jobs and Packets for interruption-safe resume and staged review.
 7. The selected completion boundary commits either one validated document or one complete source
 8. Output is standard Obsidian-compatible markdown with frontmatter and `[[wikilinks]]`
 
+## Content packs and retrieval indexes
+
+The vault is the write model. A **Content Pack** is an immutable read model built
+from one committed vault state: `manifest.json`, `inventory.jsonl`, `edges.jsonl`,
+and a content-addressed body store under `<config-dir>/packs/<vault-id>/vN/`.
+`pack_id` hashes page content, the active Knowledge Pack contract, visibility
+filters, and the freshness policy. It excludes timestamps and retrieval indexes,
+so rebuilding unchanged knowledge is a no-op and the content id is stable.
+
+`graph-wiki pack build` adds one or more **Retrieval Indexes** under
+`indexes/<engine>/`:
+
+- `sqlite` — standard-library FTS5 with word + CJK bigram tokens.
+- `sqlite-simple` — FTS5 with the simple tokenizer (Latin words + CJK unigrams).
+- `zvec` — optional native BM25 with Jieba segmentation.
+
+Each index records the `content_pack_id` it was built from and carries its own
+`index_id`; changing engines or tokenizers rebuilds the sidecar without creating
+a new knowledge version. Indexes are opened read-only.
+
+`pack verify` recomputes the content id and every body hash with the standard
+library only. `pack materialize` writes a read-only page tree for grep, and
+`pack eval` replays a JSON query set to compare recall@k, MRR, nDCG, and latency
+across engines. A Content Pack is not a Knowledge Pack: the latter is the domain
+contract, the former is a release artifact derived from a vault.
+
 ## Vault structure
 
 This is the `default` Knowledge Pack layout. Other Packs provide different content roots; runtime
