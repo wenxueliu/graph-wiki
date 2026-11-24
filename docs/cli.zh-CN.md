@@ -203,6 +203,7 @@ graph-wiki pack build --index all                 # 构建所有可用索引（s
 graph-wiki pack diff v40 v41
 graph-wiki pack search "retry consistency" --engine zvec --topk 5
 graph-wiki pack compare "retry consistency" --pack v41
+graph-wiki pack eval --queries eval/core-cn.json --pack v41
 graph-wiki pack materialize /tmp/wiki-snapshot --pack v41
 ```
 
@@ -217,6 +218,7 @@ graph-wiki pack materialize /tmp/wiki-snapshot --pack v41
 | `pack materialize <dir>` | 写出供 grep / agentic search 使用的页面树 |
 | `pack search <query>` | 通过某个索引 sidecar 检索 |
 | `pack compare <query>` | 对每个已建索引跑同一查询，报告延迟与重合度 |
+| `pack eval --queries FILE` | 用固定查询集回放每个已建索引，报告 recall@k、hit@k、MRR、nDCG 与延迟 |
 
 pack 由 `pack_id` 标识：对页面内容、当前 Knowledge Pack 契约、visibility 过滤与
 freshness 策略取哈希。时间戳不参与计算，因此内容未变时重建会返回已有版本。
@@ -230,6 +232,21 @@ FTS5 与“词 + CJK 二元组”分词；`sqlite-simple` 使用同一引擎的 
 `pack search` 默认把 chunk 命中折叠为每页一行；需要章节级行时传 `--chunks`。
 zvec 每个进程有一次性原生 init/open 成本；`pack compare` 会同时报告冷启动与热查询延迟。
 各引擎的分数各自独立（SQLite FTS5 BM25 与 zvec BM25），请比较排序与页面重合度，不要直接比较原始分数。
+
+`pack eval` 读取普通 JSON（或 JSONL）查询集，因此可以像代码一样评审、随 vault 版本化：
+
+```json
+{
+  "name": "core-cn",
+  "k": 5,
+  "queries": [
+    {"id": "retry", "query": "重试 一致性", "expect": ["concepts/retry.md"]}
+  ]
+}
+```
+
+指标是页面级、二值相关性：`recall@k`、`hit@k`、`MRR@k`、`nDCG@k`，外加 p50/p95 查询延迟。
+`--fail-under-recall` 可以让评测在低于阈值时以非零退出，适合接 CI 门禁。
 
 不传 `--store` 时，pack 位于 `<配置目录>/packs/<vault-id>/`。从固定 pack 回答时，请用
 `pack materialize` 生成快照后再 grep；直接 grep live vault 会混用版本。

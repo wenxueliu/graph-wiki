@@ -211,6 +211,7 @@ graph-wiki pack build --index all                 # all available indexes (sqlit
 graph-wiki pack diff v40 v41
 graph-wiki pack search "retry consistency" --engine zvec --topk 5
 graph-wiki pack compare "retry consistency" --pack v41
+graph-wiki pack eval --queries eval/core-cn.json --pack v41
 graph-wiki pack materialize /tmp/wiki-snapshot --pack v41
 ```
 
@@ -225,6 +226,7 @@ graph-wiki pack materialize /tmp/wiki-snapshot --pack v41
 | `pack materialize <dir>` | Write a page tree for grep / agentic search |
 | `pack search <query>` | Search through one index sidecar |
 | `pack compare <query>` | Run one query against every built index and report latency and overlap |
+| `pack eval --queries FILE` | Replay a fixed query set against every built index and report recall@k, hit@k, MRR, nDCG, and latency |
 
 A pack is identified by `pack_id`, a hash over page content, the active
 Knowledge Pack contract, visibility filters, and freshness policy. Timestamps
@@ -245,6 +247,23 @@ matches the pack. Zvec pays a one-time
 native init/open cost per process; `pack compare` reports both cold and warm
 latency. Scores are engine-local (SQLite FTS5 BM25 vs zvec BM25); compare rankings
 and page overlap, not raw values.
+
+`pack eval` reads a plain JSON (or JSONL) query set, so it can be reviewed and
+versioned with the vault:
+
+```json
+{
+  "name": "core-cn",
+  "k": 5,
+  "queries": [
+    {"id": "retry", "query": "重试 一致性", "expect": ["concepts/retry.md"]}
+  ]
+}
+```
+
+Metrics are page-level with binary relevance: `recall@k`, `hit@k`, `MRR@k`, and
+`nDCG@k`, plus p50/p95 query latency. `--fail-under-recall` makes an evaluation
+gate fail CI when an engine drops below a threshold.
 
 Without `--store`, packs live under `<config-dir>/packs/<vault-id>/`. Use
 `pack materialize` and grep the resulting snapshot when answering from a pinned

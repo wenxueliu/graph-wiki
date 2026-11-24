@@ -3664,6 +3664,24 @@ def build_parser() -> argparse.ArgumentParser:
     pkc.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
     pkc.set_defaults(func=cmd_pack)
 
+    pke = pk_sub.add_parser("eval", help="evaluate retrieval engines against a fixed query set")
+    pke.add_argument("--queries", required=True, help="JSON or JSONL query set")
+    pke.add_argument("--pack", help="pack path, vN, channel, or pack id")
+    pke.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pke.add_argument("--vault-id", help="vault id inside the pack store")
+    pke.add_argument("--store", help="pack store directory")
+    pke.add_argument(
+        "--engine",
+        action="append",
+        choices=("sqlite", "sqlite-simple", "zvec"),
+        help="engine to evaluate (repeatable; default: every built index)",
+    )
+    pke.add_argument("--k", type=int, help="override the query set k")
+    pke.add_argument("--fail-under-recall", type=float, help="exit non-zero below this recall@k")
+    pke.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pke.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pke.set_defaults(func=cmd_pack)
+
     return p
 
 
@@ -3859,6 +3877,7 @@ def cmd_pack(args: argparse.Namespace) -> int:
         "materialize": _cmd_pack_materialize,
         "search": _cmd_pack_search,
         "compare": _cmd_pack_compare,
+        "eval": _cmd_pack_eval,
     }
     handler = handlers.get(getattr(args, "pack_cmd", None))
     if handler is None:
@@ -4142,6 +4161,48 @@ def _cmd_pack_compare(args: argparse.Namespace) -> int:
             for item in result["results"]:
                 print(f"  {item['score']:.4f}\t{item['path']}\tL{item['line_start']}")
         print(f"overlap: {overlap}/{args.topk}")
+    return 0
+
+
+def _cmd_pack_eval(args: argparse.Namespace) -> int:
+    from graph_wiki import pack_eval
+
+    try:
+        pack_dir = _resolve_pack_arg(args)
+        query_set = pack_eval.load_query_set(Path(args.queries))
+        report = pack_eval.evaluate_pack(
+            pack_dir,
+            query_set,
+            engines=args.engine,
+            k=args.k,
+        )
+    except pack_eval.PackEvalError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        _emit_pack(report, args)
+    else:
+        print(f"pack v{report['version']} {report['pack_id']}  set={report['name']}  k={report['k']}  queries={report['queries']}")
+        for engine, result in report["engines"].items():
+            print(
+                f"{engine}: recall@{report['k']}={result['recall_at_k']:.3f} "
+                f"hit={result['hit_at_k']:.3f} mrr={result['mrr_at_k']:.3f} "
+                f"ndcg={result['ndcg_at_k']:.3f} "
+                f"p50={result['latency_ms_p50']:.2f}ms p95={result['latency_ms_p95']:.2f}ms"
+            )
+    if args.fail_under_recall is not None:
+        failing = [
+            engine
+            for engine, result in report["engines"].items()
+            if result["recall_at_k"] < args.fail_under_recall
+        ]
+        if failing:
+            print(
+                f"error: recall@{report['k']} below {args.fail_under_recall}: {', '.join(failing)}",
+                file=sys.stderr,
+            )
+            return 1
     return 0
 
 
