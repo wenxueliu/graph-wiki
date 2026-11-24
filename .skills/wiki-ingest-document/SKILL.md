@@ -88,10 +88,22 @@ complete:
    vault-relative target; never expand `routing.rules.routes` by hand.
 6. Preserve exact provenance with the original `source_path`, `document_id`, source hash,
    heading path, line range, and byte range. Mark inference and unresolved disagreement explicitly.
-7. Update pages using the owner schema. Preserve unrelated frontmatter and body content. Maintain
+7. Before writing each created or updated page, compose the full proposed content in the worker
+   directory and run the pre-write gate:
+
+   ```bash
+   graph-wiki page-check "<vault>" --path "<target>" --content "<proposed-page>" --json
+   ```
+
+   A `fail` result is a hard stop: fix the contract or update the existing target. A `warn` with
+   `duplicate_titles` or `alias_collisions` means the concept already exists; merge into the
+   reported page instead of creating a second canonical page, or record why a separate page is
+   genuinely distinct. Inspect `similar_pages` before creating a new page. Do not write a page
+   whose `hard_failures` list is non-empty.
+8. Write the approved content atomically. Preserve unrelated frontmatter and body content. Maintain
    required `title`, `category`, `tags`, `sources`, `created`, and `updated` fields and all stricter
    fields required by the active Knowledge Pack. Keep every new internal link resolvable.
-8. Validate every created or updated page. Then update and validate `index.md`, append one
+9. Validate every created or updated page. Then update and validate `index.md`, append one
    `INGEST_DOCUMENT` event to `log.md`, and refresh `hot.md`. Do not touch Job directories, Packet
    files, unit reports, or `_meta/ingest-jobs/`.
 

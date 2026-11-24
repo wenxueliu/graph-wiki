@@ -38,7 +38,7 @@ Wiki 可以增长得很快，同时变得不可信。质量控制的目的是让
 | 闸门 | 何时运行 | 命令 | 失败行为 |
 |---|---|---|---|
 | G0 入口 | 来源进入 vault | Knowledge Pack scope 检查、`text-document-*` / `text-ingest-*` | 拒收或暂存；绝不写入半成品知识页 |
-| G1 写入 | 页面创建或合并 | `validate`、page contract、canonical 合并检查 | 阻止写入并重试 |
+| G1 写入 | 页面创建或合并 | `page-check`、`validate`、page contract、canonical 合并检查 | 阻止写入并重试 |
 | G2 发布 | vault 状态发布为 Content Pack | `lint`、`quality`、`trust-check`、`pack verify`、`pack eval` | 不发布 |
 | G3 运行 | 查询与周期维护 | lifecycle 感知排序、`daily-update`、`wiki-lint` 语义审计 | 隐藏退役页、降权未定稿页、进入修复队列 |
 
@@ -89,6 +89,31 @@ graph-wiki quality --allow-lifecycle active \
 `findings` 保留明细列表，CI 或看板可以渲染具体路径而不只是计数。`metrics` 携带适合看趋势的
 数字：lifecycle 计数、provenance 均值、标记数量、重复标题组、超大页面与索引缓存一致性。
 
+## 写入前门禁
+
+`quality` 在事后度量 vault；`page-check` 则从一开始就阻止可避免的缺陷进入：agent 先把拟定页面写到
+临时文件，通过检查后再写入 vault。
+
+```bash
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --json
+graph-wiki page-check @research --path concepts/rate-limiting.md --from-stdin --json
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --mode create
+```
+
+门禁合并三类检查：
+
+1. **契约。** 与 `validate` 相同的必填 frontmatter，包括 `provenance` 块与不超过 200 字符的
+   summary。
+2. **路径。** 目标必须是 content root 内的安全 vault 相对 `.md`，不能是保留 special file 或系统区域。
+3. **Canonical 身份。** 规范化标题与别名重复是警告；slug 冲突与相似标题/摘要是合并候选软信号。
+
+`fail` 会阻止写入（`invalid_page`、`invalid_target`、create 时的 `target_exists`、update 时的
+`target_missing`）。`warn` 要求做出决定：合并到报告的页面、改为更新目标页，或记录为什么独立页面
+确实必要。`--strict` 会把重复警告变成非零退出，供自动化使用。
+
+轻量 `wiki-ingest` 路径与可恢复 packet 归并中的 direct 写入会在替换 live 页面前调用该门禁。
+staged artifact 由人工在提升前复核；把同一门禁接入 stage promotion 是下一个集成点。
+
 ## 严重级别策略
 
 | 维度 | 失败条件 | 警告条件 |
@@ -137,11 +162,13 @@ graph-wiki trust-check --strict
 - 确定性的 `quality` 报告与 CLI；
 - 来源、provenance、lifecycle 的聚合；
 - trust ledger 与 manifest 覆盖门禁；
-- `--strict`、`--strict-trust`、`--require-trust-ledger` 三种门禁模式。
+- `--strict`、`--strict-trust`、`--require-trust-ledger` 三种门禁模式；
+- 面向契约与 canonical 身份的 `page-check` 写入前门禁。
 
 后续计划：
 
 - 引用 locator 解析（来源路径加行号或锚点）；
+- 将同一写入前门禁接入 staged promotion；
 - 与 `wiki-lint` workflow 共享语义重复与矛盾信号；
 - 在检索指标之外增加答案落地（answer grounding）评估；
 - 按 vault 覆盖阈值，并建立趋势基线。

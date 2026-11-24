@@ -187,6 +187,29 @@ provenance, and lifecycle coverage. The report separates `pass`, `warn`, `fail`,
 `0` for `pass` (and `warn` without `--strict`) and `1` for `fail` or `warn --strict`. See
 [Knowledge Quality](quality.md) for the dimension model and CI gate examples.
 
+## Pre-write page gate
+
+| Command | What it does |
+|---|---|
+| `page-check [vault] --path PAGE` | Validate planned page content and detect canonical title/alias duplicates before writing |
+
+```bash
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md
+graph-wiki page-check @research --path concepts/rate-limiting.md --from-stdin --json < /tmp/page.md
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --mode create
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --strict
+```
+
+`page-check` is read-only and sits before a write, unlike `validate` which runs after one. It
+fails on an incomplete page contract, an unsafe or system-area target, a `--mode create` target
+that already exists, or a `--mode update` target that is missing. It warns when another page owns
+the same normalized title or alias, and reports slug collisions and similar pages as soft signals
+for the canonical-merge decision. `--strict` turns duplicate warnings into a non-zero exit.
+
+Exit codes are `0` for `pass` (and `warn` without `--strict`) and `1` for `fail` or
+`warn --strict`. The lightweight `wiki-ingest` path and the recoverable packet integration run
+this gate before live writes; see [Knowledge Quality](quality.md#write-time-gate).
+
 ## Validating pages and sources
 
 | Command | What it does |

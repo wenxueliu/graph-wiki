@@ -180,6 +180,28 @@ lifecycle 覆盖。报告按维度区分 `pass`、`warn`、`fail` 与 `not_measu
 被悄悄当成通过。`pass`（以及未加 `--strict` 的 `warn`）退出码为 `0`，`fail` 或
 `warn --strict` 为 `1`。维度模型与 CI 示例见 [知识质量](quality.zh-CN.md)。
 
+## 写入前页面门禁
+
+| 命令 | 作用 |
+|---|---|
+| `page-check [vault] --path PAGE` | 写入前校验拟定页面内容，并检测 canonical 标题/别名重复 |
+
+```bash
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md
+graph-wiki page-check @research --path concepts/rate-limiting.md --from-stdin --json < /tmp/page.md
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --mode create
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --strict
+```
+
+`page-check` 是只读命令，位于写入之前；`validate` 则在写入之后。它在以下情况失败：page contract
+不完整、目标路径不安全或位于系统区域、`--mode create` 的目标已存在、`--mode update` 的目标不存在。
+当其他页面已占用相同规范化标题或别名时它会警告，并把 slug 冲突与相似页面作为 canonical 合并决策的
+软信号。`--strict` 会把重复警告变成非零退出。
+
+退出码：`pass`（以及未加 `--strict` 的 `warn`）为 `0`，`fail` 或 `warn --strict` 为 `1`。
+轻量 `wiki-ingest` 路径与可恢复的 packet 归并都会在 live 写入前执行该门禁；见
+[知识质量](quality.zh-CN.md#写入前门禁)。
+
 ## 校验页面与来源
 
 | 命令 | 作用 |

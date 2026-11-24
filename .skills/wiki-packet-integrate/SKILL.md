@@ -111,8 +111,9 @@ merge-plan.md（页面级路由、provenance、关系与写入模式计划）
 3. 新页面使用 owner 生效 schema；更新页面先读后合并，保留 owner 字段和不受影响的原文。维护 title/category/tags/sources/summary/created/updated，以及策略要求的 relationships、provenance、confidence、lifecycle、tier、visibility。每条 typed edge 必须把同一 `(target,type)` 同步写入 nested `relationships:`、顶层 type-key quoted-wikilink list 和正文 `@type` alias；typed alias 是 OBSIDIAN_LINK_FORMAT=markdown 的兼容例外。
 4. direct mode 只写 route resolver 返回的 live content target；staged mode 只写 _staging 下绑定该 canonical target 的完整新页面或带完整 binding metadata 与 Additions/Deletions/Updated Fields 的 patch，绝不改 live 页面、index.md 或 .manifest.json。
 5. 对本次新增 wikilink 做局部双向引用检查；staged mode 的 backlink 也必须作为 staged artifact。
-6. 先运行 changed live pages / staged artifacts 的页面校验，再运行仓库正常的相关 vault 校验；额外比较 typed edge 三种 projection 的 canonical `(target,type)` 集合，一致且无重复才通过。失败则修复后重验，尚不推进 Job unit 状态。
-7. 在产出目录写 integration-write-report.md，列出 created/updated/omitted artifact、mode、provenance、校验命令与结果。保持 job.json 的 unit 状态和永久 manifest 不变。
+6. direct mode 下，每个 live 目标在原子替换前先把完整拟定内容写到产出目录的临时文件，并运行 `graph-wiki page-check "<vault>" --path "<canonical-target>" --content "<temp-file>" --json`。`hard_failures` 非空时不得写入；`duplicate_titles` 或 `alias_collisions` 必须改为合并到候选页，或记录独立页面的明确理由；创建前检查 `similar_pages`。staged mode 不在本步骤写 live 页面，其提升由 stage promotion 单独审查。
+7. 先运行 changed live pages / staged artifacts 的页面校验，再运行仓库正常的相关 vault 校验；额外比较 typed edge 三种 projection 的 canonical `(target,type)` 集合，一致且无重复才通过。失败则修复后重验，尚不推进 Job unit 状态。
+8. 在产出目录写 integration-write-report.md，列出 created/updated/omitted artifact、mode、provenance、page-check 结果、校验命令与结果。保持 job.json 的 unit 状态和永久 manifest 不变。
 
 #### 输入
 

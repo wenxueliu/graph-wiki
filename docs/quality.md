@@ -40,7 +40,7 @@ publishing should be strict.
 | Gate | When it runs | Commands | Failure behavior |
 |---|---|---|---|
 | G0 Ingest | A source enters the vault | Knowledge Pack scope check, `text-document-*` / `text-ingest-*` | Reject or stage; never write a partial knowledge page |
-| G1 Write | A page is created or merged | `validate`, page contract, canonical-merge check | Block the write and retry |
+| G1 Write | A page is created or merged | `page-check`, `validate`, page contract, canonical-merge check | Block the write and retry |
 | G2 Release | A vault state is published as a Content Pack | `lint`, `quality`, `trust-check`, `pack verify`, `pack eval` | Do not publish |
 | G3 Runtime | Queries and periodic maintenance | lifecycle-aware ranking, `daily-update`, `wiki-lint` semantic audit | Hide retired pages, demote unsettled ones, queue repairs |
 
@@ -93,6 +93,36 @@ Exit codes: `0` for `pass` (and for `warn` unless `--strict`), `1` for `fail` or
 `metrics` carries the trend-friendly numbers: lifecycle counts, provenance means, marker counts,
 duplicate-title groups, oversized pages, and index-cache consistency.
 
+## Write-time gate
+
+`quality` measures the vault after the fact. `page-check` keeps an avoidable defect out of it in
+the first place: an agent composes the proposed page in a temporary file, checks it, and only then
+writes to the vault.
+
+```bash
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --json
+graph-wiki page-check @research --path concepts/rate-limiting.md --from-stdin --json
+graph-wiki page-check --path concepts/rate-limiting.md --content /tmp/page.md --mode create
+```
+
+The gate combines three checks:
+
+1. **Contract.** The same required frontmatter as `validate`, including a `provenance` block and
+   a summary within 200 characters.
+2. **Path.** The target must be a safe vault-relative `.md` inside a declared content root, not a
+   reserved special file or system area.
+3. **Canonical identity.** Duplicate normalized titles and aliases are warnings; slug collisions
+   and similar titles or summaries are soft candidates for a merge.
+
+`fail` blocks the write (`invalid_page`, `invalid_target`, `target_exists` on create,
+`target_missing` on update). `warn` requires a decision: merge into the reported page, retarget an
+update, or record why a separate page is genuinely distinct. `--strict` turns duplicate warnings
+into a non-zero exit for automation.
+
+The lightweight `wiki-ingest` path and direct writes in the recoverable packet integration call
+this gate before replacing a live page. Staged artifacts are reviewed by a human before promotion;
+wiring the same gate into that promotion step is the next integration point.
+
 ## Severity policy
 
 | Dimension | Fails when | Warns when |
@@ -142,11 +172,13 @@ Shipped in this release:
 - the deterministic `quality` report and CLI;
 - source/provenance/lifecycle aggregation;
 - trust-ledger and manifest-coverage gating;
-- `--strict`, `--strict-trust`, and `--require-trust-ledger` gate modes.
+- `--strict`, `--strict-trust`, and `--require-trust-ledger` gate modes;
+- the `page-check` pre-write gate for contract and canonical identity.
 
 Planned next:
 
 - citation-locator resolution (source path plus line or anchor);
+- the same pre-write gate for staged promotion;
 - semantic duplicate and contradiction signals shared with the `wiki-lint` workflow;
 - answer-grounding evaluation alongside retrieval metrics;
 - per-vault threshold overrides and trend baselines.

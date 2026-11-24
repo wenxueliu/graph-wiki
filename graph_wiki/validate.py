@@ -1,9 +1,8 @@
-"""Post-ingest frontmatter validation.
+"""Frontmatter validation for written or planned wiki pages.
 
-Checks that newly written or updated wiki pages have all required frontmatter
-fields per the page template in llm-wiki/SKILL.md.  Run this after every ingest
-before updating index.md / log.md / manifest so missing fields surface as
-actionable errors rather than silent omissions.
+Checks that newly written, updated, or planned pages have all required
+frontmatter fields per the page template in llm-wiki/SKILL.md. ``validate``
+runs it after a write; ``page-check`` runs the same contract before a write.
 """
 
 from __future__ import annotations
@@ -56,13 +55,12 @@ def _check_provenance_block(frontmatter: str) -> bool:
     return False
 
 
-def validate_page(path: Path) -> dict[str, Any]:
-    """Validate a single markdown page. Returns dict with 'path', 'missing', 'warnings'."""
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as exc:
-        return {"path": str(path), "error": str(exc), "missing": [], "warnings": []}
+def validate_text(text: str, *, path: str | Path = "<stdin>") -> dict[str, Any]:
+    """Validate page text without requiring it to exist on disk.
 
+    The pre-write gate (``page-check``) uses this to validate a page that is
+    still in a temporary file or stdin.
+    """
     match = _FRONTMATTER_RE.match(text)
     if not match:
         return {
@@ -70,6 +68,7 @@ def validate_page(path: Path) -> dict[str, Any]:
             "error": "no frontmatter block found",
             "missing": list(REQUIRED_FIELDS),
             "warnings": [],
+            "ok": False,
         }
 
     frontmatter = match.group(1)
@@ -96,6 +95,21 @@ def validate_page(path: Path) -> dict[str, Any]:
         "warnings": warnings,
         "ok": len(missing) == 0 and len(warnings) == 0,
     }
+
+
+def validate_page(path: Path) -> dict[str, Any]:
+    """Validate a single markdown page. Returns dict with 'path', 'missing', 'warnings'."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return {
+            "path": str(path),
+            "error": str(exc),
+            "missing": [],
+            "warnings": [],
+            "ok": False,
+        }
+    return validate_text(text, path=path)
 
 
 def validate_pages(paths: list[Path], vault_root: Path | None = None) -> dict[str, Any]:

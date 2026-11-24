@@ -2445,6 +2445,48 @@ def _print_quality(report: dict[str, object]) -> None:
         print(f"warning dimension: {name}")
 
 
+def _print_page_check(report: dict[str, object]) -> None:
+    print(f"graph-wiki page-check: {report['status']}")
+    print(f"target: {report['target']} ({report['mode']})")
+    page = report["page"]
+    print(f"page: title={page['title']!r} category={page['category'] or '(missing)'}")
+    validation = report["validation"]
+    print(
+        f"contract: {validation['status']}"
+        f"  missing={len(validation['missing'])}"
+        f"  warnings={len(validation['warnings'])}"
+    )
+    for key in (
+        "path_problem",
+        "target_exists",
+        "duplicate_titles",
+        "alias_collisions",
+        "slug_collisions",
+        "similar_pages",
+    ):
+        value = report["findings"][key]
+        if isinstance(value, list):
+            if not value:
+                continue
+            print(f"{key}:")
+            for item in value:
+                if key == "similar_pages":
+                    print(
+                        f"  - {item['path']}: {item['title']}"
+                        f"  score={item['score']} reason={item['reason']}"
+                    )
+                elif key == "alias_collisions":
+                    print(
+                        f"  - {item['path']}: {item['title']}"
+                        f"  ({item['kind']}: {item['matched']})"
+                    )
+                else:
+                    print(f"  - {item['path']}: {item['title']}")
+        elif value:
+            print(f"{key}: {value}")
+    print(f"recommendation: {report['recommendation']}")
+
+
 def _schema_csv(config: dict[str, str], key: str) -> list[str]:
     if key not in config:
         return []
@@ -2655,6 +2697,38 @@ def cmd_quality(args: argparse.Namespace) -> int:
             print(json.dumps(report))
     else:
         _print_quality(report)
+    if report["status"] == "fail" or (args.strict and report["status"] == "warn"):
+        return 1
+    return 0
+
+
+def cmd_page_check(args: argparse.Namespace) -> int:
+    from graph_wiki.page_check import check_page
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    if args.from_stdin:
+        content = sys.stdin.read()
+    else:
+        try:
+            content = Path(args.content).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            print(f"error: cannot read page content: {exc}", file=sys.stderr)
+            return 1
+    report = check_page(
+        vault,
+        target=args.path,
+        content=content,
+        mode=args.mode,
+    )
+    if args.json:
+        if args.pretty:
+            print(json.dumps(report, indent=2))
+        else:
+            print(json.dumps(report))
+    else:
+        _print_page_check(report)
     if report["status"] == "fail" or (args.strict and report["status"] == "warn"):
         return 1
     return 0
@@ -3556,6 +3630,45 @@ def build_parser() -> argparse.ArgumentParser:
         help="authority locator recorded in the quality report (for example, vault/AGENTS.md)",
     )
     ql.set_defaults(func=cmd_quality)
+
+    pc = sub.add_parser(
+        "page-check",
+        help=(
+            "validate a planned page and detect canonical title/alias duplicates "
+            "before writing it"
+        ),
+    )
+    pc.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then global config)")
+    pc.add_argument(
+        "--path",
+        required=True,
+        metavar="PAGE",
+        help="planned vault-relative target path, e.g. concepts/rate-limiting.md",
+    )
+    content_source = pc.add_mutually_exclusive_group(required=True)
+    content_source.add_argument(
+        "--content",
+        metavar="FILE",
+        help="file containing the planned page content",
+    )
+    content_source.add_argument(
+        "--from-stdin",
+        action="store_true",
+        help="read the planned page content from stdin",
+    )
+    pc.add_argument(
+        "--mode",
+        choices=("create", "update"),
+        help="expected write mode (default: infer from whether the target exists)",
+    )
+    pc.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pc.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pc.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit non-zero on canonical duplicate warnings as well as failures",
+    )
+    pc.set_defaults(func=cmd_page_check)
 
     vl = sub.add_parser(
         "validate",
