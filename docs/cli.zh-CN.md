@@ -191,6 +191,49 @@ graph-wiki context-pack "release notes" --budget 8000 --public-only
 
 `context` 是 `context-pack` 的可用别名。
 
+## Knowledge pack
+
+`graph-wiki pack` 把当前 vault 变成不可变、内容寻址的发布件。vault 仍是唯一可写来源；pack
+是只读产物，用于固定版本检索、版本 diff 与 grep 快照。
+
+```bash
+graph-wiki pack build --index sqlite              # 内容包 + bigram FTS5 索引
+graph-wiki pack build --index sqlite-simple       # simple 分词器：英文词 + 中文单字
+graph-wiki pack build --index all                 # 构建所有可用索引（sqlite、sqlite-simple、zvec）
+graph-wiki pack diff v40 v41
+graph-wiki pack search "retry consistency" --engine zvec --topk 5
+graph-wiki pack compare "retry consistency" --pack v41
+graph-wiki pack materialize /tmp/wiki-snapshot --pack v41
+```
+
+| 命令 | 作用 |
+|---|---|
+| `pack build` | 构建内容包与一个检索索引（`sqlite`、`sqlite-simple`、`zvec`、`all` 或 `none`） |
+| `pack verify [pack]` | 不依赖索引引擎，重新计算内容 id 与每个正文哈希 |
+| `pack list` | 列出 pack store 中的版本 |
+| `pack show [pack]` | 打印某个 manifest |
+| `pack diff <before> <after>` | 按内容哈希比较页面 |
+| `pack status` | 报告 channel 版本、最新版本与 live vault 漂移 |
+| `pack materialize <dir>` | 写出供 grep / agentic search 使用的页面树 |
+| `pack search <query>` | 通过某个索引 sidecar 检索 |
+| `pack compare <query>` | 对每个已建索引跑同一查询，报告延迟与重合度 |
+
+pack 由 `pack_id` 标识：对页面内容、当前 Knowledge Pack 契约、visibility 过滤与
+freshness 策略取哈希。时间戳不参与计算，因此内容未变时重建会返回已有版本。
+`pack build` 默认拒绝脏 git 工作树；传 `--allow-dirty` 会标记为非可复现构建。
+
+索引是 `indexes/<engine>/` 下可重建的 sidecar，不参与 `pack_id`。`sqlite` 使用标准库
+FTS5 与“词 + CJK 二元组”分词；`sqlite-simple` 使用同一引擎的 simple 分词器（英文词 + 中文单字）；
+`zvec` 是可选的本地 BM25 + Jieba 分词引擎，通过
+`pip install "graph-wiki-skills[pack-zvec]"` 安装（64 位 Python 3.10+）。查询时所有引擎都以
+只读方式打开；`pack search` 会拒绝 `content_pack_id` 与 pack 不一致的索引。
+`pack search` 默认把 chunk 命中折叠为每页一行；需要章节级行时传 `--chunks`。
+zvec 每个进程有一次性原生 init/open 成本；`pack compare` 会同时报告冷启动与热查询延迟。
+各引擎的分数各自独立（SQLite FTS5 BM25 与 zvec BM25），请比较排序与页面重合度，不要直接比较原始分数。
+
+不传 `--store` 时，pack 位于 `<配置目录>/packs/<vault-id>/`。从固定 pack 回答时，请用
+`pack materialize` 生成快照后再 grep；直接 grep live vault 会混用版本。
+
 ## Session brain
 
 在 agent 会话历史之上构建主题图谱。输出是一个 **sidecar**，位于 `~/.claude/session-brain/`——绝不

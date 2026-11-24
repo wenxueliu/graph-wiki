@@ -80,6 +80,16 @@ def iter_pages(vault: Path) -> Iterator[Path]:
     yield from iter_content_pages(vault)
 
 
+def build_page_index(vault: Path) -> dict[str, dict[str, Any]]:
+    """Build the page index in memory without reading or writing the disk cache.
+
+    Pack building must not mutate the vault, so it cannot use
+    :func:`load_index`, which persists ``.obsidian/frontmatter-index.json``.
+    """
+    vault = Path(vault)
+    return _build_full(vault, list(iter_pages(vault)))
+
+
 def _extract_scalar(front: str, key: str) -> str:
     """Extract a YAML scalar value, folding block scalars (``>`` / ``|``)."""
     lines = front.splitlines()

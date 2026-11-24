@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TypedDict
@@ -3542,6 +3543,127 @@ def build_parser() -> argparse.ArgumentParser:
     cp.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
     cp.set_defaults(func=cmd_context_pack)
 
+    pk = sub.add_parser(
+        "pack",
+        help="build, verify, and search immutable knowledge packs",
+    )
+    pk_sub = pk.add_subparsers(dest="pack_cmd")
+    pkb = pk_sub.add_parser("build", help="build a content pack and optional retrieval indexes")
+    pkb.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkb.add_argument("--store", help="pack store directory (default: <config-dir>/packs)")
+    pkb.add_argument("--channel", default="release", help="channel pointer to advance (default: release)")
+    pkb.add_argument(
+        "--index",
+        choices=("none", "sqlite", "sqlite-simple", "zvec", "all"),
+        default="sqlite",
+        help="retrieval index to build with the pack (default: sqlite)",
+    )
+    pkb.add_argument(
+        "--tokenizer",
+        choices=("bigram", "simple"),
+        help="SQLite tokenizer; 'simple' selects the sqlite-simple index",
+    )
+    pkb.add_argument("--allow-dirty", action="store_true", help="allow a dirty vault (not reproducible)")
+    pkb.add_argument("--max-age-days", type=int, help="override the pack freshness policy")
+    pkb.add_argument(
+        "--visibility-filter",
+        action="append",
+        metavar="TAG",
+        help="exclude pages carrying this tag (repeatable)",
+    )
+    pkb.add_argument("--version", type=int, help="explicit pack version (must not exist)")
+    pkb.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkb.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkb.set_defaults(func=cmd_pack)
+
+    pkv = pk_sub.add_parser("verify", help="verify pack identity and body hashes")
+    pkv.add_argument("pack", nargs="?", help="pack path, vN, channel, or pack id")
+    pkv.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkv.add_argument("--vault-id", help="vault id inside the pack store")
+    pkv.add_argument("--store", help="pack store directory")
+    pkv.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkv.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkv.set_defaults(func=cmd_pack)
+
+    pkl = pk_sub.add_parser("list", help="list packs in the store")
+    pkl.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkl.add_argument("--vault-id", help="vault id inside the pack store")
+    pkl.add_argument("--store", help="pack store directory")
+    pkl.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkl.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkl.set_defaults(func=cmd_pack)
+
+    pks = pk_sub.add_parser("show", help="show one pack manifest")
+    pks.add_argument("pack", nargs="?", help="pack path, vN, channel, or pack id")
+    pks.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pks.add_argument("--vault-id", help="vault id inside the pack store")
+    pks.add_argument("--store", help="pack store directory")
+    pks.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pks.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pks.set_defaults(func=cmd_pack)
+
+    pkd = pk_sub.add_parser("diff", help="diff two packs by page content hash")
+    pkd.add_argument("before", help="baseline pack path, vN, channel, or pack id")
+    pkd.add_argument("after", help="target pack path, vN, channel, or pack id")
+    pkd.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkd.add_argument("--vault-id", help="vault id inside the pack store")
+    pkd.add_argument("--store", help="pack store directory")
+    pkd.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkd.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkd.set_defaults(func=cmd_pack)
+
+    pkst = pk_sub.add_parser("status", help="report channel/latest pack and live-vault drift")
+    pkst.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkst.add_argument("--store", help="pack store directory")
+    pkst.add_argument("--channel", default="release", help="channel to report (default: release)")
+    pkst.add_argument("--pinned", help="pinned pack selector to compare with the channel")
+    pkst.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkst.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkst.set_defaults(func=cmd_pack)
+
+    pkm = pk_sub.add_parser("materialize", help="write a read-only page tree for grep")
+    pkm.add_argument("dest", help="destination directory")
+    pkm.add_argument("--pack", help="pack path, vN, channel, or pack id")
+    pkm.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkm.add_argument("--vault-id", help="vault id inside the pack store")
+    pkm.add_argument("--store", help="pack store directory")
+    pkm.add_argument("--force", action="store_true", help="overwrite a non-empty destination")
+    pkm.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkm.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkm.set_defaults(func=cmd_pack)
+
+    pkq = pk_sub.add_parser("search", help="search a pack through its index sidecar")
+    pkq.add_argument("query", help="search query")
+    pkq.add_argument("--pack", help="pack path, vN, channel, or pack id")
+    pkq.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkq.add_argument("--vault-id", help="vault id inside the pack store")
+    pkq.add_argument("--store", help="pack store directory")
+    pkq.add_argument(
+        "--engine",
+        choices=("sqlite", "sqlite-simple", "zvec"),
+        help="index engine (default: auto)",
+    )
+    pkq.add_argument("--topk", type=int, default=10, help="number of chunks to return (default: 10)")
+    pkq.add_argument("--operator", choices=("AND", "OR", "and", "or"), default="AND")
+    pkq.add_argument("--include-archived", action="store_true", help="include archived pages")
+    pkq.add_argument("--include-expired", action="store_true", help="include expired pages")
+    pkq.add_argument("--chunks", action="store_true", help="return chunk rows instead of page aggregation")
+    pkq.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkq.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkq.set_defaults(func=cmd_pack)
+
+    pkc = pk_sub.add_parser("compare", help="compare both index engines for one query")
+    pkc.add_argument("query", help="search query")
+    pkc.add_argument("--pack", help="pack path, vN, channel, or pack id")
+    pkc.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    pkc.add_argument("--vault-id", help="vault id inside the pack store")
+    pkc.add_argument("--store", help="pack store directory")
+    pkc.add_argument("--topk", type=int, default=5, help="number of chunks per engine (default: 5)")
+    pkc.add_argument("--operator", choices=("AND", "OR", "and", "or"), default="AND")
+    pkc.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pkc.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pkc.set_defaults(func=cmd_pack)
+
     return p
 
 
@@ -3685,6 +3807,342 @@ def _add_setup_args(sp: argparse.ArgumentParser) -> None:
         help="GitHub (or any git host) repo URL for vault sync — skips the interactive "
         "prompt and configures it non-interactively (see also: graph-wiki sync-setup)",
     )
+
+
+def _pack_store(value: str | None) -> Path:
+    from graph_wiki import pack as pack_mod
+
+    return Path(value).expanduser().resolve() if value else pack_mod.default_store()
+
+
+def _pack_vault_id(args: argparse.Namespace) -> tuple[str | None, Path | None]:
+    from graph_wiki import pack as pack_mod
+
+    explicit = getattr(args, "vault_id", None)
+    if explicit:
+        return explicit, None
+    vault = _resolve_command_vault(getattr(args, "vault", None))
+    if vault is None:
+        return None, None
+    return pack_mod.vault_identity(vault, pack_mod.load_policy(vault)), vault
+
+
+def _resolve_pack_arg(args: argparse.Namespace) -> Path:
+    from graph_wiki import pack as pack_mod
+
+    selector = getattr(args, "pack", None)
+    if selector and Path(selector).expanduser().is_dir():
+        return pack_mod.resolve_pack(selector)
+    vault_id, vault = _pack_vault_id(args)
+    if vault_id is None:
+        raise pack_mod.PackError("pass --vault or --vault-id to resolve a pack")
+    return pack_mod.resolve_pack(
+        selector,
+        store=_pack_store(getattr(args, "store", None)),
+        vault_id=vault_id,
+        vault=vault,
+    )
+
+
+def _emit_pack(payload: object, args: argparse.Namespace) -> None:
+    print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
+
+
+def cmd_pack(args: argparse.Namespace) -> int:
+    handlers = {
+        "build": _cmd_pack_build,
+        "verify": _cmd_pack_verify,
+        "list": _cmd_pack_list,
+        "show": _cmd_pack_show,
+        "diff": _cmd_pack_diff,
+        "status": _cmd_pack_status,
+        "materialize": _cmd_pack_materialize,
+        "search": _cmd_pack_search,
+        "compare": _cmd_pack_compare,
+    }
+    handler = handlers.get(getattr(args, "pack_cmd", None))
+    if handler is None:
+        print("usage: graph-wiki pack {build,verify,list,show,diff,status,materialize,search}", file=sys.stderr)
+        return 2
+    return handler(args)
+
+
+def _cmd_pack_build(args: argparse.Namespace) -> int:
+    from graph_wiki import pack as pack_mod
+    from graph_wiki import pack_index
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    store = _pack_store(args.store)
+    try:
+        manifest = pack_mod.build_pack(
+            vault,
+            store=store,
+            channel=args.channel,
+            allow_dirty=args.allow_dirty,
+            max_age_days=args.max_age_days,
+            visibility_filter=args.visibility_filter,
+            version=args.version,
+        )
+        pack_dir = pack_mod.resolve_pack(None, store=store, vault=vault, channel=args.channel)
+    except pack_mod.PackError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    indexes: dict[str, object] = {}
+    warnings: list[str] = []
+    if args.index != "none":
+        if args.index == "all":
+            requested = ["sqlite", "sqlite-simple", "zvec"]
+        elif args.index == "sqlite" and args.tokenizer:
+            requested = ["sqlite-simple" if args.tokenizer == "simple" else "sqlite"]
+        else:
+            requested = [args.index]
+        for engine in requested:
+            try:
+                indexes[engine] = pack_index.build_index(pack_dir, engine)
+            except pack_index.PackIndexError as exc:
+                if args.index == "all":
+                    warnings.append(f"{engine}: {exc}")
+                else:
+                    print(f"error: {exc}", file=sys.stderr)
+                    return 1
+    payload = {
+        "manifest": manifest,
+        "pack_dir": str(pack_dir),
+        "indexes": indexes,
+        "warnings": warnings,
+    }
+    if args.json:
+        _emit_pack(payload, args)
+    else:
+        counts = manifest.get("counts", {})
+        print(f"pack v{manifest['version']} {manifest['pack_id']}  pages={counts.get('pages', 0)} stale={counts.get('stale', 0)}")
+        print(f"path: {pack_dir}")
+        for engine, meta in indexes.items():
+            print(f"index[{engine}]: {meta['index_id']}  chunks={meta.get('counts', {}).get('chunks', 0)}")
+        for warning in warnings:
+            print(f"warning: {warning}", file=sys.stderr)
+    return 0
+
+
+def _cmd_pack_verify(args: argparse.Namespace) -> int:
+    from graph_wiki import pack as pack_mod
+
+    try:
+        report = pack_mod.verify_pack(_resolve_pack_arg(args))
+    except pack_mod.PackError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _emit_pack(report, args)
+    else:
+        status = "OK" if report["ok"] else "FAILED"
+        print(f"{status} pack v{report.get('version')} {report.get('pack_id')}")
+        for error in report["errors"]:
+            print(f"- {error}")
+    return 0 if report["ok"] else 1
+
+
+def _cmd_pack_list(args: argparse.Namespace) -> int:
+    from graph_wiki import pack as pack_mod
+
+    vault_id, _vault = _pack_vault_id(args)
+    if vault_id is None:
+        return 1
+    try:
+        rows = pack_mod.list_packs(_pack_store(args.store), vault_id)
+    except pack_mod.PackError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _emit_pack({"vault_id": vault_id, "packs": rows}, args)
+    else:
+        for row in rows:
+            counts = row.get("counts", {})
+            print(f"v{row['version']}\t{row['pack_id']}\tpages={counts.get('pages', 0)}\t{row.get('created_at', '')}")
+    return 0
+
+
+def _cmd_pack_show(args: argparse.Namespace) -> int:
+    from graph_wiki import pack as pack_mod
+
+    try:
+        manifest = pack_mod.load_manifest(_resolve_pack_arg(args))
+    except pack_mod.PackError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _emit_pack(manifest, args)
+    else:
+        print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _cmd_pack_diff(args: argparse.Namespace) -> int:
+    from graph_wiki import pack as pack_mod
+
+    before_arg = Path(args.before).expanduser()
+    after_arg = Path(args.after).expanduser()
+    try:
+        if before_arg.is_dir() and after_arg.is_dir():
+            before = pack_mod.resolve_pack(before_arg)
+            after = pack_mod.resolve_pack(after_arg)
+        else:
+            vault_id, vault = _pack_vault_id(args)
+            if vault_id is None:
+                return 1
+            store = _pack_store(args.store)
+            before = pack_mod.resolve_pack(args.before, store=store, vault_id=vault_id, vault=vault)
+            after = pack_mod.resolve_pack(args.after, store=store, vault_id=vault_id, vault=vault)
+        report = pack_mod.diff_packs(before, after)
+    except pack_mod.PackError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _emit_pack(report, args)
+    else:
+        print(f"added={report['counts']['added']} updated={report['counts']['updated']} removed={report['counts']['removed']}")
+        for label in ("added", "updated", "removed"):
+            for path in report[label]:
+                print(f"{label[0].upper()}\t{path}")
+    return 0
+
+
+def _cmd_pack_status(args: argparse.Namespace) -> int:
+    from graph_wiki import pack as pack_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    try:
+        report = pack_mod.status(
+            vault,
+            store=_pack_store(args.store),
+            channel=args.channel,
+            pinned=args.pinned,
+        )
+    except pack_mod.PackError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _emit_pack(report, args)
+    else:
+        print(f"vault: {report['vault_id']}  channel: {report['channel']}")
+        print(f"current: v{report['version']} {report['pack_id']}")
+        print(f"latest: v{report['latest_version']}  pinned: {report['pinned_version']}")
+        drift = report["drift"]
+        print(f"drift: changed={len(drift['changed'])} missing={len(drift['missing'])}")
+        for path in drift["changed"]:
+            print(f"C\t{path}")
+        for path in drift["missing"]:
+            print(f"M\t{path}")
+    return 0
+
+
+def _cmd_pack_materialize(args: argparse.Namespace) -> int:
+    from graph_wiki import pack as pack_mod
+
+    try:
+        result = pack_mod.materialize(_resolve_pack_arg(args), Path(args.dest), force=args.force)
+    except pack_mod.PackError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _emit_pack(result, args)
+    else:
+        print(f"materialized {result['pages']} pages to {result['destination']} ({result['pack_id']})")
+    return 0
+
+
+def _cmd_pack_search(args: argparse.Namespace) -> int:
+    from graph_wiki import pack_index
+
+    try:
+        pack_dir = _resolve_pack_arg(args)
+        result = pack_index.search_index(
+            pack_dir,
+            args.query,
+            engine=args.engine,
+            topk=args.topk,
+            operator=args.operator,
+            include_archived=args.include_archived,
+            include_expired=args.include_expired,
+            group_pages=not args.chunks,
+        )
+    except pack_index.PackIndexError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _emit_pack(result, args)
+    else:
+        for item in result["results"]:
+            stale = " stale" if item.get("stale") else ""
+            heading = f" > {item['heading']}" if item.get("heading") else ""
+            print(f"{item['score']:.4f}\t{item['path']}{heading}\tL{item['line_start']}{stale}")
+    return 0
+
+
+def _cmd_pack_compare(args: argparse.Namespace) -> int:
+    from graph_wiki import pack_index
+
+    try:
+        pack_dir = _resolve_pack_arg(args)
+        engines = pack_index.available_indexes(pack_dir)
+        if not engines:
+            raise pack_index.PackIndexError("pack has no indexes; build them first")
+        comparison: dict[str, object] = {}
+        for engine in ("sqlite", "sqlite-simple", "zvec"):
+            if engine not in engines:
+                continue
+            started = time.perf_counter()
+            pack_index.search_index(
+                pack_dir,
+                args.query,
+                engine=engine,
+                topk=args.topk,
+                operator=args.operator,
+            )
+            cold_ms = round((time.perf_counter() - started) * 1000, 2)
+            started = time.perf_counter()
+            result = pack_index.search_index(
+                pack_dir,
+                args.query,
+                engine=engine,
+                topk=args.topk,
+                operator=args.operator,
+            )
+            elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+            comparison[engine] = {
+                "cold_ms": cold_ms,
+                "elapsed_ms": elapsed_ms,
+                "results": result["results"],
+            }
+    except pack_index.PackIndexError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    path_sets = [
+        {str(item["path"]) for item in payload["results"]}
+        for payload in comparison.values()
+    ]
+    overlap = len(set.intersection(*path_sets)) if path_sets else 0
+    payload = {
+        "pack_dir": str(pack_dir),
+        "query": args.query,
+        "engines": comparison,
+        "overlap": overlap,
+    }
+    if args.json:
+        _emit_pack(payload, args)
+    else:
+        for engine, result in comparison.items():
+            print(f"== {engine} (warm {result['elapsed_ms']}ms, cold {result['cold_ms']}ms) ==")
+            for item in result["results"]:
+                print(f"  {item['score']:.4f}\t{item['path']}\tL{item['line_start']}")
+        print(f"overlap: {overlap}/{args.topk}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

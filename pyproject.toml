@@ -38,6 +38,8 @@ dependencies = []
 ast = ["tree-sitter>=0.21", "tree-sitter-languages>=1.10"]
 # Higher-fidelity community detection (Leiden algorithm; greedy label propagation is the default fallback).
 graph = ["leidenalg>=0.10", "igraph>=0.11", "networkx>=3.0"]
+# Optional native BM25 + Jieba FTS engine for pack indexes (64-bit Python 3.10+).
+pack-zvec = ["zvec>=0.8,<0.9; python_version >= '3.10'"]
 
 [project.urls]
 Homepage = "https://github.com/wenxueliu/graph-wiki"

@@ -198,6 +198,58 @@ or `--json` for tool-to-tool integration.
 
 `context` is an accepted alias for `context-pack`.
 
+## Knowledge packs
+
+`graph-wiki pack` turns the current vault into an immutable, content-addressed
+release. The vault remains the only writable source; a pack is a read-only
+artifact for pinned retrieval, version diffing, and grep snapshots.
+
+```bash
+graph-wiki pack build --index sqlite              # content pack + bigram FTS5 index
+graph-wiki pack build --index sqlite-simple       # simple tokenizer: Latin words + CJK unigrams
+graph-wiki pack build --index all                 # all available indexes (sqlite, sqlite-simple, zvec)
+graph-wiki pack diff v40 v41
+graph-wiki pack search "retry consistency" --engine zvec --topk 5
+graph-wiki pack compare "retry consistency" --pack v41
+graph-wiki pack materialize /tmp/wiki-snapshot --pack v41
+```
+
+| Command | What it does |
+|---|---|
+| `pack build` | Build a content pack and one retrieval index (`sqlite`, `sqlite-simple`, `zvec`, `all`, or `none`) |
+| `pack verify [pack]` | Recompute the content id and every body hash without an index engine |
+| `pack list` | List versions in the pack store |
+| `pack show [pack]` | Print one manifest |
+| `pack diff <before> <after>` | Compare pages by content hash |
+| `pack status` | Report the channel pack, latest version, and live-vault drift |
+| `pack materialize <dir>` | Write a page tree for grep / agentic search |
+| `pack search <query>` | Search through one index sidecar |
+| `pack compare <query>` | Run one query against every built index and report latency and overlap |
+
+A pack is identified by `pack_id`, a hash over page content, the active
+Knowledge Pack contract, visibility filters, and freshness policy. Timestamps
+are excluded, so rebuilding unchanged knowledge returns the existing version.
+`pack build` refuses a dirty git tree unless `--allow-dirty` is passed; a dirty
+build is marked non-reproducible.
+
+Indexes are rebuildable sidecars under `indexes/<engine>/` and never contribute
+to `pack_id`. `sqlite` uses the stdlib FTS5 extension with word + CJK bigram
+tokens; `sqlite-simple` uses the same engine with a simple tokenizer (Latin
+words + one token per CJK character). `zvec` is optional and uses native BM25
+with Jieba segmentation; install it with
+`pip install "graph-wiki-skills[pack-zvec]"` (64-bit Python 3.10+).
+`pack search` collapses chunk hits to one row per page by default; pass
+`--chunks` for section-level rows. All indexes are opened read-only for
+queries, and `pack search` refuses an index whose `content_pack_id` no longer
+matches the pack. Zvec pays a one-time
+native init/open cost per process; `pack compare` reports both cold and warm
+latency. Scores are engine-local (SQLite FTS5 BM25 vs zvec BM25); compare rankings
+and page overlap, not raw values.
+
+Without `--store`, packs live under `<config-dir>/packs/<vault-id>/`. Use
+`pack materialize` and grep the resulting snapshot when answering from a pinned
+pack; grepping the live vault would mix versions.
+
 ## Session brain
 
 Builds a topic graph over your agent session history. Output is a **sidecar** at `~/.claude/session-brain/` — the vault is never written to. Full detail in [Session Brain](session-brain.md).
