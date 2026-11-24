@@ -167,6 +167,26 @@ graph-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
 
 Lint resolves its vault and schema together: explicit path (no config inheritance), positional `@name`, nearest CWD `.env`, then the config file. CLI schema flags extend/replace that resolved vault's settings and are recorded in the JSON `schema` block.
 
+## Knowledge quality
+
+| Command | What it does |
+|---|---|
+| `quality [vault]` | Aggregate structure, traceability, trust, coverage, and freshness into one gate-ready report |
+
+```bash
+graph-wiki quality                     # configured vault
+graph-wiki quality /path/to/vault --json --pretty
+graph-wiki quality @research --strict   # warnings also exit non-zero
+graph-wiki quality --require-trust-ledger   # release gate: no ledger means fail
+graph-wiki quality --strict-trust --schema-source /path/to/vault/AGENTS.md
+```
+
+`quality` is read-only. It reuses `lint`, `verify`, and the trust ledger, then adds source,
+provenance, and lifecycle coverage. The report separates `pass`, `warn`, `fail`, and
+`not_measured` per dimension; `not_measured` is never silently treated as a pass. Exit codes are
+`0` for `pass` (and `warn` without `--strict`) and `1` for `fail` or `warn --strict`. See
+[Knowledge Quality](quality.md) for the dimension model and CI gate examples.
+
 ## Validating pages and sources
 
 | Command | What it does |

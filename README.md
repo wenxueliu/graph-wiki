@@ -267,6 +267,7 @@ Need a reproducible read model? `graph-wiki pack build` turns a committed vault 
 - **It only reads what changed.** A manifest tracks every source ingested, so the second run processes the delta — not your whole library again.
 - **You can tell knowledge from guessing.** Every claim is tagged `extracted`, `^[inferred]`, or `^[ambiguous]`, and lint flags pages drifting into speculation.
 - **Queries stay cheap as it grows.** Titles, tags, and summaries get read before page bodies. 20 pages or 2000, roughly the same cost.
+- **Quality is enforceable.** `graph-wiki quality` aggregates structure, provenance, trust, coverage, and freshness into one gate-ready report for CI.
 - **It's yours.** Plain markdown in a folder. Push it to a private repo, open it in Obsidian, grep it, delete it. No service, no lock-in, nothing leaves your machine.
 - **Works where you already work.** One bundled `.skills/` directory, linked into each selected agent under your project.
 
@@ -284,6 +285,7 @@ These docs are available in English and Simplified Chinese.
 | **[CLI Reference](https://github.com/wenxueliu/graph-wiki/blob/main/docs/cli.md)** | Every `graph-wiki` subcommand |
 | **[Configuration](https://github.com/wenxueliu/graph-wiki/blob/main/docs/configuration.md)** | Config vars, QMD semantic search, `_raw/` staging, GitHub sync |
 | **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.md)** | The four ingest stages, vault structure, what we added to Karpathy's pattern |
+| **[Knowledge Quality](https://github.com/wenxueliu/graph-wiki/blob/main/docs/quality.md)** | Quality dimensions, gates, and the `quality` report |
 | **[Session Brain](https://github.com/wenxueliu/graph-wiki/blob/main/docs/session-brain.md)** | Topic graph over your agent session history |
 | **[Graph Viewer](https://github.com/wenxueliu/graph-wiki/blob/main/docs/viewer.md)** | Local read-only browser graph with search, filters, and page details |
 | **[Contributing](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.md)** | Adding skills, keeping the English and Chinese docs in sync |

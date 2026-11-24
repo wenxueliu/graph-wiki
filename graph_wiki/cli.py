@@ -2415,6 +2415,36 @@ def _print_lint(report: dict[str, object]) -> None:
             print(f"index: {state}")
 
 
+def _print_quality(report: dict[str, object]) -> None:
+    print(f"graph-wiki quality: {report['status']}")
+    print(f"vault: {report['vault']}")
+    stats = report["stats"]
+    print(
+        f"pages: {stats['pages']}  tokens: {stats['total_tokens']}"
+        f"  avg: {stats['average_tokens']}  manifest: {stats['manifest_sources']}"
+    )
+    print("dimensions:")
+    for name, dimension in report["dimensions"].items():
+        signals = " ".join(
+            f"{key}={value}" for key, value in dimension["signals"].items()
+        )
+        suffix = f"  {signals}" if signals else ""
+        print(f"  {name:<13} {dimension['status']:<13}{suffix}")
+    notes = [
+        (name, note)
+        for name, dimension in report["dimensions"].items()
+        for note in dimension["notes"]
+    ]
+    if notes:
+        print("notes:")
+        for name, note in notes:
+            print(f"  - {name}: {note}")
+    for name in report["gate"]["failed_dimensions"]:
+        print(f"failed dimension: {name}")
+    for name in report["gate"]["warned_dimensions"]:
+        print(f"warning dimension: {name}")
+
+
 def _schema_csv(config: dict[str, str], key: str) -> list[str]:
     if key not in config:
         return []
@@ -2589,6 +2619,42 @@ def cmd_lint(args: argparse.Namespace) -> int:
             print(json.dumps(report))
     else:
         _print_lint(report)
+    if report["status"] == "fail" or (args.strict and report["status"] == "warn"):
+        return 1
+    return 0
+
+
+def cmd_quality(args: argparse.Namespace) -> int:
+    from graph_wiki.quality import assess_quality
+
+    context = _resolve_schema_command_context(args.vault)
+    if context is None:
+        return 1
+    vault, config, config_source = context
+
+    strict_trust = args.strict_trust or config.get("OBSIDIAN_TRUST_STRICT", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    try:
+        schema = _schema_options(args, config, config_source)
+        report = assess_quality(
+            vault,
+            strict_trust=strict_trust,
+            require_trust_ledger=args.require_trust_ledger,
+            **schema,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        if args.pretty:
+            print(json.dumps(report, indent=2))
+        else:
+            print(json.dumps(report))
+    else:
+        _print_quality(report)
     if report["status"] == "fail" or (args.strict and report["status"] == "warn"):
         return 1
     return 0
@@ -3442,6 +3508,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="authority locator recorded in the lint report (for example, vault/AGENTS.md)",
     )
     lt.set_defaults(func=cmd_lint)
+
+    ql = sub.add_parser(
+        "quality",
+        help=(
+            "aggregate structure, provenance, trust, coverage, and freshness "
+            "into one gate-ready quality report"
+        ),
+    )
+    ql.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then global config)")
+    ql.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ql.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ql.add_argument("--strict", action="store_true", help="exit non-zero on warnings as well as failures")
+    ql.add_argument(
+        "--strict-trust",
+        action="store_true",
+        help=(
+            "treat schema gaps and stale trust reviews as failures. "
+            "Also settable per-vault via OBSIDIAN_TRUST_STRICT=1 in the config."
+        ),
+    )
+    ql.add_argument(
+        "--require-trust-ledger",
+        action="store_true",
+        help="fail when the vault has no approved trust ledger (release-gate mode)",
+    )
+    ql.add_argument(
+        "--allow-lifecycle",
+        action="append",
+        metavar="VALUE",
+        help="extend the framework lifecycle allowlist (repeatable)",
+    )
+    ql.add_argument(
+        "--allow-relationship-type",
+        action="append",
+        metavar="VALUE",
+        help="extend the framework relationship-type allowlist (repeatable)",
+    )
+    ql.add_argument(
+        "--required-trust-field",
+        action="append",
+        choices=("base_confidence", "lifecycle", "lifecycle_changed", "updated"),
+        help="replace default trust-field requiredness (repeatable)",
+    )
+    ql.add_argument(
+        "--schema-source",
+        help="authority locator recorded in the quality report (for example, vault/AGENTS.md)",
+    )
+    ql.set_defaults(func=cmd_quality)
 
     vl = sub.add_parser(
         "validate",

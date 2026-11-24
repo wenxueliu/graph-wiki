@@ -202,6 +202,9 @@ The [original gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519
 
 - **Audit and lint.** Orphaned pages, broken wikilinks, stale content, contradictions, missing frontmatter — plus a dashboard of what's ingested vs. pending.
 
+- **Quality gate.** `graph-wiki quality` aggregates structure, provenance, trust, coverage, and
+  freshness into one read-only report, with `--strict` and `--require-trust-ledger` modes for CI.
+
 - **Identity resolution.** `wiki-dedup` finds pages covering the same concept under different names ("RSC" vs. "React Server Components") and merges them.
 
 - **Optional cross-linking.** After ingest completes, run the cross-linker separately to scan for unlinked mentions and weave them into the graph; it is not part of the ingest Job completion boundary.

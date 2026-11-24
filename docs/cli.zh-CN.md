@@ -161,6 +161,25 @@ graph-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
 Lint 会同时解析 vault 与 schema：显式路径（不继承配置）、位置参数 `@name`、最近的 CWD `.env`，最后
 是配置文件。CLI 的 schema 参数会扩展/替换该 vault 的解析结果，并记录在 JSON 的 `schema` 块中。
 
+## 知识质量
+
+| 命令 | 作用 |
+|---|---|
+| `quality [vault]` | 把结构、可溯源性、可信、覆盖与时效聚合为一份可供门禁使用的报告 |
+
+```bash
+graph-wiki quality                     # 使用已配置的 vault
+graph-wiki quality /path/to/vault --json --pretty
+graph-wiki quality @research --strict   # warning 也让退出码非零
+graph-wiki quality --require-trust-ledger   # 发布门禁：没有台账即失败
+graph-wiki quality --strict-trust --schema-source /path/to/vault/AGENTS.md
+```
+
+`quality` 是只读命令。它复用 `lint`、`verify` 与 trust ledger，再补充来源、provenance 与
+lifecycle 覆盖。报告按维度区分 `pass`、`warn`、`fail` 与 `not_measured`；`not_measured` 不会
+被悄悄当成通过。`pass`（以及未加 `--strict` 的 `warn`）退出码为 `0`，`fail` 或
+`warn --strict` 为 `1`。维度模型与 CI 示例见 [知识质量](quality.zh-CN.md)。
+
 ## 校验页面与来源
 
 | 命令 | 作用 |

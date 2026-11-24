@@ -1,0 +1,82 @@
+name: knowledge quality
+
+# Guards the deterministic quality report: unit tests plus a real fixture vault
+# gated exactly the way a downstream repo would gate its own knowledge repo.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test tooling
+        run: python -m pip install --upgrade pytest
+
+      - name: Run quality tests
+        run: PYTHONPATH="$PWD" python -m pytest tests/test_quality.py -q
+
+      - name: Gate a fixture vault
+        run: |
+          set -euo pipefail
+          vault="$RUNNER_TEMP/quality-vault"
+          mkdir -p "$vault/concepts"
+
+          cat > "$vault/concepts/alpha.md" <<'EOF'
+          ---
+          title: Alpha
+          category: concepts
+          tags: [fixture]
+          sources: [manual]
+          created: 2026-01-01
+          updated: 2026-01-01
+          summary: Alpha fixture page.
+          provenance:
+            extracted: 0.9
+            inferred: 0.1
+            ambiguous: 0.0
+          base_confidence: 0.85
+          lifecycle: reviewed
+          lifecycle_changed: 2026-01-01
+          ---
+          # Alpha
+
+          See [[beta]].
+          EOF
+
+          cat > "$vault/concepts/beta.md" <<'EOF'
+          ---
+          title: Beta
+          category: concepts
+          tags: [fixture]
+          sources: [manual]
+          created: 2026-01-01
+          updated: 2026-01-01
+          summary: Beta fixture page.
+          provenance:
+            extracted: 0.8
+            inferred: 0.2
+            ambiguous: 0.0
+          base_confidence: 0.85
+          lifecycle: verified
+          lifecycle_changed: 2026-01-01
+          ---
+          # Beta
+
+          See [[alpha]].
+          EOF
+
+          PYTHONPATH="$PWD" python -m graph_wiki.cli quality "$vault" --strict --json

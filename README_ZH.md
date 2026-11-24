@@ -266,6 +266,7 @@ flowchart LR
 - **它只读有变动的部分。** manifest 追踪每个导入过的来源，所以第二次执行只处理差异，而不是重跑整个库。
 - **你分得出哪些是知识、哪些是猜测。** 每个陈述都会标记为 `extracted`、`^[inferred]` 或 `^[ambiguous]`，lint 会标出开始偏向臆测的页面。
 - **查询成本不随规模爆炸。** 先读标题、tag 和 summary，需要时才打开页面内容。20 页或 2000 页，成本差不多。
+- **质量可以被强制。** `graph-wiki quality` 把结构、可溯源性、可信、覆盖与时效聚合为一份可直接用于 CI 门禁的报告。
 - **它是你的。** 就是文件夹里的纯 markdown。推到私人 repo、用 Obsidian 打开、用 grep 搜、直接删掉都行。没有服务、没有锁定，什么都不会离开你的机器。
 - **在你原本工作的地方就能用。** 一个 bundled `.skills/` 目录，链接到项目内每个选定的 agent。
 
@@ -283,6 +284,7 @@ flowchart LR
 | **[CLI Reference](https://github.com/wenxueliu/graph-wiki/blob/main/docs/cli.zh-CN.md)** | 每一个 `graph-wiki` 子命令 |
 | **[Configuration](https://github.com/wenxueliu/graph-wiki/blob/main/docs/configuration.zh-CN.md)** | 设置变量、QMD 语义搜索、`_raw/` 暂存区、GitHub 同步 |
 | **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.zh-CN.md)** | 四个导入阶段、vault 结构、我们在 Karpathy 模式上加了什么 |
+| **[知识质量](https://github.com/wenxueliu/graph-wiki/blob/main/docs/quality.zh-CN.md)** | 质量维度、闸门与 `quality` 报告 |
 | **[Session Brain](https://github.com/wenxueliu/graph-wiki/blob/main/docs/session-brain.zh-CN.md)** | 建立在 agent session 历史之上的主题图谱 |
 | **[图谱查看器](https://github.com/wenxueliu/graph-wiki/blob/main/docs/viewer.zh-CN.md)** | 本地只读的浏览器图谱，支持搜索、过滤与页面详情 |
 | **[Contributing](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.zh-CN.md)** | 新增 skill、维持中英双语文档同步 |
