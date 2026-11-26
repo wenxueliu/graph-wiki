@@ -263,6 +263,8 @@ report only covers events a collector actually delivered.
 label, `client` is an opaque id, and `ts` is ISO-8601 with a timezone (default: now). Invalid lines
 are rejected; `--strict` exits non-zero when any line is rejected.
 
+See [Operational Metrics](operations.md) for the storage model, collectors, and limitations.
+
 ## Pre-write page gate
 
 | Command | What it does |

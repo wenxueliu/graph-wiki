@@ -286,6 +286,7 @@ flowchart LR
 | **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.zh-CN.md)** | 四个导入阶段、vault 结构、我们在 Karpathy 模式上加了什么 |
 | **[知识质量](https://github.com/wenxueliu/graph-wiki/blob/main/docs/quality.zh-CN.md)** | 质量维度、闸门与 `quality` 报告 |
 | **[访问控制](https://github.com/wenxueliu/graph-wiki/blob/main/docs/access-control.zh-CN.md)** | 按角色构建的 Content Pack、多角色令牌与带审计的检索网关 |
+| **[运营指标](https://github.com/wenxueliu/graph-wiki/blob/main/docs/operations.zh-CN.md)** | 页面访问、检索事件、变更历史、版本跟踪、过期与元数据健康 |
 | **[Session Brain](https://github.com/wenxueliu/graph-wiki/blob/main/docs/session-brain.zh-CN.md)** | 建立在 agent session 历史之上的主题图谱 |
 | **[图谱查看器](https://github.com/wenxueliu/graph-wiki/blob/main/docs/viewer.zh-CN.md)** | 本地只读的浏览器图谱，支持搜索、过滤与页面详情 |
 | **[Contributing](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.zh-CN.md)** | 新增 skill、维持中英双语文档同步 |

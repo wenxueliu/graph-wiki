@@ -15,6 +15,7 @@ Simplified Chinese; the links below point at the English originals.
 | [Architecture](architecture.md) | The four ingest stages, vault structure, what we added to Karpathy's pattern |
 | [Knowledge Quality](quality.md) | Quality dimensions, gates, the `quality` report, and CI enforcement |
 | [Access Control](access-control.md) | Role-scoped content packs, token-gated retrieval gateway, and audit trail |
+| [Operations](operations.md) | Page views, retrieval events, change history, version tracking, expiry, and metadata health |
 | [Text Ingest Pipeline V1](ingest-pipeline-redesign.md) | Shipped text-only scope, independent partitioning, bounded Packets, resumable integration |
 | [Session Brain](session-brain.md) | Topic graph over your agent session history |
 | [Graph Viewer](viewer.md) | Local read-only browser graph with page details and a small JSON backend |

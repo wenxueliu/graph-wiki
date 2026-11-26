@@ -14,6 +14,7 @@
 | [架构](architecture.zh-CN.md) | 四个摄取阶段、vault 结构、我们在 Karpathy 模式之上加的东西 |
 | [知识质量](quality.zh-CN.md) | 质量维度、闸门、`quality` 报告与 CI 门禁 |
 | [访问控制](access-control.zh-CN.md) | 按角色构建的 Content Pack、令牌网关与审计日志 |
+| [运营指标](operations.zh-CN.md) | 页面访问、检索事件、变更历史、版本跟踪、过期与元数据健康 |
 | [Text Ingest Pipeline V1](ingest-pipeline-redesign.zh-CN.md) | 已交付的纯文本范围、独立分区、有界 Packet、可续跑归并 |
 | [Session Brain](session-brain.zh-CN.md) | 在你的 agent 会话历史之上构建的主题图谱 |
 | [图谱查看器](viewer.zh-CN.md) | 本地只读的浏览器图谱，含页面详情与小型 JSON 后端 |

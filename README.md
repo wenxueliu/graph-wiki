@@ -287,6 +287,7 @@ These docs are available in English and Simplified Chinese.
 | **[Architecture](https://github.com/wenxueliu/graph-wiki/blob/main/docs/architecture.md)** | The four ingest stages, vault structure, what we added to Karpathy's pattern |
 | **[Knowledge Quality](https://github.com/wenxueliu/graph-wiki/blob/main/docs/quality.md)** | Quality dimensions, gates, and the `quality` report |
 | **[Access Control](https://github.com/wenxueliu/graph-wiki/blob/main/docs/access-control.md)** | Role-scoped content packs, multi-role tokens, and an audited retrieval gateway |
+| **[Operations](https://github.com/wenxueliu/graph-wiki/blob/main/docs/operations.md)** | Page views, retrieval events, change history, version tracking, expiry, and metadata health |
 | **[Session Brain](https://github.com/wenxueliu/graph-wiki/blob/main/docs/session-brain.md)** | Topic graph over your agent session history |
 | **[Graph Viewer](https://github.com/wenxueliu/graph-wiki/blob/main/docs/viewer.md)** | Local read-only browser graph with search, filters, and page details |
 | **[Contributing](https://github.com/wenxueliu/graph-wiki/blob/main/docs/contributing.md)** | Adding skills, keeping the English and Chinese docs in sync |

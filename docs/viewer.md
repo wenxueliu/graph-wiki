@@ -210,8 +210,8 @@ state directory; the plugin needs the token from that directory.
 Events and reports stay outside the vault (default
 `~/.graph-wiki/state/<vault-id>/ops/`). The listener is loopback-only by
 default and the token is local. No IP, user agent, referrer, or page body is
-stored. See [Operational metrics](cli.md#operational-metrics) for the report,
-event schema, and dedupe model.
+stored. See [Operational metrics](operations.md) for the full model and
+[CLI Reference](cli.md#operational-metrics) for the commands.
 
 `/api/ops/event` accepts `POST` and `OPTIONS`; other write methods remain
 `405`. CORS headers are limited to that route, and a token is still required.

@@ -199,7 +199,7 @@ graph-wiki ops install-obsidian ~/brain --port 8765
 
 事件与报告都留在 vault 外（默认 `~/.graph-wiki/state/<vault-id>/ops/`）。
 默认只监听回环地址，token 只存在本机。不保存 IP、User-Agent、Referer 或页面正文。
-报表、事件格式与去重模型见[运营指标](cli.zh-CN.md#运营指标)。
+完整模型见[运营指标](operations.zh-CN.md)，命令见 [CLI 参考](cli.zh-CN.md#运营指标)。
 
 `/api/ops/event` 接受 `POST` 与 `OPTIONS`；其他写入方法仍返回 `405`。CORS 头只对该路由生效，
 并且仍然需要 token。
