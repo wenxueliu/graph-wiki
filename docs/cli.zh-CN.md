@@ -312,6 +312,40 @@ zvec 每个进程有一次性原生 init/open 成本；`pack compare` 会同时�
 不传 `--store` 时，pack 位于 `<配置目录>/packs/<vault-id>/`。从固定 pack 回答时，请用
 `pack materialize` 生成快照后再 grep；直接 grep live vault 会混用版本。
 
+## 访问控制
+
+`graph-wiki access` 为每个角色构建一个 Content Pack，并通过令牌网关提供检索。完整说明见
+[访问控制](access-control.zh-CN.md)。
+
+| 命令 | 作用 |
+|---|---|
+| `access init` | 写出带角色声明的 `_meta/access-policy.json` |
+| `access build --role R` / `--all` | 在 channel `role-R` 上构建该角色的 pack 及其索引 |
+| `access search <query> [--role NAME]` | 网关：搜索令牌拥有的全部 pack，可限定单个角色 |
+| `access inventory` | 列出令牌角色可读、按路径去重后的页面 |
+| `access page <path>` | 从令牌的角色 pack 中读取单个页面正文 |
+| `access resolve` | 显示令牌对应的主体、角色与 pack |
+| `access status [--strict]` | 报告每个角色的 pack 版本与漂移状态；`--strict` 用于 CI 门禁 |
+| `access audit` | 打印最近的网关决策 |
+| `access token create/revoke/list` | 管理主体；`--role` 可重复，只保存令牌哈希 |
+
+```bash
+graph-wiki access init --vault ~/brain --role finance --role public
+graph-wiki access build --vault ~/brain --all
+graph-wiki access token create --vault ~/brain --name alice --role finance --role public
+GRAPH_WIKI_ACCESS_TOKEN=gw_... graph-wiki access search "retention policy" --vault ~/brain
+GRAPH_WIKI_ACCESS_TOKEN=gw_... graph-wiki access inventory --limit 200
+```
+
+当页面没有 `role/` 标签、或带有该角色的 `role/<name>` 标签，并且没有命中该角色 `exclude_tags`
+（默认 `visibility/pii`）中的标签时，该页面对这个角色可见。每次构建都会写出 `access.json` sidecar；
+策略或可见页面指纹与实时 vault 不再一致时，网关会拒绝该 pack。一个令牌可以拥有多个角色：网关会校验
+每个授权 pack，搜索全部 pack，按路径去重并融合排名，让多角色 agent 能探索自己的整个语料。
+`access build` 要求 git 工作区干净，除非传入 `--allow-dirty`。
+
+令牌来自 `--token` 或 `GRAPH_WIKI_ACCESS_TOKEN`。请确保 vault 与 pack store 对 agent 所在用户不可读：
+直接访问文件系统或 `pack search --pack` 都会绕过网关。
+
 ## Session brain
 
 在 agent 会话历史之上构建主题图谱。输出是一个 **sidecar**，位于 `~/.claude/session-brain/`——绝不

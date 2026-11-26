@@ -265,6 +265,11 @@ def _build_inventory(
     return inventory, bodies
 
 
+def load_inventory(pack_dir: Path) -> list[dict[str, Any]]:
+    """Return a pack's inventory rows (public read-only accessor)."""
+    return _load_inventory(Path(pack_dir))
+
+
 def _build_edges(
     pages: dict[str, dict[str, Any]],
     allowed: set[str] | None = None,
@@ -398,6 +403,14 @@ def _write_channel(base: Path, channel: str, manifest: dict[str, Any]) -> None:
     _atomic_write(base / "channels" / f"{channel}.json", json.dumps(pointer, ensure_ascii=False, indent=2) + "\n")
 
 
+def _build_extra_matches(manifest: dict[str, Any], build_extra: dict[str, Any] | None) -> bool:
+    """Return True when a reusable manifest already carries the requested build metadata."""
+    if not build_extra:
+        return True
+    build = manifest.get("build", {})
+    return all(build.get(key) == value for key, value in build_extra.items())
+
+
 def build_pack(
     vault: Path,
     *,
@@ -407,8 +420,16 @@ def build_pack(
     max_age_days: int | None = None,
     visibility_filter: list[str] | None = None,
     version: int | None = None,
+    include_paths: Iterable[str] | None = None,
+    build_extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Build one immutable content pack from the vault's current pages."""
+    """Build one immutable content pack from the vault's current pages.
+
+    ``include_paths`` restricts the pack to an explicit page allowlist, which is
+    how role-scoped packs are produced. ``build_extra`` is merged into
+    ``manifest["build"]`` for callers that need auditable build metadata; it
+    never participates in ``pack_id``.
+    """
     vault = Path(vault).expanduser().resolve()
     if not vault.is_dir():
         raise PackError(f"vault not found: {vault}")
@@ -424,8 +445,17 @@ def build_pack(
     if age < 1:
         raise PackError("max_age_days must be positive")
     filters = visibility_filter if visibility_filter is not None else list(policy["visibility_filter"])
+    if build_extra is not None:
+        if not isinstance(build_extra, dict):
+            raise PackError("build_extra must be a mapping")
+        reserved = {"mode", "deterministic", "visibility_filter"} & set(build_extra)
+        if reserved:
+            raise PackError(f"build_extra cannot override reserved build keys: {sorted(reserved)}")
 
     pages = build_page_index(vault)
+    if include_paths is not None:
+        allowed = {str(path) for path in include_paths}
+        pages = {path: entry for path, entry in pages.items() if path in allowed}
     inventory, bodies = _build_inventory(vault, pages, age, filters)
     edges = _build_edges(pages, {entry["path"] for entry in inventory})
 
@@ -440,7 +470,7 @@ def build_pack(
         existing_versions = _versions(base)
         if existing_versions:
             latest = load_manifest(base / f"v{existing_versions[-1]}")
-            if latest.get("pack_id") == pack_id:
+            if latest.get("pack_id") == pack_id and _build_extra_matches(latest, build_extra):
                 _write_channel(base, channel, latest)
                 return latest
 
@@ -497,6 +527,8 @@ def build_pack(
         "edges_sha256": _sha256_text(_jsonl(edges)),
         "changes": changes,
     }
+    if build_extra:
+        manifest["build"].update(build_extra)
 
     temporary = Path(tempfile.mkdtemp(prefix=".pack-", dir=base))
     try:

@@ -4003,6 +4003,145 @@ def build_parser() -> argparse.ArgumentParser:
     pke.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
     pke.set_defaults(func=cmd_pack)
 
+    ac = sub.add_parser(
+        "access",
+        help="build role-scoped packs and run the token-gated retrieval gateway",
+    )
+    ac_sub = ac.add_subparsers(dest="access_cmd")
+
+    aci = ac_sub.add_parser("init", help="write _meta/access-policy.json with role declarations")
+    aci.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    aci.add_argument(
+        "--role",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="declare a role (repeatable)",
+    )
+    aci.add_argument("--force", action="store_true", help="replace an existing policy file")
+    aci.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    aci.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    aci.set_defaults(func=cmd_access)
+
+    acb = ac_sub.add_parser("build", help="build the Content Pack owned by one role or every role")
+    acb.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    acb.add_argument("--store", help="pack store directory (default: <config-dir>/packs)")
+    acb.add_argument("--role", help="role to build")
+    acb.add_argument("--all", action="store_true", help="build every role in the access policy")
+    acb.add_argument(
+        "--index",
+        choices=("none", "sqlite", "sqlite-simple", "zvec", "all"),
+        default="sqlite",
+        help="retrieval index to build with the pack (default: sqlite)",
+    )
+    acb.add_argument("--allow-dirty", action="store_true", help="allow a dirty vault")
+    acb.add_argument("--max-age-days", type=int, help="override the pack freshness policy")
+    acb.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    acb.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    acb.set_defaults(func=cmd_access)
+
+    acs = ac_sub.add_parser("search", help="gateway: search every pack granted to the token")
+    acs.add_argument("query", help="search query")
+    acs.add_argument("--token", help="bearer token (default: $GRAPH_WIKI_ACCESS_TOKEN)")
+    acs.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    acs.add_argument("--store", help="pack store directory (default: <config-dir>/packs)")
+    acs.add_argument(
+        "--engine",
+        choices=("sqlite", "sqlite-simple", "zvec"),
+        help="index engine (default: auto)",
+    )
+    acs.add_argument("--topk", type=int, default=10, help="number of chunks to return (default: 10)")
+    acs.add_argument("--operator", choices=("AND", "OR", "and", "or"), default="AND")
+    acs.add_argument(
+        "--role",
+        help="narrow the search to one role granted to the token",
+    )
+    acs.add_argument(
+        "--skip-drift-check",
+        action="store_true",
+        help="skip the live-vault fingerprint check (policy is still verified)",
+    )
+    acs.add_argument("--json", action="store_true", help="emit machine-readable JSON (the default)")
+    acs.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    acs.set_defaults(func=cmd_access)
+
+    acr = ac_sub.add_parser("resolve", help="show the principal, roles, and packs a token resolves to")
+    acr.add_argument("--token", help="bearer token (default: $GRAPH_WIKI_ACCESS_TOKEN)")
+    acr.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    acr.add_argument("--store", help="pack store directory (default: <config-dir>/packs)")
+    acr.add_argument("--skip-drift-check", action="store_true", help="skip the live-vault check")
+    acr.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    acr.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    acr.set_defaults(func=cmd_access)
+
+    acst = ac_sub.add_parser("status", help="report every role, its pack, and whether it is current")
+    acst.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    acst.add_argument("--store", help="pack store directory (default: <config-dir>/packs)")
+    acst.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit non-zero when any role is unbuilt or stale",
+    )
+    acst.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    acst.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    acst.set_defaults(func=cmd_access)
+
+    aca = ac_sub.add_parser("audit", help="print recent gateway access records")
+    aca.add_argument("--limit", type=int, default=50, help="number of records (default: 50)")
+    aca.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    aca.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    aca.set_defaults(func=cmd_access)
+
+    aci2 = ac_sub.add_parser("inventory", help="list every page the token's roles can read")
+    aci2.add_argument("--token", help="bearer token (default: $GRAPH_WIKI_ACCESS_TOKEN)")
+    aci2.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    aci2.add_argument("--store", help="pack store directory (default: <config-dir>/packs)")
+    aci2.add_argument("--limit", type=int, default=200, help="maximum rows to return (default: 200)")
+    aci2.add_argument("--offset", type=int, default=0, help="rows to skip")
+    aci2.add_argument("--skip-drift-check", action="store_true", help="skip the live-vault check")
+    aci2.add_argument("--json", action="store_true", help="emit machine-readable JSON (the default)")
+    aci2.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    aci2.set_defaults(func=cmd_access)
+
+    acp = ac_sub.add_parser("page", help="read one page from the token's role packs")
+    acp.add_argument("path", help="vault-relative page path, e.g. concepts/retention.md")
+    acp.add_argument("--token", help="bearer token (default: $GRAPH_WIKI_ACCESS_TOKEN)")
+    acp.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    acp.add_argument("--store", help="pack store directory (default: <config-dir>/packs)")
+    acp.add_argument("--skip-drift-check", action="store_true", help="skip the live-vault check")
+    acp.add_argument("--json", action="store_true", help="emit machine-readable JSON (the default)")
+    acp.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    acp.set_defaults(func=cmd_access)
+
+    act = ac_sub.add_parser("token", help="create, revoke, or list principal tokens")
+    act_sub = act.add_subparsers(dest="token_cmd")
+    actc = act_sub.add_parser("create", help="create a principal and print its token once")
+    actc.add_argument("--name", required=True, help="principal name")
+    actc.add_argument(
+        "--role",
+        action="append",
+        required=True,
+        metavar="NAME",
+        help="role from _meta/access-policy.json (repeatable for multi-role principals)",
+    )
+    actc.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH")
+    actc.add_argument("--vault-id", help="pin the token to one vault id")
+    actc.add_argument("--replace", action="store_true", help="replace an existing principal")
+    actc.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    actc.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    actc.set_defaults(func=cmd_access)
+
+    actr = act_sub.add_parser("revoke", help="revoke a principal token")
+    actr.add_argument("--name", required=True, help="principal name")
+    actr.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    actr.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    actr.set_defaults(func=cmd_access)
+
+    actl = act_sub.add_parser("list", help="list principals without token hashes")
+    actl.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    actl.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    actl.set_defaults(func=cmd_access)
+
     return p
 
 
@@ -4527,6 +4666,319 @@ def _cmd_pack_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def _access_emit(payload: object, args: argparse.Namespace) -> None:
+    print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
+
+
+def _access_token(args: argparse.Namespace) -> str:
+    from graph_wiki import access as access_mod
+
+    return args.token if getattr(args, "token", None) else os.environ.get(access_mod.TOKEN_ENV, "")
+
+
+def cmd_access(args: argparse.Namespace) -> int:
+    handlers = {
+        "init": _cmd_access_init,
+        "build": _cmd_access_build,
+        "search": _cmd_access_search,
+        "inventory": _cmd_access_inventory,
+        "page": _cmd_access_page,
+        "resolve": _cmd_access_resolve,
+        "status": _cmd_access_status,
+        "audit": _cmd_access_audit,
+        "token": _cmd_access_token,
+    }
+    handler = handlers.get(getattr(args, "access_cmd", None))
+    if handler is None:
+        print(
+            "usage: graph-wiki access {init,build,search,inventory,page,resolve,status,audit,token}",
+            file=sys.stderr,
+        )
+        return 2
+    return handler(args)
+
+
+def _cmd_access_init(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    try:
+        policy = access_mod.default_policy(args.role)
+        path = access_mod.write_policy(vault, policy, force=args.force)
+    except access_mod.AccessError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    payload = {"policy": str(path), "roles": sorted(policy["roles"])}
+    if args.json:
+        _access_emit(payload, args)
+    else:
+        print(f"wrote {path}")
+        if policy["roles"]:
+            print("roles: " + ", ".join(sorted(policy["roles"])))
+        else:
+            print("roles: (none) — add roles with `--role NAME` or edit the policy file")
+        print("next: graph-wiki access build --all")
+    return 0
+
+
+def _cmd_access_build(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    if args.all and args.role:
+        print("error: pass either --role or --all, not both", file=sys.stderr)
+        return 2
+    if not args.all and not args.role:
+        print("error: pass --role NAME or --all", file=sys.stderr)
+        return 2
+    try:
+        policy = access_mod.load_policy(vault)
+        roles = access_mod.policy_roles(policy) if args.all else [args.role]
+    except access_mod.AccessError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    results: list[dict[str, object]] = []
+    failures = 0
+    for role in roles:
+        try:
+            results.append(
+                access_mod.build_role_pack(
+                    vault,
+                    role,
+                    store=_pack_store(args.store),
+                    index=args.index,
+                    allow_dirty=args.allow_dirty,
+                    max_age_days=args.max_age_days,
+                )
+            )
+        except access_mod.AccessError as exc:
+            failures += 1
+            print(f"error: role {role}: {exc}", file=sys.stderr)
+    if args.json:
+        _access_emit({"vault": str(vault), "results": results, "failures": failures}, args)
+    else:
+        for result in results:
+            print(
+                f"{result['role']}\t{result['channel']}\tpack v{result['version']} "
+                f"{result['pack_id']}\tvisible={result['visible_pages']} excluded={result['excluded_pages']}"
+            )
+            print(f"  {result['pack_dir']}")
+            for engine, meta in dict(result["indexes"]).items():
+                print(f"  index[{engine}]: {meta['index_id']} chunks={meta.get('counts', {}).get('chunks', 0)}")
+            for warning in result["warnings"]:
+                print(f"  warning: {warning}", file=sys.stderr)
+            for tag in result["unknown_role_tags"]:
+                print(
+                    f"  warning: role tag `{tag}` matches no configured role; the page is invisible to every role",
+                    file=sys.stderr,
+                )
+    return 1 if failures else 0
+
+
+def _cmd_access_search(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    payload = access_mod.gateway_search(
+        _access_token(args),
+        args.query,
+        vault=vault,
+        store=_pack_store(args.store),
+        engine=args.engine,
+        topk=args.topk,
+        operator=args.operator,
+        skip_drift=args.skip_drift_check,
+        role=args.role,
+    )
+    print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
+    return 0
+
+
+def _cmd_access_inventory(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    payload = access_mod.gateway_inventory(
+        _access_token(args),
+        vault=vault,
+        store=_pack_store(args.store),
+        skip_drift=args.skip_drift_check,
+        limit=args.limit,
+        offset=args.offset,
+    )
+    print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
+    return 0
+
+
+def _cmd_access_page(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    payload = access_mod.gateway_page(
+        _access_token(args),
+        args.path,
+        vault=vault,
+        store=_pack_store(args.store),
+        skip_drift=args.skip_drift_check,
+    )
+    print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
+    return 0
+
+
+def _cmd_access_resolve(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    policy = access_mod.load_policy(vault)
+    identity = access_mod.pack_vault_id(vault)
+    principal = access_mod.resolve_principal(_access_token(args), vault_id=identity)
+    for role in principal["roles"]:
+        access_mod.role_config(policy, role)
+    packs = []
+    for role in principal["roles"]:
+        _pack_dir, manifest, sidecar, _snapshot = access_mod.verify_role_pack(
+            vault, role, store=_pack_store(args.store), skip_drift=args.skip_drift_check
+        )
+        packs.append(
+            {
+                "role": role,
+                "channel": sidecar["channel"],
+                "pack_id": manifest["pack_id"],
+                "pack_version": manifest["version"],
+                "visible_pages": sidecar["visible_pages"],
+                "excluded_pages": sidecar["excluded_pages"],
+            }
+        )
+    payload = {
+        "principal": principal["name"],
+        "roles": principal["roles"],
+        "vault_id": identity,
+        "packs": packs,
+        "drift_checked": not args.skip_drift_check,
+    }
+    if args.json:
+        _access_emit(payload, args)
+    else:
+        print(f"principal: {payload['principal']}")
+        print(f"roles:     {', '.join(payload['roles'])}")
+        for pack in packs:
+            print(
+                f"  {pack['role']}: {pack['channel']} v{pack['pack_version']} "
+                f"{pack['pack_id']} ({pack['visible_pages']} visible)"
+            )
+    return 0
+
+
+def _cmd_access_status(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    vault = _resolve_command_vault(args.vault)
+    if vault is None:
+        return 1
+    report = access_mod.role_status(vault, store=_pack_store(args.store))
+    healthy = all(
+        entry.get("built") and entry.get("policy_current") and entry.get("content_current")
+        for entry in report["roles"]
+    )
+    if args.json:
+        _access_emit(report, args)
+        return 1 if args.strict and not healthy else 0
+    print(f"vault:  {report['vault_id']}")
+    print(f"policy: {report['policy_sha256']}")
+    for entry in report["roles"]:
+        state = "not built"
+        if entry.get("built"):
+            state = (
+                f"v{entry['version']} policy={'current' if entry.get('policy_current') else 'stale'} "
+                f"content={'current' if entry.get('content_current') else 'stale'}"
+            )
+        detail = f"{entry['visible_pages']} visible / {entry['excluded_pages']} excluded"
+        print(f"{entry['role']}\t{entry['channel']}\t{state}\t{detail}")
+        if entry.get("error"):
+            print(f"  error: {entry['error']}", file=sys.stderr)
+        for tag in entry.get("unknown_role_tags", []):
+            print(f"  warning: role tag `{tag}` matches no configured role", file=sys.stderr)
+    return 1 if args.strict and not healthy else 0
+
+
+def _cmd_access_audit(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    rows = access_mod.read_audit(args.limit)
+    if args.json:
+        _access_emit(rows, args)
+        return 0
+    for row in rows:
+        principal = row.get("principal", "-")
+        role_list = row.get("roles") or ([row["role"]] if row.get("role") else [])
+        roles = ",".join(role_list) or "-"
+        detail = row.get("query") or row.get("path") or ""
+        print(
+            f"{row.get('ts', '-')}\t{row.get('outcome', '-')}\t{principal}\t{roles}\t"
+            f"{row.get('count', '-')}\t{detail}"
+        )
+    if not rows:
+        print(f"no access records in {access_mod.audit_file()}")
+    return 0
+
+
+def _cmd_access_token(args: argparse.Namespace) -> int:
+    from graph_wiki import access as access_mod
+
+    action = getattr(args, "token_cmd", None)
+    if action == "create":
+        vault = _resolve_command_vault(args.vault)
+        if vault is None:
+            return 1
+        policy = access_mod.load_policy(vault)
+        for role in args.role:
+            access_mod.role_config(policy, role)
+        token, record = access_mod.create_token(
+            args.name, args.role, vault_id=args.vault_id, replace=args.replace
+        )
+        if args.json:
+            _access_emit({"token": token, "principal": record}, args)
+        else:
+            print(token)
+            print(
+                f"principal {record['name']} -> roles {', '.join(record['roles'])}; "
+                "store this token now, only its hash was saved",
+                file=sys.stderr,
+            )
+        return 0
+    if action == "revoke":
+        record = access_mod.revoke_token(args.name)
+        if args.json:
+            _access_emit(record, args)
+        else:
+            print(f"revoked {record['name']} at {record['revoked_at']}")
+        return 0
+    if action == "list":
+        rows = access_mod.list_principals()
+        if args.json:
+            _access_emit(rows, args)
+        else:
+            for row in rows:
+                state = "revoked" if row.get("revoked_at") else "active"
+                roles = ",".join(row.get("roles", []))
+                print(f"{row['name']}\t{roles}\t{state}\t{row.get('created_at')}")
+        return 0
+    print("usage: graph-wiki access token {create,revoke,list}", file=sys.stderr)
+    return 2
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     argv = list(sys.argv[1:] if argv is None else argv)
@@ -4540,7 +4992,7 @@ def main(argv: list[str] | None = None) -> int:
     # Warn about stale installs on every command except `setup` (which fixes it),
     # `info` (which calls _check_stale itself with richer output), `doctor`, and
     # `serve` (which does not use the installed skills).
-    if getattr(args, "command", None) not in ("setup", "info", "doctor", "serve", None):
+    if getattr(args, "command", None) not in ("setup", "info", "doctor", "serve", "access", None):
         _check_stale()
     try:
         return args.func(args)

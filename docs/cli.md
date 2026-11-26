@@ -334,6 +334,41 @@ Without `--store`, packs live under `<config-dir>/packs/<vault-id>/`. Use
 `pack materialize` and grep the resulting snapshot when answering from a pinned
 pack; grepping the live vault would mix versions.
 
+## Access control
+
+`graph-wiki access` builds one Content Pack per role and serves retrieval through a token-gated
+gateway. Full detail in [Access Control](access-control.md).
+
+| Command | What it does |
+|---|---|
+| `access init` | Write `_meta/access-policy.json` with role declarations |
+| `access build --role R` / `--all` | Build a role's pack on channel `role-R` plus its index |
+| `access search <query> [--role NAME]` | Gateway: search every pack granted to the token, optionally one role |
+| `access inventory` | List the deduplicated pages the token's roles can read |
+| `access page <path>` | Read one page body from the token's role packs |
+| `access resolve` | Show the principal, role, and pack a token would open |
+| `access status [--strict]` | Report every role's pack version and drift; `--strict` gates CI |
+| `access audit` | Print recent gateway decisions |
+| `access token create/revoke/list` | Manage principals; `--role` is repeatable, only token hashes are stored |
+
+```bash
+graph-wiki access init --vault ~/brain --role finance --role public
+graph-wiki access build --vault ~/brain --all
+graph-wiki access token create --vault ~/brain --name alice --role finance --role public
+GRAPH_WIKI_ACCESS_TOKEN=gw_... graph-wiki access search "retention policy" --vault ~/brain
+GRAPH_WIKI_ACCESS_TOKEN=gw_... graph-wiki access inventory --limit 200
+```
+
+A page is visible to a role when it carries no `role/` tag or carries that role's `role/<name>` tag,
+and no tag listed in the role's `exclude_tags` (default `visibility/pii`). Each build writes an
+`access.json` sidecar; the gateway refuses a pack whose policy or visible-page fingerprint no longer
+matches the live vault. A token may hold several roles: the gateway verifies every granted pack,
+searches all of them, deduplicates pages by path, and fuses ranks so a multi-role agent can explore
+its whole corpus. `access build` requires a clean git tree unless `--allow-dirty` is passed.
+
+The token comes from `--token` or `GRAPH_WIKI_ACCESS_TOKEN`. Keep the vault and pack store
+unreadable to the agent's user: direct filesystem access or `pack search --pack` bypasses the gateway.
+
 ## Session brain
 
 Builds a topic graph over your agent session history. Output is a **sidecar** at `~/.claude/session-brain/` — the vault is never written to. Full detail in [Session Brain](session-brain.md).
