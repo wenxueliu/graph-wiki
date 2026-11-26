@@ -171,6 +171,39 @@ wikilink 的 `slug` 作为别名。如果两个文件共享同一个 slug，查�
 边按框架的 Edge Identity 去重：`(source, target, relation)`。指向同一目标的重复普通链接会合并成
 一条 untyped 边，并累加 `weight`。
 
+## 运营记录
+
+Viewer 可以为运营报表记录页面访问。记录默认关闭；用 `--ops`（或设置
+`GRAPH_WIKI_OPS=1`）开启，用 `--ops-dir` 改变状态目录：
+
+```bash
+graph-wiki serve --ops --port 8765
+graph-wiki serve --ops --ops-dir /path/to/ops
+```
+
+开启后，Viewer 会：
+
+- 对携带 `X-Viewer-Id` 的成功 `/api/page` 响应写入一条 `view` 事件（浏览器页面在
+  `localStorage` 中生成随机 id）。`HEAD`、`304`、错误响应以及没有该请求头的请求都不计入。
+- 为内置 Obsidian 插件和外部采集器暴露 `POST /api/ops/event`。请求必须携带
+  `X-Graph-Wiki-Ops-Token`，其值来自 `<ops-dir>/token`；只接受已知的页面 id。
+- 启动时打印状态目录与事件端点。
+
+安装 Obsidian 采集器：
+
+```bash
+graph-wiki ops install-obsidian ~/brain --port 8765
+```
+
+如果迁移了状态目录，`serve` 与 `install-obsidian` 必须使用相同的 `--ops-dir`；插件需要从该目录读取 token。
+
+事件与报告都留在 vault 外（默认 `~/.graph-wiki/state/<vault-id>/ops/`）。
+默认只监听回环地址，token 只存在本机。不保存 IP、User-Agent、Referer 或页面正文。
+报表、事件格式与去重模型见[运营指标](cli.zh-CN.md#运营指标)。
+
+`/api/ops/event` 接受 `POST` 与 `OPTIONS`；其他写入方法仍返回 `405`。CORS 头只对该路由生效，
+并且仍然需要 token。
+
 ## 工作原理
 
 - `viewer.py` 用共享页面索引在内存中构建 payload。它只保留 vault 声明的内容根目录下的页面，不写

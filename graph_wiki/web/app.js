@@ -20,6 +20,23 @@
   const UNTYPED_EDGE = "rgba(150, 156, 184, 0.38)";
   const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  const VIEWER_ID_KEY = "graph-wiki-viewer-id";
+
+  function viewerId() {
+    try {
+      let value = localStorage.getItem(VIEWER_ID_KEY);
+      if (!value) {
+        value = window.crypto && window.crypto.randomUUID
+          ? window.crypto.randomUUID()
+          : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem(VIEWER_ID_KEY, value);
+      }
+      return value;
+    } catch (error) {
+      return "viewer-unknown";
+    }
+  }
+
   const state = {
     graph: null,
     network: null,
@@ -525,7 +542,10 @@
     }
     renderDetail(node, null, { loading: true });
 
-    fetch(`/api/page?id=${encodeURIComponent(id)}`, { cache: "no-store" })
+    fetch(`/api/page?id=${encodeURIComponent(id)}`, {
+      cache: "no-store",
+      headers: { "X-Viewer-Id": viewerId() },
+    })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();

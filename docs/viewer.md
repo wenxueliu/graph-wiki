@@ -177,6 +177,45 @@ The graph payload is schema-versioned:
 Edges are deduplicated by the framework's Edge Identity: `(source, target, relation)`. Repeated
 plain links to the same target become one untyped edge with a higher `weight`.
 
+## Operations recording
+
+The viewer can record page views for the operations report. Recording is off by
+default; start it with `--ops` (or set `GRAPH_WIKI_OPS=1`) and use `--ops-dir`
+to relocate the state directory:
+
+```bash
+graph-wiki serve --ops --port 8765
+graph-wiki serve --ops --ops-dir /path/to/ops
+```
+
+When enabled, the viewer:
+
+- writes one `view` event for a successful `/api/page` response that carries
+  `X-Viewer-Id` (the browser page generates a random id in `localStorage`).
+  `HEAD`, `304`, error responses, and requests without the header never count.
+- exposes `POST /api/ops/event` for the bundled Obsidian plugin and external
+  collectors. The request must carry `X-Graph-Wiki-Ops-Token` with the token
+  stored in `<ops-dir>/token`; only known page ids are accepted.
+- prints the state directory and endpoint at startup.
+
+Install the Obsidian collector with:
+
+```bash
+graph-wiki ops install-obsidian ~/brain --port 8765
+```
+
+Use the same `--ops-dir` for `serve` and `install-obsidian` when you relocate the
+state directory; the plugin needs the token from that directory.
+
+Events and reports stay outside the vault (default
+`~/.graph-wiki/state/<vault-id>/ops/`). The listener is loopback-only by
+default and the token is local. No IP, user agent, referrer, or page body is
+stored. See [Operational metrics](cli.md#operational-metrics) for the report,
+event schema, and dedupe model.
+
+`/api/ops/event` accepts `POST` and `OPTIONS`; other write methods remain
+`405`. CORS headers are limited to that route, and a token is still required.
+
 ## How it works
 
 - `viewer.py` builds the payload in memory with the shared page index. It filters to pages under the
@@ -243,8 +282,11 @@ engine (zvec / the pack index) instead of adding a second one.
 
 ## Read-only and security
 
-- Only `GET` and `HEAD` are accepted; there is no write route.
-- The vault is read in memory; the viewer does not create `.obsidian/frontmatter-index.json`.
+- Only `GET` and `HEAD` are accepted; `/api/ops/event` additionally accepts
+  `POST` and `OPTIONS` when operations recording is enabled.
+- The vault is read in memory; the viewer never writes knowledge pages and does
+  not create `.obsidian/frontmatter-index.json`. Operations events are appended
+  outside the vault.
 - The default bind is loopback. The `Host` header is checked against the bound loopback host to
   reduce DNS-rebinding risk.
 - Static routes are a whitelist. The page endpoint resolves ids to indexed paths and rejects

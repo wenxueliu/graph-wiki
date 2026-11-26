@@ -188,7 +188,7 @@ def _parse_iso(value: Any) -> datetime | None:
     return parsed
 
 
-def _load_review_ledger(vault: Path) -> dict[str, Any]:
+def load_review_ledger(vault: Path) -> dict[str, Any]:
     path = vault / TRUST_LEDGER_RELATIVE_PATH
     if not path.is_file():
         return {}
@@ -200,7 +200,7 @@ def _load_review_ledger(vault: Path) -> dict[str, Any]:
     return pages if isinstance(pages, dict) else {}
 
 
-def _review_sla(
+def review_sla(
     pages: list[dict[str, Any]],
     ledger: dict[str, Any],
     now: datetime,
@@ -636,7 +636,7 @@ def assess_quality(
     current_time = now or datetime.now(timezone.utc)
     if current_time.tzinfo is None:
         current_time = current_time.replace(tzinfo=timezone.utc)
-    reviews = _review_sla(pages, _load_review_ledger(vault), current_time)
+    reviews = review_sla(pages, load_review_ledger(vault), current_time)
     contradictions, disputed = _contradiction_register(pages)
     duplicate_candidates = _duplicate_candidates(pages)
 

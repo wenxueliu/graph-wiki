@@ -23,30 +23,13 @@ from typing import Any, Iterable
 from urllib.parse import quote
 
 from graph_wiki.index import build_page_index, entry_edges
-from graph_wiki.knowledge_pack import iter_content_pages
+from graph_wiki.page_set import page_files as _shared_page_files
 from graph_wiki.relationships import split_frontmatter
 
 SCHEMA_VERSION = 1
 DEFAULT_PAGE_MAX_BYTES = 256_000
 MAX_PAGE_MAX_BYTES = 2_000_000
 CONTENT_TRUST = "untrusted_reference_data"
-
-# Files that are operational bookkeeping rather than knowledge pages.  A pack
-# whose content root is the vault itself would otherwise list ``index.md`` /
-# ``log.md`` as graph nodes.
-SYSTEM_FILES = frozenset(
-    {
-        "AGENTS.md",
-        "CLAUDE.md",
-        "GEMINI.md",
-        "_insights.md",
-        "hot.md",
-        "index.md",
-        "log.md",
-    }
-)
-ROOT_ONLY_FILES = frozenset({"README.md"})
-
 
 class ViewerError(RuntimeError):
     """Base error for viewer data operations."""
@@ -67,20 +50,6 @@ def _resolved_vault(vault: str | Path) -> Path:
 
 def _relative(path: Path, vault: Path) -> str:
     return path.relative_to(vault).as_posix()
-
-
-def _page_files(vault: Path) -> list[Path]:
-    """Return page files in deterministic order, excluding bookkeeping."""
-    files: list[Path] = []
-    for path in iter_content_pages(vault):
-        rel = path.relative_to(vault)
-        if rel.name in SYSTEM_FILES:
-            continue
-        if rel.parent == Path(".") and rel.name in ROOT_ONLY_FILES:
-            continue
-        files.append(path)
-    files.sort(key=lambda item: _relative(item, vault))
-    return files
 
 
 def _fingerprint(vault: Path, files: Iterable[Path]) -> str:
@@ -274,7 +243,7 @@ def _build_payload(vault: Path, files: list[Path], fingerprint: str) -> dict[str
 def build_graph_payload(vault: str | Path) -> dict[str, Any]:
     """Build the complete viewer payload for *vault* without writing anything."""
     resolved = _resolved_vault(vault)
-    files = _page_files(resolved)
+    files = _shared_page_files(resolved)
     return _build_payload(resolved, files, _fingerprint(resolved, files))
 
 
@@ -368,7 +337,7 @@ class GraphService:
         ):
             return self._payload
 
-        files = _page_files(self.vault)
+        files = _shared_page_files(self.vault)
         fingerprint = _fingerprint(self.vault, files)
         if self._payload is None or fingerprint != self._fingerprint:
             payload = _build_payload(self.vault, files, fingerprint)

@@ -1,0 +1,9 @@
+{
+  "id": "graph-wiki-ops",
+  "name": "Graph Wiki Operations",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Records note opens to the local Graph Wiki operations store.",
+  "author": "Graph Wiki",
+  "isDesktopOnly": true
+}

@@ -171,6 +171,8 @@ manifest、index、hot cache、logs、ingest Job、当前 CWD 与内联覆盖仍
 | 变量 | 作用 | 默认值 |
 |---|---|---|
 | `WIKI_STAGED_WRITES` | 为 `true` 时，LLM 写入的页面落入 `_staging/` 等待人工复核，而不是直接进入 live vault。用 `/wiki-stage-commit` 提升它们 | `false`——直接写入 |
+| `GRAPH_WIKI_OPS` | 开启运营事件记录：Viewer 页面访问与 CLI 检索事件。`serve --ops` 也可显式开启 Viewer 采集；`--no-ops` 覆盖该值。显式 `graph-wiki ops` 命令不受此开关影响 | `0`（关闭） |
+| `GRAPH_WIKI_OPS_AGING_DAYS` | 超过此天数没有实质性变更的页面会报告为老化 | `365` |
 | `OBSIDIAN_TRUST_STRICT` | 为 `1` 时，`graph-wiki lint` 把缺失 trust 字段、ledger 错误、过期复核与分数不匹配视为失败而非警告。等同于 `lint --strict-trust` | *（未设置）* |
 | `OBSIDIAN_ALLOWED_LIFECYCLES` | 该解析后 vault 的逗号分隔 lifecycle 扩展 | *（仅框架默认值）* |
 | `OBSIDIAN_ALLOWED_RELATIONSHIP_TYPES` | 该解析后 vault 的逗号分隔 relationship 类型扩展 | *（仅框架默认值）* |

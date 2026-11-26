@@ -76,6 +76,7 @@ exclude = [
 "workflows" = "graph_wiki/_data/workflows"
 "knowledge-packs" = "graph_wiki/_data/knowledge-packs"
 "scripts" = "graph_wiki/_data/scripts"
+"extensions/obsidian-ops" = "graph_wiki/_data/extensions/obsidian-ops"
 "hooks/wiki-stop-capture.sh" = "graph_wiki/_data/hooks/wiki-stop-capture.sh"
 "hooks/wiki-stop-capture.ps1" = "graph_wiki/_data/hooks/wiki-stop-capture.ps1"
 ".env.example" = "graph_wiki/_data/.env.example"
@@ -111,5 +112,6 @@ exclude = [
 [tool.hatch.build.targets.sdist.force-include]
 ".skills" = ".skills"
 "knowledge-packs" = "knowledge-packs"
+"extensions/obsidian-ops" = "extensions/obsidian-ops"
 "hooks/wiki-stop-capture.sh" = "hooks/wiki-stop-capture.sh"
 "hooks/wiki-stop-capture.ps1" = "hooks/wiki-stop-capture.ps1"

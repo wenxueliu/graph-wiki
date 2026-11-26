@@ -184,6 +184,67 @@ lifecycle 覆盖、lifecycle/置信度复核 SLA、矛盾登记与重复候选�
 比较。`pass`（以及未加 `--strict` 的 `warn`）退出码为 `0`，`fail` 或 `warn --strict` 为 `1`。
 维度模型、复核策略与 CI 示例见 [知识质量](quality.zh-CN.md)。
 
+## 运营指标
+
+`graph-wiki ops` 记录并报告知识页面的使用与变更元数据。记录默认关闭：Viewer 采集用
+`serve --ops` 开启，CLI 检索采集设 `GRAPH_WIKI_OPS=1` 开启。`ops` 命令本身是显式操作，因此
+`scan`、`report`、`record`、`ingest` 与 `install-obsidian` 一旦调用就会执行。
+
+| 命令 | 作用 |
+|---|---|
+| `ops scan [vault]` | 计算页面哈希、刷新清单，并追加 created/updated/metadata-only/renamed/deleted 历史 |
+| `ops report [vault]` | 报告去重后的访问、检索、更新、版本、复核到期、老化与元数据健康 |
+| `ops record [vault] --page PAGE` | 追加一条校验通过的 `view` 或 `retrieval` 事件 |
+| `ops ingest [vault] --file FILE` | 导入门户、访问网关或脚本产生的 JSONL 事件（`-` 从标准输入读取） |
+| `ops events [vault]` | 查看最近的原始事件，用于验证采集是否生效 |
+| `ops install-obsidian [vault]` | 把内置 Obsidian 采集插件安装到 vault |
+
+事件、清单与历史默认位于 vault 外：
+`~/.graph-wiki/state/<vault-id>/ops/`。
+所有命令都接受 `--ops-dir PATH` 来改变该目录。位于 vault 内的 ops 目录会被拒绝；
+`--save` / `--out` 也拒绝把报告写进 vault。
+
+```bash
+graph-wiki ops scan ~/brain
+graph-wiki ops report ~/brain --days 30 --top 10
+graph-wiki ops report ~/brain --days 7 --json --pretty
+graph-wiki ops report ~/brain --baseline "$STATE/ops-latest.json" --save "$STATE/ops-latest.json"
+graph-wiki ops record ~/brain --page concepts/rate-limiting --source portal --client u-42
+graph-wiki ops ingest ~/brain --file access-events.jsonl --strict
+graph-wiki ops events ~/brain --days 2 --limit 20
+graph-wiki ops install-obsidian ~/brain --port 8765
+```
+
+### 统计口径
+
+- **访问（view）**——人类打开了页面。`serve --ops` 统计携带 viewer id 的 `/api/page` 响应；
+  内置 Obsidian 插件发送 `source: obsidian`；门户或网关可通过 `ops record`、`ops ingest` 或本地
+  事件端点发送 `source: portal`。`HEAD`、`304` 和没有 viewer id 的请求不计入。
+- **检索（retrieval）**——agent 或 CLI 命令返回了页面。设置 `GRAPH_WIKI_OPS=1` 后，`query`、
+  `context-pack`、`graph-query` 与 `pack search` 会记录它们返回的页面。
+- **更新（update）**——内容哈希发生变化。报告区分 `created`、实质性 `updated`、
+  `metadata_only`（例如只改了 `updated:` 日期）、`renamed` 与 `deleted`。
+- **版本（version）**——每个页面派生出的计数器，只随实质性变更递增。它永远不会写进 frontmatter。
+- **过期（expiry）**——报告把两类信号分开：trust 台账的复核到期（沿用现有 review SLA）与老化
+  （超过 `--aging-days` 没有实质性变更，默认 365 天）。
+
+报告按页面、client 与 source 在 30 分钟窗口内去重访问（`--dedupe-minutes`）；原始事件仍会计入
+`views.raw`。`views.viewers` 统计的是不同 client id，同一个人用两个浏览器会算两次。不保存 IP、User-Agent、Referer、搜索词或页面正文。
+
+agent 直接读取文件、或未安装插件的 Obsidian 打开，本层都无法观测。报告只覆盖采集器实际送达的事件。
+
+### 事件输入
+
+`ops record` 与 `ops ingest` 接受每行一个 JSON 对象：
+
+```json
+{"event":"view","page":"concepts/transformers","source":"portal","client":"u-42","ts":"2026-11-26T10:42:10+08:00"}
+```
+
+`event` 为 `view` 或 `retrieval`，`page` 为不带 `.md` 的 vault 相对路径，`source` 是小写标签，
+`client` 是不透明 id，`ts` 是带时区的 ISO-8601 时间（默认当前时间）。非法行会被拒绝；
+`--strict` 在出现拒绝行时返回非零退出码。
+
 ## 写入前页面门禁
 
 | 命令 | 作用 |

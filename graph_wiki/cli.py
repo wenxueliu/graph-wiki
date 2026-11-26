@@ -1563,11 +1563,21 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
 def cmd_graph_query(args: argparse.Namespace) -> int:
     from graph_wiki.graphrag import query
-    vault = Path(args.vault).expanduser().resolve()
+    vault, config, _source = resolve_vault_binding(args.vault)
+    if vault is None:
+        print("error: vault not found", file=sys.stderr)
+        return 1
     if not vault.is_dir():
         print(f"error: vault not found: {vault}", file=sys.stderr)
         return 1
     result = query(vault, args.question, top_n=args.top, max_should_read=args.max_read)
+    from graph_wiki.ops import record_retrieval
+
+    pages = result.get("should_read") or [
+        candidate.get("page", "")
+        for candidate in result.get("candidates", [])[: args.max_read]
+    ]
+    record_retrieval(vault, pages, "graph-query", config=config)
     if args.pretty:
         print(json.dumps(result, indent=2))
     else:
@@ -2953,11 +2963,22 @@ def _print_query(result: dict[str, object]) -> None:
 def cmd_query(args: argparse.Namespace) -> int:
     from graph_wiki.graphrag import query
 
-    vault = _resolve_command_vault(args.vault)
+    vault, config, _source = resolve_vault_binding(args.vault)
     if vault is None:
+        print("error: vault not configured; pass a path or run graph-wiki setup", file=sys.stderr)
+        return 1
+    if not vault.is_dir():
+        print(f"error: vault not found: {vault}", file=sys.stderr)
         return 1
 
     result = query(vault, args.question, top_n=args.top, max_should_read=args.max_read)
+    from graph_wiki.ops import record_retrieval
+
+    pages = result.get("should_read") or [
+        candidate.get("page", "")
+        for candidate in result.get("candidates", [])[: args.max_read]
+    ]
+    record_retrieval(vault, pages, "query", config=config)
     if args.json:
         if args.pretty:
             print(json.dumps(result, indent=2))
@@ -2971,8 +2992,12 @@ def cmd_query(args: argparse.Namespace) -> int:
 def cmd_context_pack(args: argparse.Namespace) -> int:
     from graph_wiki.context_pack import ContextError, build_context_pack, render_markdown
 
-    vault = _resolve_context_pack_vault(args.vault)
+    vault, config, _source = resolve_vault_binding(args.vault)
     if vault is None:
+        print("error: vault not configured; pass a path or run graph-wiki setup", file=sys.stderr)
+        return 1
+    if not vault.is_dir():
+        print(f"error: vault not found: {vault}", file=sys.stderr)
         return 1
     try:
         pack = build_context_pack(
@@ -2986,6 +3011,14 @@ def cmd_context_pack(args: argparse.Namespace) -> int:
     except ContextError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    from graph_wiki.ops import record_retrieval
+
+    record_retrieval(
+        vault,
+        [entry.get("path", "") for entry in pack.get("pages", [])],
+        "context-pack",
+        config=config,
+    )
     if args.json:
         print(json.dumps(pack, indent=2 if args.pretty else None))
     else:
@@ -2995,8 +3028,12 @@ def cmd_context_pack(args: argparse.Namespace) -> int:
 
 def cmd_serve(args: argparse.Namespace) -> int:
     """Serve the read-only graph viewer on a local HTTP port."""
-    vault = _resolve_command_vault(args.vault)
+    vault, config, _source = resolve_vault_binding(args.vault)
     if vault is None:
+        print("error: vault not configured; pass a path or run graph-wiki setup", file=sys.stderr)
+        return 1
+    if not vault.is_dir():
+        print(f"error: vault not found: {vault}", file=sys.stderr)
         return 1
     if not 0 <= args.port <= 65535:
         print("error: --port must be between 0 and 65535", file=sys.stderr)
@@ -3007,8 +3044,12 @@ def cmd_serve(args: argparse.Namespace) -> int:
             "the viewer has no authentication",
             file=sys.stderr,
         )
+    from graph_wiki.ops import ops_enabled
     from graph_wiki.server import run_server
 
+    recording = bool(getattr(args, "ops", False)) or ops_enabled(config)
+    if getattr(args, "no_ops", False):
+        recording = False
     try:
         return run_server(
             vault,
@@ -3016,10 +3057,245 @@ def cmd_serve(args: argparse.Namespace) -> int:
             port=args.port,
             open_browser=args.open,
             verbose=args.verbose,
+            ops_enabled=recording,
+            ops_dir=getattr(args, "ops_dir", None),
         )
     except RuntimeError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+
+
+def _ops_vault_context(args: argparse.Namespace):
+    context = _resolve_schema_command_context(getattr(args, "vault", None))
+    if context is None:
+        return None
+    return context
+
+
+def _print_ops_error(exc: Exception) -> int:
+    print(f"error: {exc}", file=sys.stderr)
+    return 1
+
+
+def cmd_ops(args: argparse.Namespace) -> int:
+    handlers = {
+        "scan": _cmd_ops_scan,
+        "report": _cmd_ops_report,
+        "record": _cmd_ops_record,
+        "ingest": _cmd_ops_ingest,
+        "events": _cmd_ops_events,
+        "install-obsidian": _cmd_ops_install_obsidian,
+    }
+    handler = handlers.get(getattr(args, "ops_cmd", None))
+    if handler is None:
+        print(
+            "usage: graph-wiki ops {scan,report,record,ingest,events,install-obsidian}",
+            file=sys.stderr,
+        )
+        return 2
+    return handler(args)
+
+
+def _cmd_ops_scan(args: argparse.Namespace) -> int:
+    from graph_wiki.ops import OpsError, scan
+
+    context = _ops_vault_context(args)
+    if context is None:
+        return 1
+    vault, _config, _source = context
+    try:
+        summary = scan(vault, ops_dir=args.ops_dir)
+    except (OpsError, OSError) as exc:
+        return _print_ops_error(exc)
+    if args.json:
+        print(json.dumps(summary, indent=2 if args.pretty else None))
+        return 0
+    label = "baseline" if summary["baseline"] else "incremental"
+    print(f"ops scan: {label} · pages={summary['pages']} created={summary['created']} "
+          f"updated={summary['updated']} metadata_only={summary['metadata_only']} "
+          f"renamed={summary['renamed']} deleted={summary['deleted']} "
+          f"unchanged={summary['unchanged']} events={summary['history_events']}")
+    print(f"state: {summary['ops_dir']}")
+    return 0
+
+
+def _cmd_ops_report(args: argparse.Namespace) -> int:
+    from graph_wiki.ops import (
+        OpsError,
+        build_report,
+        compare_reports,
+        due_aging_days,
+        load_report,
+        render_markdown,
+        save_report,
+        scan,
+    )
+
+    context = _ops_vault_context(args)
+    if context is None:
+        return 1
+    vault, config, _source = context
+    if not args.no_scan:
+        try:
+            scan(vault, ops_dir=args.ops_dir)
+        except (OpsError, OSError) as exc:
+            print(f"warning: could not refresh operations inventory: {exc}", file=sys.stderr)
+    aging_days = args.aging_days if args.aging_days is not None else due_aging_days(config)
+    try:
+        report = build_report(
+            vault,
+            days=args.days,
+            top=args.top,
+            aging_days=aging_days,
+            dedupe_minutes=args.dedupe_minutes,
+            ops_dir=args.ops_dir,
+        )
+    except (OpsError, OSError) as exc:
+        return _print_ops_error(exc)
+    if args.baseline:
+        before = load_report(args.baseline)
+        report["delta"] = compare_reports(before, report)
+    if args.save:
+        try:
+            save_report(args.save, report, vault=vault)
+        except (OpsError, OSError) as exc:
+            return _print_ops_error(exc)
+    rendered = render_markdown(report)
+    if args.out:
+        destination = Path(args.out).expanduser().resolve()
+        resolved_vault = vault.resolve()
+        if destination == resolved_vault or resolved_vault in destination.parents:
+            print("error: operations reports must be stored outside the vault", file=sys.stderr)
+            return 1
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(rendered, encoding="utf-8")
+    if args.json:
+        print(json.dumps(report, indent=2 if args.pretty else None, ensure_ascii=False))
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def _cmd_ops_record(args: argparse.Namespace) -> int:
+    from graph_wiki.ops import OpsError, record_event
+
+    context = _ops_vault_context(args)
+    if context is None:
+        return 1
+    vault, _config, _source = context
+    try:
+        result = record_event(
+            vault,
+            event=args.event,
+            page=args.page,
+            source=args.source,
+            client=args.client or "",
+            ts=args.at,
+            ops_dir=args.ops_dir,
+        )
+    except (OpsError, OSError) as exc:
+        return _print_ops_error(exc)
+    if args.json:
+        print(json.dumps(result, indent=2 if args.pretty else None))
+    else:
+        print(f"recorded {args.event} for {args.page} ({args.source})")
+    return 0
+
+
+def _cmd_ops_ingest(args: argparse.Namespace) -> int:
+    from graph_wiki.ops import OpsError, record_events
+
+    context = _ops_vault_context(args)
+    if context is None:
+        return 1
+    vault, _config, _source = context
+    try:
+        if args.file == "-":
+            raw = sys.stdin.read()
+        else:
+            raw = Path(args.file).expanduser().read_text(encoding="utf-8")
+    except OSError as exc:
+        return _print_ops_error(exc)
+    events: list[dict] = []
+    parse_errors = []
+    for number, line in enumerate(raw.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            item = json.loads(line)
+        except ValueError as exc:
+            parse_errors.append({"line": number, "error": f"invalid JSON: {exc}"})
+            continue
+        if not isinstance(item, dict):
+            parse_errors.append({"line": number, "error": "event must be an object"})
+            continue
+        events.append(item)
+    try:
+        result = record_events(vault, events, ops_dir=args.ops_dir)
+    except (OpsError, OSError) as exc:
+        return _print_ops_error(exc)
+    result["parse_errors"] = parse_errors
+    if args.json:
+        print(json.dumps(result, indent=2 if args.pretty else None))
+    else:
+        print(f"ingested={result['accepted']} rejected={result['rejected']} parse_errors={len(parse_errors)}")
+        for error in result["errors"]:
+            print(f"  rejected: {error}")
+        for error in parse_errors:
+            print(f"  line {error['line']}: {error['error']}")
+    if args.strict and (result["rejected"] or parse_errors):
+        return 1
+    return 0
+
+
+def _cmd_ops_events(args: argparse.Namespace) -> int:
+    from graph_wiki.ops import OpsError, list_events
+
+    context = _ops_vault_context(args)
+    if context is None:
+        return 1
+    vault, _config, _source = context
+    try:
+        events = list_events(vault, days=args.days, limit=args.limit, ops_dir=args.ops_dir)
+    except (OpsError, OSError) as exc:
+        return _print_ops_error(exc)
+    if args.json:
+        print(json.dumps(events, indent=2 if args.pretty else None, ensure_ascii=False))
+        return 0
+    if not events:
+        print("no events")
+        return 0
+    for event in events:
+        print(
+            f"{event.get('ts')}  {event.get('event'):9}  {event.get('source'):12}  "
+            f"{event.get('page')}"
+        )
+    return 0
+
+
+def _cmd_ops_install_obsidian(args: argparse.Namespace) -> int:
+    from graph_wiki.ops import OpsError, install_obsidian_plugin
+
+    context = _ops_vault_context(args)
+    if context is None:
+        return 1
+    vault, _config, _source = context
+    try:
+        result = install_obsidian_plugin(
+            vault,
+            port=args.port,
+            ops_dir=args.ops_dir,
+            force=args.force,
+        )
+    except (OpsError, OSError) as exc:
+        return _print_ops_error(exc)
+    if args.json:
+        print(json.dumps(result, indent=2 if args.pretty else None))
+        return 0
+    print(f"plugin: {result['plugin_dir']}")
+    print(f"settings: {result['settings']}")
+    print("next: run `graph-wiki serve --ops --port %d`, then enable the plugin in Obsidian" % result["port"])
+    return 0
 
 
 def cmd_list(args: argparse.Namespace) -> int:
@@ -3161,7 +3437,101 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sv.add_argument("--open", action="store_true", help="open the viewer in the default browser")
     sv.add_argument("--verbose", action="store_true", help="log every HTTP request")
+    sv.add_argument(
+        "--ops",
+        action="store_true",
+        help="record page views and expose the local operations event endpoint",
+    )
+    sv.add_argument(
+        "--no-ops",
+        action="store_true",
+        help="force operations recording off even when GRAPH_WIKI_OPS is set",
+    )
+    sv.add_argument(
+        "--ops-dir",
+        metavar="PATH",
+        help="override the operations directory (default: <state>/<vault-id>/ops)",
+    )
     sv.set_defaults(func=cmd_serve)
+
+    op = sub.add_parser(
+        "ops",
+        help="record wiki page events and report operational metrics",
+    )
+    op_sub = op.add_subparsers(dest="ops_cmd")
+
+    ops_scan = op_sub.add_parser("scan", help="refresh the page inventory and change history")
+    ops_scan.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then config)")
+    ops_scan.add_argument("--ops-dir", metavar="PATH", help="override the operations directory")
+    ops_scan.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ops_scan.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ops_scan.set_defaults(func=cmd_ops)
+
+    ops_report = op_sub.add_parser("report", help="build views, updates, versions, and expiry report")
+    ops_report.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then config)")
+    ops_report.add_argument("--days", type=int, default=30, help="report window in calendar days (default: 30)")
+    ops_report.add_argument("--top", type=int, default=10, help="number of rows in top lists (default: 10)")
+    ops_report.add_argument(
+        "--aging-days",
+        type=int,
+        help="pages without a substantive change for this many days are aging (default: GRAPH_WIKI_OPS_AGING_DAYS or 365)",
+    )
+    ops_report.add_argument(
+        "--dedupe-minutes",
+        type=int,
+        default=30,
+        help="one view per page, client, and source inside this window (default: 30; 0 disables)",
+    )
+    ops_report.add_argument("--no-scan", action="store_true", help="use the existing inventory without refreshing it")
+    ops_report.add_argument("--baseline", metavar="FILE", help="compare against a previous ops report")
+    ops_report.add_argument("--save", metavar="FILE", help="atomically save this report outside the vault")
+    ops_report.add_argument("--out", metavar="FILE", help="write the Markdown report to a file")
+    ops_report.add_argument("--ops-dir", metavar="PATH", help="override the operations directory")
+    ops_report.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ops_report.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ops_report.set_defaults(func=cmd_ops)
+
+    ops_record = op_sub.add_parser("record", help="append one validated event")
+    ops_record.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then config)")
+    ops_record.add_argument("--page", required=True, help="vault-relative page id, e.g. concepts/retry")
+    ops_record.add_argument("--event", choices=("view", "retrieval"), default="view", help="event type (default: view)")
+    ops_record.add_argument("--source", default="cli", help="event source label (default: cli)")
+    ops_record.add_argument("--client", default="", help="opaque viewer or consumer id")
+    ops_record.add_argument("--at", help="ISO-8601 timestamp with timezone (default: now)")
+    ops_record.add_argument("--ops-dir", metavar="PATH", help="override the operations directory")
+    ops_record.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ops_record.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ops_record.set_defaults(func=cmd_ops)
+
+    ops_ingest = op_sub.add_parser("ingest", help="import JSONL events from a file or stdin")
+    ops_ingest.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then config)")
+    ops_ingest.add_argument("--file", default="-", help="JSONL file, or - for stdin (default: -)")
+    ops_ingest.add_argument("--strict", action="store_true", help="exit non-zero if any line is rejected")
+    ops_ingest.add_argument("--ops-dir", metavar="PATH", help="override the operations directory")
+    ops_ingest.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ops_ingest.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ops_ingest.set_defaults(func=cmd_ops)
+
+    ops_events = op_sub.add_parser("events", help="show recent raw events")
+    ops_events.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then config)")
+    ops_events.add_argument("--days", type=int, default=7, help="look back this many calendar days (default: 7)")
+    ops_events.add_argument("--limit", type=int, default=50, help="maximum rows (default: 50)")
+    ops_events.add_argument("--ops-dir", metavar="PATH", help="override the operations directory")
+    ops_events.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ops_events.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ops_events.set_defaults(func=cmd_ops)
+
+    ops_install = op_sub.add_parser(
+        "install-obsidian",
+        help="install the bundled Obsidian view collector into the vault",
+    )
+    ops_install.add_argument("vault", nargs="?", help="vault path or @name (defaults via CWD .env, then config)")
+    ops_install.add_argument("--port", type=int, default=8765, help="viewer port the plugin should call (default: 8765)")
+    ops_install.add_argument("--force", action="store_true", help="reset the plugin client id")
+    ops_install.add_argument("--ops-dir", metavar="PATH", help="override the operations directory")
+    ops_install.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ops_install.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ops_install.set_defaults(func=cmd_ops)
 
     gq = sub.add_parser(
         "graph-query",
@@ -4553,6 +4923,16 @@ def _cmd_pack_search(args: argparse.Namespace) -> int:
     except pack_index.PackIndexError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    vault, config, _source = resolve_vault_binding(getattr(args, "vault", None))
+    if vault is not None:
+        from graph_wiki.ops import record_retrieval
+
+        record_retrieval(
+            vault,
+            [str(item.get("path", "")) for item in result.get("results", [])],
+            "pack-search",
+            config=config,
+        )
     if args.json:
         _emit_pack(result, args)
     else:

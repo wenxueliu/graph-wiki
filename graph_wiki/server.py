@@ -2,12 +2,16 @@
 
 The server is intentionally small and stdlib-only: it serves one HTML page,
 its static assets, and the two JSON endpoints that page needs.  It never
-accepts writes, never lists directories, and binds to loopback by default.
+accepts knowledge writes and never lists directories; when operations
+recording is enabled it also accepts token-guarded view events on
+``/api/ops/event`` and appends them outside the vault.  It binds to loopback
+by default.
 """
 
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import sys
 import threading
@@ -21,6 +25,15 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 from graph_wiki import __version__
+from graph_wiki.ops import (
+    MAX_EVENT_BYTES,
+    OPS_EVENT_PATH,
+    OPS_TOKEN_HEADER,
+    OpsError,
+    OpsRecorder,
+    VIEWER_OPS_HEADER,
+    normalize_event,
+)
 from graph_wiki.viewer import (
     DEFAULT_PAGE_MAX_BYTES,
     GraphService,
@@ -91,10 +104,13 @@ class ViewerHTTPServer(ThreadingHTTPServer):
         service: GraphService,
         verbose: bool = False,
         bound_host: str = "127.0.0.1",
+        ops: OpsRecorder | None = None,
     ) -> None:
         self.service = service
         self.verbose = verbose
         self.bound_host = bound_host
+        self.ops = ops
+        self.ops_token = ops.token if ops is not None else ""
         super().__init__(server_address, handler_class)
 
 
@@ -117,6 +133,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self._handle(head=True)
 
     def do_POST(self) -> None:
+        if self._is_ops_route():
+            self._handle_ops_event()
+            return
         self._method_not_allowed()
 
     def do_PUT(self) -> None:
@@ -129,6 +148,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self._method_not_allowed()
 
     def do_OPTIONS(self) -> None:
+        if self._is_ops_route() and self.server.ops is not None:
+            self._respond(HTTPStatus.NO_CONTENT, self._cors_headers(), b"", head=False)
+            return
         self._method_not_allowed()
 
     # -- request plumbing -------------------------------------------------
@@ -161,7 +183,125 @@ class ViewerHandler(BaseHTTPRequestHandler):
             if not getattr(self.server, "verbose", False):
                 print(f"graph-wiki viewer: {exc}", file=sys.stderr)
 
+        self._maybe_record_view(status, head=head)
         self._respond(status, headers, body, head=head)
+
+    def _is_ops_route(self) -> bool:
+        return urlsplit(self.path).path == OPS_EVENT_PATH
+
+    def _cors_headers(self) -> dict[str, str]:
+        return {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": f"Content-Type, {OPS_TOKEN_HEADER}",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Cache-Control": "no-store",
+        }
+
+    def _maybe_record_view(self, status: int, *, head: bool) -> None:
+        if head or status != HTTPStatus.OK or self.server.ops is None:
+            return
+        parsed = urlsplit(self.path)
+        if parsed.path != "/api/page":
+            return
+        client = (self.headers.get(VIEWER_OPS_HEADER) or "").strip()
+        if not client:
+            # API clients, curl, and copied API links do not carry a viewer
+            # id, so they are not human views and must not inflate the count.
+            return
+        page_id = (parse_qs(parsed.query, keep_blank_values=True).get("id") or [""])[0].strip()
+        if page_id.endswith(".md"):
+            page_id = page_id[:-3]
+        if not page_id:
+            return
+        try:
+            self.server.ops.record_view(page_id, client)
+        except Exception:
+            pass
+
+    def _handle_ops_event(self) -> None:
+        if self.server.ops is None:
+            self._respond(
+                HTTPStatus.NOT_FOUND,
+                {"Cache-Control": "no-store"},
+                _error_body("not_found", "operations recording is disabled"),
+                head=False,
+            )
+            return
+        if not self._host_allowed():
+            self._respond(
+                HTTPStatus.FORBIDDEN,
+                {"Cache-Control": "no-store"},
+                _error_body("forbidden", "unexpected Host header"),
+                head=False,
+            )
+            return
+        token = (self.headers.get(OPS_TOKEN_HEADER) or "").strip()
+        if not token or not hmac.compare_digest(token, self.server.ops_token):
+            self._respond(
+                HTTPStatus.FORBIDDEN,
+                self._cors_headers(),
+                _error_body("forbidden", "invalid operations token"),
+                head=False,
+            )
+            return
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        if length <= 0:
+            self._respond(
+                HTTPStatus.BAD_REQUEST,
+                self._cors_headers(),
+                _error_body("invalid_request", "Content-Length is required"),
+                head=False,
+            )
+            return
+        if length > MAX_EVENT_BYTES:
+            self.close_connection = True
+            self._respond(
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                self._cors_headers(),
+                _error_body("payload_too_large", "event payload is too large"),
+                head=False,
+            )
+            return
+        raw = self.rfile.read(length)
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+            event = normalize_event(payload)
+        except (UnicodeError, ValueError, OpsError) as exc:
+            self._respond(
+                HTTPStatus.BAD_REQUEST,
+                self._cors_headers(),
+                _error_body("invalid_request", str(exc)),
+                head=False,
+            )
+            return
+        graph = self.server.service.graph()
+        known = {str(node.get("id")) for node in graph.get("nodes", [])}
+        if event["page"] not in known:
+            self._respond(
+                HTTPStatus.BAD_REQUEST,
+                self._cors_headers(),
+                _error_body("invalid_request", f"unknown page: {event['page']}"),
+                head=False,
+            )
+            return
+        try:
+            recorded = self.server.ops.record(
+                event["event"], event["page"], event.get("client", ""), source=event["source"]
+            )
+        except Exception:
+            recorded = False
+        if not recorded:
+            self._respond(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                self._cors_headers(),
+                _error_body("recording_failed", "could not write the operations event"),
+                head=False,
+            )
+            return
+        self._respond(HTTPStatus.NO_CONTENT, self._cors_headers(), b"", head=False)
 
     def _dispatch(self) -> tuple[int, dict[str, str], bytes]:
         if not self._host_allowed():
@@ -337,6 +477,7 @@ def make_server(
     *,
     verbose: bool = False,
     refresh_interval: float = 1.0,
+    ops: OpsRecorder | None = None,
 ) -> tuple[ViewerHTTPServer, GraphService]:
     """Create (but do not start) a viewer server bound to *host*:*port*."""
     service = GraphService(vault, refresh_interval=refresh_interval)
@@ -346,6 +487,7 @@ def make_server(
         service=service,
         verbose=verbose,
         bound_host=host,
+        ops=ops,
     )
     return server, service
 
@@ -369,8 +511,16 @@ def run_server(
     open_browser: bool = False,
     verbose: bool = False,
     refresh_interval: float = 1.0,
+    ops_enabled: bool = False,
+    ops_dir: str | Path | None = None,
 ) -> int:
     """Run the viewer until interrupted."""
+    recorder = None
+    if ops_enabled:
+        try:
+            recorder = OpsRecorder(vault, ops_dir=ops_dir)
+        except OSError as exc:
+            raise RuntimeError(f"cannot initialize operations state: {exc}") from exc
     try:
         server, _service = make_server(
             vault,
@@ -378,6 +528,7 @@ def run_server(
             port=port,
             verbose=verbose,
             refresh_interval=refresh_interval,
+            ops=recorder,
         )
     except OSError as exc:
         raise RuntimeError(f"cannot bind {host}:{port}: {exc}") from exc
@@ -385,6 +536,9 @@ def run_server(
     url = _display_url(server)
     print(f"graph-wiki viewer: {url}", flush=True)
     print(f"vault: {Path(vault).expanduser().resolve()}", flush=True)
+    if recorder is not None:
+        print(f"operations: recording to {recorder.paths.ops}", flush=True)
+        print(f"operations event endpoint: {OPS_EVENT_PATH} (token in {recorder.paths.token})", flush=True)
     print("Ctrl-C to stop", flush=True)
 
     if open_browser:

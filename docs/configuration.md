@@ -175,6 +175,8 @@ Local git repo clones work in `OBSIDIAN_SOURCES_DIR` (public or private, any hos
 | Variable | What it does | Default |
 |---|---|---|
 | `WIKI_STAGED_WRITES` | When `true`, LLM-written pages land in `_staging/` for human review instead of the live vault. Promote them with `/wiki-stage-commit` | `false` — direct writes |
+| `GRAPH_WIKI_OPS` | Enables operational event recording: viewer page views and CLI retrieval events. `serve --ops` also enables the viewer collector explicitly; `--no-ops` overrides this value. Explicit `graph-wiki ops` commands ignore the switch | `0` (off) |
+| `GRAPH_WIKI_OPS_AGING_DAYS` | A page with no substantive change for this many days is reported as aging | `365` |
 | `OBSIDIAN_TRUST_STRICT` | When `1`, `graph-wiki lint` treats missing trust fields, ledger errors, stale reviews, and score mismatches as failures rather than warnings. Same as `lint --strict-trust` | *(unset)* |
 | `OBSIDIAN_ALLOWED_LIFECYCLES` | Comma-separated lifecycle extensions for this resolved vault | *(framework defaults only)* |
 | `OBSIDIAN_ALLOWED_RELATIONSHIP_TYPES` | Comma-separated relationship-type extensions for this resolved vault | *(framework defaults only)* |

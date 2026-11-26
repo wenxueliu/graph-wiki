@@ -192,6 +192,73 @@ the current report for the next run. Exit codes are `0` for `pass` (and `warn` w
 and `1` for `fail` or `warn --strict`. See [Knowledge Quality](quality.md) for the dimension
 model, review policy, and CI gate examples.
 
+## Operational metrics
+
+`graph-wiki ops` records and reports usage and change metadata for knowledge pages. Recording is
+opt-in: enable the viewer collector with `serve --ops`, and set `GRAPH_WIKI_OPS=1` for CLI retrieval
+instrumentation. `ops` commands themselves are explicit, so `scan`, `report`, `record`, `ingest`, and
+`install-obsidian` always run when invoked.
+
+| Command | What it does |
+|---|---|
+| `ops scan [vault]` | Hash pages, refresh the inventory, and append created/updated/metadata-only/renamed/deleted history |
+| `ops report [vault]` | Report deduped views, retrievals, updates, versions, review overdue, aging, and metadata health |
+| `ops record [vault] --page PAGE` | Append one validated `view` or `retrieval` event |
+| `ops ingest [vault] --file FILE` | Import JSONL events from a portal, access gateway, or script (`-` reads stdin) |
+| `ops events [vault]` | Show recent raw events so you can verify a collector |
+| `ops install-obsidian [vault]` | Install the bundled Obsidian view collector into the vault |
+
+Events, inventory, and history live outside the vault, in
+`~/.graph-wiki/state/<vault-id>/ops/` by default.
+Every command accepts `--ops-dir PATH` to relocate that directory. An ops directory inside the
+vault is rejected, and `--save` / `--out` refuse to write reports inside the vault.
+
+```bash
+graph-wiki ops scan ~/brain
+graph-wiki ops report ~/brain --days 30 --top 10
+graph-wiki ops report ~/brain --days 7 --json --pretty
+graph-wiki ops report ~/brain --baseline "$STATE/ops-latest.json" --save "$STATE/ops-latest.json"
+graph-wiki ops record ~/brain --page concepts/rate-limiting --source portal --client u-42
+graph-wiki ops ingest ~/brain --file access-events.jsonl --strict
+graph-wiki ops events ~/brain --days 2 --limit 20
+graph-wiki ops install-obsidian ~/brain --port 8765
+```
+
+### What counts
+
+- **View** — a human opened a page. `serve --ops` counts `/api/page` responses that carry a viewer
+  id; the bundled Obsidian plugin sends `source: obsidian`; a portal or gateway can send
+  `source: portal` through `ops record`, `ops ingest`, or the local event endpoint. `HEAD`, `304`, and
+  requests without a viewer id do not count.
+- **Retrieval** — an agent or CLI command surfaced pages. With `GRAPH_WIKI_OPS=1`, `query`,
+  `context-pack`, `graph-query`, and `pack search` record the pages they return.
+- **Update** — a content hash changed. The report separates `created`, substantive `updated`,
+  `metadata_only` (for example, only the `updated:` date moved), `renamed`, and `deleted`.
+- **Version** — a derived counter per page, incremented on substantive changes. It is never written
+  into frontmatter.
+- **Expiry** — two signals are reported separately: trust-ledger review overdue (the existing review
+  SLA) and aging (no substantive change for `--aging-days`, default 365).
+
+The report deduplicates views per page, client, and source inside a 30-minute window
+(`--dedupe-minutes`); raw events are still counted in `views.raw`. `views.viewers` counts distinct
+client ids, so the same person in two browsers counts twice. Nothing stores IP addresses,
+user agents, referrers, search queries, or page bodies.
+
+Direct file reads by an agent or by Obsidian without the plugin are invisible to this layer. The
+report only covers events a collector actually delivered.
+
+### Event input
+
+`ops record` and `ops ingest` accept one JSON object per line:
+
+```json
+{"event":"view","page":"concepts/transformers","source":"portal","client":"u-42","ts":"2026-11-26T10:42:10+08:00"}
+```
+
+`event` is `view` or `retrieval`, `page` is vault-relative without `.md`, `source` is a lowercase
+label, `client` is an opaque id, and `ts` is ISO-8601 with a timezone (default: now). Invalid lines
+are rejected; `--strict` exits non-zero when any line is rejected.
+
 ## Pre-write page gate
 
 | Command | What it does |

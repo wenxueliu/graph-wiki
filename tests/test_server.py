@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from graph_wiki.ops import OPS_TOKEN_HEADER
 from graph_wiki.server import make_server
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -277,6 +278,126 @@ def test_viewer_does_not_write_to_the_vault(server) -> None:
     _get(base + "/api/page?id=concepts/ml").read()
 
     assert not (vault / ".obsidian").exists()
+
+
+@pytest.fixture()
+def ops_server(tmp_path: Path):
+    from graph_wiki.ops import OpsRecorder
+
+    vault = _make_vault(tmp_path)
+    recorder = OpsRecorder(vault, ops_dir=tmp_path / "ops")
+    instance, _service = make_server(
+        vault,
+        host="127.0.0.1",
+        port=0,
+        refresh_interval=0.0,
+        ops=recorder,
+    )
+    thread = threading.Thread(target=instance.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{instance.server_address[1]}"
+    try:
+        yield base, vault, instance, recorder, tmp_path / "ops"
+    finally:
+        instance.shutdown()
+        instance.server_close()
+        thread.join(timeout=5)
+
+
+def _events(ops_dir: Path) -> list[dict]:
+    events: list[dict] = []
+    for path in sorted((ops_dir / "events").glob("*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                events.append(json.loads(line))
+    return events
+
+
+def _post_event(base: str, payload: dict, token: str | None = None, **headers: str) -> int:
+    request = urllib.request.Request(
+        base + "/api/ops/event",
+        data=json.dumps(payload).encode("utf-8"),
+        method="POST",
+        headers={"Content-Type": "application/json", **headers},
+    )
+    if token is not None:
+        request.add_header(OPS_TOKEN_HEADER, token)
+    with urllib.request.urlopen(request, timeout=5) as response:
+        return response.status
+
+
+def test_ops_records_only_identified_page_views(ops_server) -> None:
+    base, vault, _instance, recorder, ops_dir = ops_server
+    response = _get(base + "/api/page?id=concepts/ml", **{"X-Viewer-Id": "viewer-a"})
+    etag = response.headers["ETag"]
+    response.read()
+    _get(base + "/api/page?id=concepts/ml", **{"X-Viewer-Id": "viewer-a"}).read()
+    # No viewer id: curl, copied API links, and agents do not count.
+    _get(base + "/api/page?id=concepts/ml").read()
+    # Conditional and HEAD requests do not count.
+    _error_status(base + "/api/page?id=concepts/ml", **{"If-None-Match": etag, "X-Viewer-Id": "viewer-a"})
+    request = urllib.request.Request(
+        base + "/api/page?id=concepts/ml",
+        method="HEAD",
+        headers={"X-Viewer-Id": "viewer-a"},
+    )
+    urllib.request.urlopen(request).read()
+
+    events = _events(ops_dir)
+    assert len(events) == 2
+    assert all(event["event"] == "view" for event in events)
+    assert all(event["client"] == "viewer-a" for event in events)
+    assert all(event["source"] == "viewer" for event in events)
+    assert not (vault / ".obsidian").exists()
+
+
+def test_ops_post_endpoint_requires_token(ops_server) -> None:
+    base, _vault, _instance, recorder, ops_dir = ops_server
+    payload = {
+        "event": "view",
+        "page": "concepts/ml",
+        "source": "obsidian",
+        "client": "obsidian-1",
+    }
+    assert _post_event(base, payload, token=recorder.token) == 204
+    events = _events(ops_dir)
+    assert events[-1]["source"] == "obsidian"
+
+    with pytest.raises(urllib.error.HTTPError) as caught:
+        _post_event(base, payload, token="wrong-token")
+    assert caught.value.code == 403
+    body = json.loads(caught.value.read().decode("utf-8"))
+    assert body["error"]["code"] == "forbidden"
+
+    with pytest.raises(urllib.error.HTTPError) as caught:
+        _post_event(base, {**payload, "page": "missing/page"}, token=recorder.token)
+    assert caught.value.code == 400
+
+    with pytest.raises(urllib.error.HTTPError) as caught:
+        _post_event(base, {**payload, "event": "open"}, token=recorder.token)
+    assert caught.value.code == 400
+
+
+def test_ops_endpoint_options_is_cors_only(ops_server) -> None:
+    base, _vault, _instance, _recorder, _ops_dir = ops_server
+    request = urllib.request.Request(base + "/api/ops/event", method="OPTIONS")
+    with urllib.request.urlopen(request, timeout=5) as response:
+        assert response.status == 204
+        assert response.headers["Access-Control-Allow-Origin"] == "*"
+        assert response.headers["Access-Control-Allow-Methods"] == "POST, OPTIONS"
+
+
+def test_ops_disabled_rejects_event_post(server) -> None:
+    base, _vault, _instance = server
+    request = urllib.request.Request(
+        base + "/api/ops/event",
+        data=b'{"event":"view"}',
+        method="POST",
+        headers={"Content-Type": "application/json", OPS_TOKEN_HEADER: "anything"},
+    )
+    with pytest.raises(urllib.error.HTTPError) as caught:
+        urllib.request.urlopen(request, timeout=5)
+    assert caught.value.code == 404
 
 
 def test_cli_parser_exposes_serve() -> None:
