@@ -239,9 +239,30 @@ extraction without making page writes concurrent.
 PageIndex is not a V1 dependency. A future PDF pipeline may use it only as a structure provider
 behind the local hard-budget splitter; PDFs remain explicitly unsupported until that pipeline exists.
 
+## Retrieval mode
+
+`WIKI_RETRIEVAL_MODE` chooses which path answers a query. It is read at runtime, so switching does
+not require re-running setup or recompiling the context snapshot.
+
+| Value | Behavior |
+|---|---|
+| `live` *(default)* | Answer from the current vault: GraphRAG/index, optional QMD, bounded body reads, typed graph. Every citation points at the live wiki. |
+| `pinned` | Answer from the immutable Content Pack resolved from `WIKI_PACK_CHANNEL` (default `release`). Answers carry `pack_id`/version and are marked as not current knowledge. Fails closed when no pack exists. |
+
+```env
+WIKI_RETRIEVAL_MODE=live
+WIKI_PACK_CHANNEL=release
+```
+
+Pinned retrieval needs a built pack (`graph-wiki pack build --index sqlite`). To query one version
+instead of the channel, pass `--pack v41` (or a pack id/directory) to
+`graph-wiki query --mode pinned`. See [Two retrieval paths](architecture.md#two-retrieval-paths).
+
 ## QMD semantic search (optional)
 
 By default, `wiki-folder-ingest` and `wiki-query` use Grep/Glob — fully functional, no extra setup. If your vault grows large or you want concept-level matches across your sources, plug in [QMD](https://github.com/tobi/qmd), either through MCP or by letting the agent call the local `qmd` CLI.
+
+QMD serves the live path only. Pinned retrieval over a Content Pack uses the pack's own index sidecars (`sqlite`, `sqlite-simple`, `zvec`); see [Two retrieval paths](architecture.md#two-retrieval-paths).
 
 | Variable | What it does | Default |
 |---|---|---|

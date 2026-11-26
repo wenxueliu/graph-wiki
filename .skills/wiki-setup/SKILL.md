@@ -47,7 +47,7 @@ setup invocation、source CWD 与可能存在的 config/vault metadata
 
 调用参数：
 
-- `requested_keys`: OBSIDIAN_VAULT_PATH,OBSIDIAN_SOURCES_DIR,CLAUDE_HISTORY_PATH,QMD_WIKI_COLLECTION,QMD_PAPERS_COLLECTION,QMD_TRANSPORT,QMD_CLI_SEARCH_MODE,WIKI_TOKEN_WARN_THRESHOLD,WIKI_STAGED_WRITES,WIKI_FOLDER_INGEST_MAX_EXTRACTION_WORKERS,WIKI_TEXT_DIRECT_EXTRACT_MAX_BYTES,WIKI_TEXT_CHUNK_TARGET_BYTES,WIKI_TEXT_CHUNK_MIN_BYTES,WIKI_TEXT_CHUNK_HARD_MAX_BYTES,WIKI_TEXT_CHUNK_STRATEGY,WIKI_TEXT_CHUNK_OPTIONS,GRAPH_WIKI_REPO
+- `requested_keys`: OBSIDIAN_VAULT_PATH,OBSIDIAN_SOURCES_DIR,CLAUDE_HISTORY_PATH,QMD_WIKI_COLLECTION,QMD_PAPERS_COLLECTION,QMD_TRANSPORT,QMD_CLI_SEARCH_MODE,WIKI_RETRIEVAL_MODE,WIKI_PACK_CHANNEL,WIKI_TOKEN_WARN_THRESHOLD,WIKI_STAGED_WRITES,WIKI_FOLDER_INGEST_MAX_EXTRACTION_WORKERS,WIKI_TEXT_DIRECT_EXTRACT_MAX_BYTES,WIKI_TEXT_CHUNK_TARGET_BYTES,WIKI_TEXT_CHUNK_MIN_BYTES,WIKI_TEXT_CHUNK_HARD_MAX_BYTES,WIKI_TEXT_CHUNK_STRATEGY,WIKI_TEXT_CHUNK_OPTIONS,GRAPH_WIKI_REPO
 
 - `optional_reads`: existing config, vault metadata, AGENTS.md, active knowledge pack metadata, QMD collection metadata
 
@@ -105,7 +105,7 @@ setup-contract.md + setup-contract.json
 
 以 `wiki-context.json` 的磁盘事实和 `setup-contract.json/md` 的精确默认值、模板、命令与验收条款为唯一依据，形成 setup plan，不读取外部规范或示例配置。
 
-先区分新建或 repair，并盘点唯一 config path、canonical vault、active Knowledge Pack（固定配对的 Knowledge Profile + Vault Layout）、core files、Writing Profile、QMD collection、hooks 与 Git remote。只询问尚未确定或需要用户选择的项目：vault/source/history paths、Knowledge Pack、QMD、token threshold、staged writes，以及是否安装 Stop hook、配置 private Git sync和准确 repo URL。采用默认值时也要在 plan 明示。
+先区分新建或 repair，并盘点唯一 config path、canonical vault、active Knowledge Pack（固定配对的 Knowledge Profile + Vault Layout）、core files、Writing Profile、QMD collection、retrieval mode、hooks 与 Git remote。只询问尚未确定或需要用户选择的项目：vault/source/history paths、Knowledge Pack、QMD、retrieval mode（默认 `live`，`pinned` 需要已有 pack）、token threshold、staged writes，以及是否安装 Stop hook、配置 private Git sync和准确 repo URL。采用默认值时也要在 plan 明示。
 
 在 `setup-plan.md` 列出 exact targets、每项 create/preserve/minimal-repair、原子写策略、required checks，以及所有需要 home/network/git/QMD 变更的 optional approvals。现有 `.env`、WRITING.md、core files、hooks、custom dirs 和 owner data 默认 preserve；此步骤零写入。
 
@@ -165,6 +165,8 @@ approval-request.md + approved-setup.json
 
 配置必须写入 `OBSIDIAN_KNOWLEDGE_PACK`、`OBSIDIAN_OWNER_RULES_PATH`、`OBSIDIAN_WRITING_PROFILE_PATH`、`OBSIDIAN_VAULT_METADATA_DIR`、`OBSIDIAN_TAXONOMY_PATH` 与 `OBSIDIAN_CONTEXT_SNAPSHOT`。这些键只绑定稳定路径和 Pack；Profile/Layout/Routing 正文仍作为一个原子 Pack 编译，不拆成独立 env JSON。
 
+同时按 approved binding 写入 `WIKI_RETRIEVAL_MODE`（默认 `live`）与 `WIKI_PACK_CHANNEL`（默认 `release`）。两者是运行时开关，读取 config 即可切换，不需要重编译 context snapshot；`pinned` 在缺少 pack 时按 fail-closed 处理，不回退 live。
+
 写 `config-report.md`，记录 target、created/preserved/repaired、effective non-secret values 和秘密值的 configured/unconfigured 状态。
 
 #### 输入
@@ -177,7 +179,7 @@ config + config-report.md
 
 #### 验收
 
-解析目标 config，核对 approved path、required typed values 和 report；repair 时确认未知字段、注释和秘密值保留，且未改变其他 setup 状态
+解析目标 config，核对 approved path、required typed values、`WIKI_RETRIEVAL_MODE`/`WIKI_PACK_CHANNEL` 和 report；repair 时确认未知字段、注释和秘密值保留，且未改变其他 setup 状态
 
 #### 流程控制
 
@@ -379,7 +381,7 @@ Vault Git sync 配置（如获批）+ git-sync-report.md
 
 #### 执行
 
-若 QMD 配置获批，按 contract 和 approved names/path 写入 wiki/papers collection 配置以及 `_raw/**` exclusion；未获批或未配置时不改变 QMD 配置。
+若 QMD 配置获批，按 contract 和 approved names/path 写入 wiki/papers collection 配置以及 `_raw/**` exclusion；未获批或未配置时不改变 QMD 配置。QMD 只服务 `WIKI_RETRIEVAL_MODE=live`；pinned 模式使用 pack 自己的索引 sidecar，不依赖 QMD。
 
 写 `qmd-collection-report.md`，记录 configured/skipped/failed、collection names、paths、patterns 和 exclusions。
 

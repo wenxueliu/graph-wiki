@@ -150,12 +150,14 @@ page's summary, links, and raw Markdown. It only reads the vault. For AI retriev
 
 | Command | What it does |
 |---|---|
-| `query <question>` | Answer a question from the configured vault's index |
+| `query <question>` | Answer a question from the configured vault's index, or from a pinned pack when `--mode pinned` / `WIKI_RETRIEVAL_MODE=pinned` |
 | `lint [vault]` | Find missing frontmatter, broken links, duplicates, orphans, and oversized pages |
 
 ```bash
 graph-wiki query "what do I know about MCP security?"
 graph-wiki query "rate limiting" --top 12 --max-read 5 --json
+graph-wiki query "what did v41 say?" --mode pinned --pack v41
+graph-wiki query "attention" --mode pinned --channel release --store ~/.graph-wiki/packs
 
 graph-wiki lint                     # uses the configured vault
 graph-wiki lint /path/to/vault --strict
@@ -166,6 +168,8 @@ graph-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
 ```
 
 Lint resolves its vault and schema together: explicit path (no config inheritance), positional `@name`, nearest CWD `.env`, then the config file. CLI schema flags extend/replace that resolved vault's settings and are recorded in the JSON `schema` block.
+
+`query` defaults to `WIKI_RETRIEVAL_MODE` (`live`). In pinned mode it searches the pack index instead of the vault and returns `pack_id`, `version`, and `index_id`; those results are a released snapshot, not current knowledge. See [Two retrieval paths](architecture.md#two-retrieval-paths).
 
 ## Knowledge quality
 
@@ -231,7 +235,7 @@ graph-wiki ops install-obsidian ~/brain --port 8765
   `source: portal` through `ops record`, `ops ingest`, or the local event endpoint. `HEAD`, `304`, and
   requests without a viewer id do not count.
 - **Retrieval** — an agent or CLI command surfaced pages. With `GRAPH_WIKI_OPS=1`, `query`,
-  `context-pack`, `graph-query`, and `pack search` record the pages they return.
+  `context-pack`, `graph-query`, `pack search`, `access search`, and `access page` record the pages they return.
 - **Update** — a content hash changed. The report separates `created`, substantive `updated`,
   `metadata_only` (for example, only the `updated:` date moved), `renamed`, and `deleted`.
 - **Version** — a derived counter per page, incremented on substantive changes. It is never written
@@ -335,6 +339,10 @@ or `--json` for tool-to-tool integration.
 `graph-wiki pack` turns the current vault into an immutable, content-addressed
 release. The vault remains the only writable source; a pack is a read-only
 artifact for pinned retrieval, version diffing, and grep snapshots.
+
+Pinned retrieval is one of two paths: `pack search` reads a frozen release, while questions about
+current knowledge go through the live path (`wiki-query`, `query`, `context-pack`, `graph-*`). See
+[Two retrieval paths](architecture.md#two-retrieval-paths).
 
 ```bash
 graph-wiki pack build --index sqlite              # content pack + bigram FTS5 index

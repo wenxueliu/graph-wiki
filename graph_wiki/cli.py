@@ -2964,6 +2964,21 @@ def cmd_query(args: argparse.Namespace) -> int:
     from graph_wiki.graphrag import query
 
     vault, config, _source = resolve_vault_binding(args.vault)
+    mode = (
+        getattr(args, "mode", None)
+        or config.get("WIKI_RETRIEVAL_MODE")
+        or "live"
+    ).strip().lower()
+    if getattr(args, "channel", None) is None:
+        args.channel = config.get("WIKI_PACK_CHANNEL") or "release"
+    if mode == "pinned":
+        return _query_pinned(args, vault=vault, config=config)
+    if mode != "live":
+        print(
+            f"error: invalid WIKI_RETRIEVAL_MODE {mode!r}; expected live or pinned",
+            file=sys.stderr,
+        )
+        return 1
     if vault is None:
         print("error: vault not configured; pass a path or run graph-wiki setup", file=sys.stderr)
         return 1
@@ -2986,6 +3001,83 @@ def cmd_query(args: argparse.Namespace) -> int:
             print(json.dumps(result))
     else:
         _print_query(result)
+    return 0
+
+
+def _query_pinned(
+    args: argparse.Namespace,
+    *,
+    vault: Path | None = None,
+    config: dict[str, str] | None = None,
+) -> int:
+    from graph_wiki import pack as pack_mod
+    from graph_wiki import pack_index
+
+    try:
+        pack_dir = _resolve_pack_arg(args)
+        result = pack_index.search_index(
+            pack_dir,
+            args.question,
+            engine=getattr(args, "engine", None),
+            topk=args.top,
+        )
+        manifest = pack_mod.load_manifest(pack_dir)
+    except (pack_mod.PackError, pack_index.PackIndexError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    candidates = [
+        {
+            "page": item.get("path", ""),
+            "path": item.get("path", ""),
+            "title": item.get("title", ""),
+            "score": item.get("score", 0.0),
+            "heading": item.get("heading", ""),
+            "line_start": item.get("line_start", 0),
+            "lifecycle": item.get("lifecycle", ""),
+            "stale": bool(item.get("stale")),
+            "text": item.get("text", ""),
+        }
+        for item in result["results"]
+    ]
+    payload = {
+        "mode": "pinned",
+        "pack_id": manifest["pack_id"],
+        "version": manifest["version"],
+        "channel": getattr(args, "channel", None) or pack_mod.DEFAULT_CHANNEL,
+        "pack_dir": str(pack_dir),
+        "engine": result["engine"],
+        "index_id": result["index_id"],
+        "query": args.question,
+        "candidates": candidates,
+        "should_read": [candidate["path"] for candidate in candidates[: args.max_read]],
+        "results": result["results"],
+        "count": result["count"],
+    }
+    if vault is not None:
+        from graph_wiki.ops import record_retrieval
+
+        record_retrieval(vault, payload["should_read"], "query-pinned", config=config)
+    if args.json:
+        if args.pretty:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(json.dumps(payload))
+        return 0
+    print(f"mode: pinned")
+    print(f"pack: v{payload['version']} {payload['pack_id']}")
+    print(f"channel: {payload['channel']}  engine: {payload['engine']}")
+    for candidate in candidates:
+        stale = " stale" if candidate["stale"] else ""
+        heading = f" > {candidate['heading']}" if candidate["heading"] else ""
+        print(
+            f"- {candidate['title'] or candidate['path']} ({candidate['path']}{heading}) "
+            f"score={candidate['score']:.4f}{stale}"
+        )
+    if payload["should_read"]:
+        print("should_read:")
+        for page in payload["should_read"]:
+            print(f"- {page}")
     return 0
 
 
@@ -4202,6 +4294,20 @@ def build_parser() -> argparse.ArgumentParser:
     qq.add_argument("--vault", help="override OBSIDIAN_VAULT_PATH for this query")
     qq.add_argument("--top", type=int, default=8, help="number of candidate pages to rank (default: 8)")
     qq.add_argument("--max-read", type=int, default=3, help="max pages to return in should_read (default: 3)")
+    qq.add_argument(
+        "--mode",
+        choices=("live", "pinned"),
+        help="retrieval mode; defaults to WIKI_RETRIEVAL_MODE, then live",
+    )
+    qq.add_argument("--pack", help="pack path, vN, channel, or pack id for pinned mode")
+    qq.add_argument("--channel", help="pack channel for pinned mode (default: WIKI_PACK_CHANNEL or release)")
+    qq.add_argument("--store", help="pack store directory for pinned mode")
+    qq.add_argument("--vault-id", help="vault id inside the pack store for pinned mode")
+    qq.add_argument(
+        "--engine",
+        choices=("sqlite", "sqlite-simple", "zvec"),
+        help="pack index engine for pinned mode (default: first built index)",
+    )
     qq.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     qq.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
     qq.set_defaults(func=cmd_query)
@@ -4681,6 +4787,7 @@ def _resolve_pack_arg(args: argparse.Namespace) -> Path:
     selector = getattr(args, "pack", None)
     if selector and Path(selector).expanduser().is_dir():
         return pack_mod.resolve_pack(selector)
+    channel = getattr(args, "channel", None) or pack_mod.DEFAULT_CHANNEL
     vault_id, vault = _pack_vault_id(args)
     if vault_id is None:
         raise pack_mod.PackError("pass --vault or --vault-id to resolve a pack")
@@ -4689,6 +4796,7 @@ def _resolve_pack_arg(args: argparse.Namespace) -> Path:
         store=_pack_store(getattr(args, "store", None)),
         vault_id=vault_id,
         vault=vault,
+        channel=channel,
     )
 
 
@@ -5176,6 +5284,13 @@ def _cmd_access_search(args: argparse.Namespace) -> int:
         skip_drift=args.skip_drift_check,
         role=args.role,
     )
+    from graph_wiki.ops import record_retrieval
+
+    record_retrieval(
+        vault,
+        [str(item.get("path", "")) for item in payload.get("results", [])],
+        "access-search",
+    )
     print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
     return 0
 
@@ -5211,6 +5326,9 @@ def _cmd_access_page(args: argparse.Namespace) -> int:
         store=_pack_store(args.store),
         skip_drift=args.skip_drift_check,
     )
+    from graph_wiki.ops import record_retrieval
+
+    record_retrieval(vault, [args.path], "access-page")
     print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
     return 0
 

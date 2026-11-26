@@ -143,12 +143,14 @@ Markdown。它只读取 vault。给 AI 检索时，继续使用 `pack search --e
 
 | 命令 | 作用 |
 |---|---|
-| `query <question>` | 从已配置 vault 的索引回答问题 |
+| `query <question>` | 从已配置 vault 的索引回答问题；`--mode pinned` / `WIKI_RETRIEVAL_MODE=pinned` 时改查固定版本 pack |
 | `lint [vault]` | 发现缺失的 frontmatter、失效链接、重复页面、孤立页面与超大页面 |
 
 ```bash
 graph-wiki query "what do I know about MCP security?"
 graph-wiki query "rate limiting" --top 12 --max-read 5 --json
+graph-wiki query "v41 里怎么说？" --mode pinned --pack v41
+graph-wiki query "attention" --mode pinned --channel release --store ~/.graph-wiki/packs
 
 graph-wiki lint                     # 使用已配置的 vault
 graph-wiki lint /path/to/vault --strict
@@ -160,6 +162,9 @@ graph-wiki lint --allow-lifecycle active --allow-relationship-type synthesizes \
 
 Lint 会同时解析 vault 与 schema：显式路径（不继承配置）、位置参数 `@name`、最近的 CWD `.env`，最后
 是配置文件。CLI 的 schema 参数会扩展/替换该 vault 的解析结果，并记录在 JSON 的 `schema` 块中。
+
+`query` 默认读取 `WIKI_RETRIEVAL_MODE`（`live`）。pinned 模式改查 pack 索引而不是 vault，返回
+`pack_id`、`version` 与 `index_id`；这些结果是发布快照，不是当前知识。见[两条检索路径](architecture.zh-CN.md#两条检索路径)。
 
 ## 知识质量
 
@@ -221,7 +226,7 @@ graph-wiki ops install-obsidian ~/brain --port 8765
   内置 Obsidian 插件发送 `source: obsidian`；门户或网关可通过 `ops record`、`ops ingest` 或本地
   事件端点发送 `source: portal`。`HEAD`、`304` 和没有 viewer id 的请求不计入。
 - **检索（retrieval）**——agent 或 CLI 命令返回了页面。设置 `GRAPH_WIKI_OPS=1` 后，`query`、
-  `context-pack`、`graph-query` 与 `pack search` 会记录它们返回的页面。
+  `context-pack`、`graph-query`、`pack search`、`access search` 与 `access page` 会记录它们返回的页面。
 - **更新（update）**——内容哈希发生变化。报告区分 `created`、实质性 `updated`、
   `metadata_only`（例如只改了 `updated:` 日期）、`renamed` 与 `deleted`。
 - **版本（version）**——每个页面派生出的计数器，只随实质性变更递增。它永远不会写进 frontmatter。
@@ -317,6 +322,9 @@ graph-wiki context-pack "release notes" --budget 8000 --public-only
 
 `graph-wiki pack` 把当前 vault 变成不可变、内容寻址的发布件。vault 仍是唯一可写来源；pack
 是只读产物，用于固定版本检索、版本 diff 与 grep 快照。
+
+Pinned 检索是两条检索路径之一：`pack search` 读取冻结的发布件，而针对当前知识的查询走 live 路径
+（`wiki-query`、`query`、`context-pack`、`graph-*`）。见[两条检索路径](architecture.zh-CN.md#两条检索路径)。
 
 ```bash
 graph-wiki pack build --index sqlite              # 内容包 + bigram FTS5 索引

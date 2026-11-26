@@ -64,3 +64,114 @@ def test_query_cli_requires_vault_when_unconfigured(tmp_path: Path) -> None:
 
     assert proc.returncode == 1
     assert "vault not configured" in proc.stderr
+
+
+def _build_pack(home: Path, vault: Path, store: Path) -> None:
+    proc = _run(
+        home,
+        "pack",
+        "build",
+        "--vault",
+        str(vault),
+        "--store",
+        str(store),
+        "--channel",
+        "release",
+        "--index",
+        "sqlite",
+    )
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_query_cli_pinned_mode_reads_pack_index(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    vault = tmp_path / "vault"
+    store = tmp_path / "packs"
+    _page(vault, "transformer", title="Transformer Architecture", summary="Self-attention model.")
+    _page(vault, "attention", title="Attention Mechanism", summary="Weighted lookup.", links=["transformer"])
+    _build_pack(home, vault, store)
+
+    proc = _run(
+        home,
+        "query",
+        "attention",
+        "--mode",
+        "pinned",
+        "--vault",
+        str(vault),
+        "--store",
+        str(store),
+        "--channel",
+        "release",
+        "--json",
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert data["mode"] == "pinned"
+    assert data["version"] == 1
+    assert data["pack_id"].startswith("sha256:")
+    assert data["index_id"].startswith("sha256:")
+    assert any(item["path"] == "attention.md" for item in data["candidates"])
+
+
+def test_query_cli_pinned_mode_follows_config_switch(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    vault = tmp_path / "vault"
+    store = tmp_path / "packs"
+    _page(vault, "attention", title="Attention Mechanism", summary="Weighted lookup.")
+    _build_pack(home, vault, store)
+
+    config_dir = home / ".graph-wiki"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "config").write_text(
+        f'OBSIDIAN_VAULT_PATH="{vault}"\n'
+        "WIKI_RETRIEVAL_MODE=pinned\n"
+        "WIKI_PACK_CHANNEL=release\n",
+        encoding="utf-8",
+    )
+
+    proc = _run(home, "query", "attention", "--store", str(store), "--json")
+
+    assert proc.returncode == 0, proc.stderr
+    assert json.loads(proc.stdout)["mode"] == "pinned"
+
+
+def test_query_cli_pinned_mode_fails_closed_without_pack(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    vault = tmp_path / "vault"
+    _page(vault, "attention", title="Attention Mechanism", summary="Weighted lookup.")
+
+    config_dir = home / ".graph-wiki"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "config").write_text(
+        f'OBSIDIAN_VAULT_PATH="{vault}"\nWIKI_RETRIEVAL_MODE=pinned\n',
+        encoding="utf-8",
+    )
+
+    proc = _run(home, "query", "attention", "--store", str(tmp_path / "empty-store"), "--json")
+
+    assert proc.returncode == 1
+    assert "no packs found" in proc.stderr
+
+
+def test_query_cli_live_mode_overrides_pinned_config(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    vault = tmp_path / "vault"
+    store = tmp_path / "packs"
+    _page(vault, "attention", title="Attention Mechanism", summary="Weighted lookup.")
+    _build_pack(home, vault, store)
+
+    config_dir = home / ".graph-wiki"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "config").write_text(
+        f'OBSIDIAN_VAULT_PATH="{vault}"\nWIKI_RETRIEVAL_MODE=pinned\n',
+        encoding="utf-8",
+    )
+
+    proc = _run(home, "query", "attention", "--mode", "live", "--json")
+
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert "answer_type" in data
+    assert data.get("mode") != "pinned"

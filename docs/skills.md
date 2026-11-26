@@ -60,7 +60,7 @@ dedicated skills above.
 
 | Skill | What it does | Slash command |
 |---|---|---|
-| `wiki-query` | Read-only answers from the compiled wiki with citations — GraphRAG, index, QMD, local bodies, then multi-hop typed graph | `/wiki-query` |
+| `wiki-query` | Read-only answers from the live compiled wiki with citations — GraphRAG, index, QMD, local bodies, then multi-hop typed graph; `WIKI_RETRIEVAL_MODE=pinned` answers from a released pack instead | `/wiki-query` |
 | `wiki-narrate` | Render a cited briefing, plain-language explanation, or progressive lecture from a topic | `/wiki-narrate <topic>` |
 | `wiki-digest` | Newsletter-style summary of what you learned over a day, week, or month | `/wiki-digest [period]` |
 | `wiki-context-pack` | Produce a token-bounded, citation-ready context slice for a downstream agent or task | `/wiki-context-pack` |

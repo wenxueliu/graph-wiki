@@ -237,11 +237,32 @@ Packet 文件，绝不改动共享 wiki 状态。已完成的 Packet 会被缓�
 PageIndex 不是 V1 的依赖。未来的 PDF 流水线可能只把它当作本地硬预算切分器背后的 structure provider；
 在那条流水线存在之前，PDF 仍然是显式不支持的。
 
+## 检索模式
+
+`WIKI_RETRIEVAL_MODE` 决定一次查询由哪条路径回答。它在运行时读取，切换不需要重新运行 setup 或
+重编译 context snapshot。
+
+| 取值 | 行为 |
+|---|---|
+| `live` *（默认）* | 从当前 vault 回答：GraphRAG/索引、可选 QMD、有界正文读取、typed graph。所有引用指向 live wiki。 |
+| `pinned` | 从 `WIKI_PACK_CHANNEL`（默认 `release`）解析出的不可变 Content Pack 回答。答案带 `pack_id`/版本，并明确标注不是当前知识。找不到 pack 时 fail-closed。 |
+
+```env
+WIKI_RETRIEVAL_MODE=live
+WIKI_PACK_CHANNEL=release
+```
+
+pinned 检索需要已构建的 pack（`graph-wiki pack build --index sqlite`）。要查询某个具体版本而不是
+channel，给 `graph-wiki query --mode pinned` 传 `--pack v41`（或 pack id/目录）。见[两条检索路径](architecture.zh-CN.md#两条检索路径)。
+
 ## QMD 语义搜索（可选）
 
 默认情况下，`wiki-folder-ingest` 与 `wiki-query` 使用 Grep/Glob——功能完整，无需额外设置。如果你的
 vault 变得很大，或你想在来源之间做概念级匹配，可以接入 [QMD](https://github.com/tobi/qmd)，通过 MCP
 或让 agent 调用本地 `qmd` CLI。
+
+QMD 只服务于 live 路径。对 Content Pack 的 pinned 检索使用 pack 自己的索引 sidecar（`sqlite`、
+`sqlite-simple`、`zvec`）；见[两条检索路径](architecture.zh-CN.md#两条检索路径)。
 
 | 变量 | 作用 | 默认值 |
 |---|---|---|

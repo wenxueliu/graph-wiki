@@ -148,6 +148,8 @@ def build_core(templates_dir: Path, knowledge_packs_dir: Path, output_dir: Path)
             "QMD_CLI_SEARCH_MODE": "quality",
             "QMD_WIKI_COLLECTION": None,
             "QMD_PAPERS_COLLECTION": None,
+            "WIKI_RETRIEVAL_MODE": "live",
+            "WIKI_PACK_CHANNEL": "release",
             "WIKI_TOKEN_WARN_THRESHOLD": 100000,
             "WIKI_STAGED_WRITES": False,
             "WIKI_FOLDER_INGEST_MAX_EXTRACTION_WORKERS": 4,
@@ -188,6 +190,17 @@ def build_core(templates_dir: Path, knowledge_packs_dir: Path, output_dir: Path)
                 "_meta/": "trust, taxonomy and dashboard metadata",
                 "_readouts/": "narrative readouts"
             },
+        },
+        "retrieval": {
+            "mode_env": "WIKI_RETRIEVAL_MODE",
+            "channel_env": "WIKI_PACK_CHANNEL",
+            "default_mode": "live",
+            "modes": {
+                "live": "answer from the current live vault with citations, trust, visibility, and graph traversal; QMD may accelerate ranking",
+                "pinned": "answer from an immutable Content Pack snapshot through its pack index; results carry pack_id/version and are not current knowledge",
+            },
+            "switch_policy": "runtime switch read from config on every invocation; changing the mode does not require recompiling the context snapshot or rebuilding a pack",
+            "pinned_requires": "a built pack for the vault; otherwise pinned mode fails closed instead of silently falling back to live",
         },
         "templates": templates,
         "default_render_values": default_values,

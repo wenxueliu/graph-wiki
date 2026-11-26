@@ -110,6 +110,30 @@ freshness 策略取哈希；时间戳和检索索引不参与计算，因此内�
 `pack eval` 回放 JSON 查询集，对比各引擎的 recall@k、MRR、nDCG 与延迟。Content Pack 不是
 Knowledge Pack：后者是领域契约，前者是从 vault 派生的发布件。
 
+## 两条检索路径
+
+两条路径并存，互不替代，也都没有被废弃：用哪条由使用者决定，通常取决于要回答的问题。默认是
+`WIKI_RETRIEVAL_MODE=live`；设为 `pinned` 后，`wiki-query` 与 `graph-wiki query` 默认走 pinned
+路径。见[检索模式](configuration.zh-CN.md#检索模式)。
+
+| | Live 路径 | Pinned 路径 |
+|---|---|---|
+| 回答的问题 | wiki 现在知道什么？ | 某个已发布版本里有什么、能不能被检索到？ |
+| 数据源 | live vault（`OBSIDIAN_VAULT_PATH`） | 不可变 Content Pack（`pack_id` 或 channel） |
+| 入口 | `wiki-query`；`graph-wiki query`、`context-pack`、`graph-query`、`graph-analyse` | `graph-wiki query --mode pinned`、`pack search`、`pack materialize` + grep、`pack diff` |
+| 输出 | 带引用的答案、candidates、`should_read`、graph path | 带 `pack_id` 与 `index_id` 的页面/chunk 排名 |
+| 是否随 vault 变化 | 是 | 否——在新 pack 构建前固定不变 |
+| 索引 | index/frontmatter + grep，可选 QMD | pack 索引 sidecar（`sqlite`、`sqlite-simple`、`zvec`） |
+| 写入 | 一条 `QUERY` 日志 | 无 |
+
+问题针对当前知识，或答案需要 citations、trust 标注、visibility 过滤、graph 多跳时，走 live 路径。
+结果必须可复现时——发布评审、版本 diff、检索基准、交付给下游的固定快照——走 pinned 路径。
+
+不要把 pinned 结果当作当前知识呈现：同时报告 `pack_id`/版本，并用 `pack status` 检测 channel pack
+与 live vault 的漂移。QMD 只属于 live 路径，不参与任何 pack 索引或 `pack_id`。发布门禁保持确定性
+（`lint`、`quality`、`trust-check`、`pack verify`、`pack eval`）；`wiki-query` 是 agent workflow，
+不是门禁。
+
 ## Vault 结构
 
 以下是 `default` Knowledge Pack 的布局。其他 Pack 提供不同的内容根目录；运行时 workflow 会枚举当前

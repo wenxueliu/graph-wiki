@@ -718,3 +718,12 @@ def test_setup_rejects_incomplete_knowledge_pack_marker_without_refresh(
     unchanged = json.loads(marker_path.read_text())
     assert unchanged["name"] == "software-knowledge"
     assert "profile_sha256" not in unchanged
+
+
+def test_env_example_declares_retrieval_mode_defaults() -> None:
+    template = (Path(__file__).resolve().parents[1] / ".env.example").read_text(
+        encoding="utf-8"
+    )
+
+    assert "\nWIKI_RETRIEVAL_MODE=live\n" in template
+    assert "\nWIKI_PACK_CHANNEL=release\n" in template

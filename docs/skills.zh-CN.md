@@ -57,7 +57,7 @@ Agent 历史与网络研究仍使用上表中各自的专用 skill。
 
 | Skill | 作用 | Slash command |
 |---|---|---|
-| `wiki-query` | 只读地从已编译 wiki 给出带引用的回答——依次走 GraphRAG、索引、QMD、局部正文与多跳 typed graph | `/wiki-query` |
+| `wiki-query` | 只读地从当前已编译 wiki（live vault）给出带引用的回答——依次走 GraphRAG、索引、QMD、局部正文与多跳 typed graph；`WIKI_RETRIEVAL_MODE=pinned` 时改从发布 pack 回答 | `/wiki-query` |
 | `wiki-narrate` | 针对某个主题生成带引用的简报、通俗解释或渐进式讲解 | `/wiki-narrate <topic>` |
 | `wiki-digest` | 以简报形式总结你在一天、一周或一个月里学到了什么 | `/wiki-digest [period]` |
 | `wiki-context-pack` | 为下游 agent 或任务生成受 token 限制、可直接引用的上下文切片 | `/wiki-context-pack` |

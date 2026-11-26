@@ -16,6 +16,8 @@ sys.dont_write_bytecode = True
 from apply_knowledge_pack import inventory as knowledge_pack_inventory
 
 BOOL_KEYS = {"WIKI_STAGED_WRITES"}
+RETRIEVAL_MODES = ("live", "pinned")
+DEFAULT_RETRIEVAL_CHANNEL = "release"
 POSITIVE_INT_KEYS = {
     "WIKI_FOLDER_INGEST_MAX_EXTRACTION_WORKERS",
     "WIKI_TEXT_CHUNK_TARGET_BYTES",
@@ -63,6 +65,33 @@ def parse_json_object(key: str, value: str) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise ValueError(f"{key} must be a JSON object")
     return parsed
+
+
+def parse_retrieval_mode(value: str) -> str:
+    mode = value.strip().lower() or "live"
+    if mode not in RETRIEVAL_MODES:
+        raise ValueError(
+            f"WIKI_RETRIEVAL_MODE must be one of {', '.join(RETRIEVAL_MODES)}, got: {value!r}"
+        )
+    return mode
+
+
+def parse_pack_channel(value: str) -> str:
+    channel = value.strip() or DEFAULT_RETRIEVAL_CHANNEL
+    if any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for character in channel):
+        raise ValueError(
+            f"WIKI_PACK_CHANNEL must use letters, digits, _ or -, got: {value!r}"
+        )
+    return channel
+
+
+def retrieval_settings(config: dict[str, str]) -> dict[str, str]:
+    return {
+        "mode": parse_retrieval_mode(config.get("WIKI_RETRIEVAL_MODE", "live")),
+        "pack_channel": parse_pack_channel(
+            config.get("WIKI_PACK_CHANNEL", DEFAULT_RETRIEVAL_CHANNEL)
+        ),
+    }
 
 
 def parse_config(path: Path) -> dict[str, str]:
@@ -191,6 +220,13 @@ def write_outputs(output_dir: Path, context: dict[str, Any]) -> None:
         f"- Setup mode: `{str(context.get('setup_mode', False)).lower()}`",
         f"- Write mode: `{context.get('write_mode', 'direct')}`",
     ]
+    retrieval = context.get("retrieval") or {}
+    if retrieval.get("mode"):
+        lines.append(f"- Retrieval mode: `{retrieval['mode']}`")
+    if retrieval.get("mode") == "pinned":
+        lines.append(
+            f"- Pack channel: `{retrieval.get('pack_channel', DEFAULT_RETRIEVAL_CHANNEL)}`"
+        )
     if context.get("reason"):
         lines.append(f"- Reason: {context['reason']}")
     active_knowledge_pack = context.get("optional_metadata", {}).get("active_knowledge_pack")
@@ -206,25 +242,6 @@ def write_outputs(output_dir: Path, context: dict[str, Any]) -> None:
         f"{index}. {value}" for index, value in enumerate(context.get("retrieval_order", []), 1)
     ]])
     (output_dir / "wiki-context.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def reuse_compiled_outputs(snapshot: Path, output_dir: Path) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    sources = {
-        "wiki-context.json": snapshot,
-        "wiki-context.md": snapshot.with_name("wiki-context.md"),
-        "text-chunk-options.json": snapshot.with_name("text-chunk-options.json"),
-    }
-    for name, source in sources.items():
-        if not source.is_file():
-            raise ValueError(f"compiled context artifact is missing: {source}")
-        target = output_dir / name
-        if target.is_symlink() or target.exists():
-            target.unlink()
-        try:
-            target.symlink_to(source)
-        except OSError:
-            target.write_bytes(source.read_bytes())
 
 
 def main() -> int:
@@ -295,6 +312,8 @@ def main() -> int:
                     if value is not None
                 }
 
+        retrieval = retrieval_settings(binding_config)
+
         if not setup_mode and not vault.is_dir():
             raise ValueError(f"vault does not exist or is not a directory: {vault}")
 
@@ -359,13 +378,26 @@ def main() -> int:
                     "stable context paths changed after the snapshot was compiled; "
                     "run wiki-setup repair"
                 )
-            reuse_compiled_outputs(snapshot_path, args.output_dir)
+            compiled = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            compiled["retrieval"] = retrieval
+            requested_values = compiled.setdefault("requested_values", {})
+            if "WIKI_RETRIEVAL_MODE" in requested:
+                requested_values["WIKI_RETRIEVAL_MODE"] = retrieval["mode"]
+            if "WIKI_PACK_CHANNEL" in requested:
+                requested_values["WIKI_PACK_CHANNEL"] = retrieval["pack_channel"]
+            write_outputs(args.output_dir, compiled)
             return 0
 
         values: dict[str, Any] = {}
         for key in requested:
             if key == "OBSIDIAN_VAULT_PATH":
                 values[key] = str(vault)
+                continue
+            if key == "WIKI_RETRIEVAL_MODE":
+                values[key] = retrieval["mode"]
+                continue
+            if key == "WIKI_PACK_CHANNEL":
+                values[key] = retrieval["pack_channel"]
                 continue
             raw = overrides.get(key, config_values.get(key))
             if raw is not None and str(raw).strip() != "":
@@ -498,6 +530,7 @@ def main() -> int:
             "mode": input_mode, "vault_path": str(vault),
             "source_cwd": str(args.source_cwd.resolve()),
             "config_source": str(config_path) if config_path else None,
+            "retrieval": retrieval,
             "requested_values": values, "setup_mode": setup_mode,
             "write_mode": "staged" if values.get("WIKI_STAGED_WRITES") is True else "direct",
             "link_format": values.get("OBSIDIAN_LINK_FORMAT", "wikilink"),

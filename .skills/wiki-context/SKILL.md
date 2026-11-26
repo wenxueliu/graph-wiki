@@ -86,7 +86,7 @@ graph-wiki wiki-context-resolve \
 
 console script 不在 PATH 时使用等价的 `python3 -m graph_wiki wiki-context-resolve ...`。config mode 严格按 `@name` 指定 config、从 source CWD 向上找第一个含 `OBSIDIAN_VAULT_PATH` 的 `.env`、再到全局 `~/.graph-wiki/config` 的顺序解析；都缺失时要求运行 wiki-setup。这里的“全局”是配置目录，默认为 `~/.graph-wiki`，可用 `GRAPH_WIKI_CONFIG_DIR` 迁移到项目仓库内。
 
-若 resolved config 的 `OBSIDIAN_CONTEXT_SNAPSHOT`（空值时默认 `<vault>/_meta/context/wiki-context.json`）存在且有效，resolver 直接把该 compiled context 作为本次三个 artifacts 的只读链接，不重新读取或展开 owner rules、Writing Profile、Knowledge Profile、Layout、routing 与低频 vault metadata。snapshot 缺失时保留兼容解析，但提示通过 wiki-setup/repair 编译。inline override、setup mode 或显式 overrides 不复用 snapshot。
+若 resolved config 的 `OBSIDIAN_CONTEXT_SNAPSHOT`（空值时默认 `<vault>/_meta/context/wiki-context.json`）存在且有效，resolver 复用该 compiled context 的稳定内容，并只用当前 config/overrides 覆盖 `retrieval`（`WIKI_RETRIEVAL_MODE`/`WIKI_PACK_CHANNEL`）后写出本次三个 artifacts；不重新读取或展开 owner rules、Writing Profile、Knowledge Profile、Layout、routing 与低频 vault metadata。因此切换检索模式不需要重编译 snapshot。snapshot 缺失时保留兼容解析，但提示通过 wiki-setup/repair 编译。inline override、setup mode 或显式 overrides 不复用 snapshot。
 
 `wiki-context.json` 是唯一 canonical result，`wiki-context.md` 只从同一 result 渲染、不得独立推导或补充事实；三者保持同一批 artifact 写入。
 
@@ -100,7 +100,7 @@ wiki-context.json + wiki-context.md + text-chunk-options.json
 
 #### 验收
 
-解析 artifacts；compiled 命中时核对链接目标、vault、Pack、version 与编译时间；兼容解析时核对 JSON/Markdown、配置、layout/profile、warnings 与 chunk options 一致；layout 必须 matched 且 hashes 完整；确认本步仅写 artifacts
+解析 artifacts；compiled 命中时核对复用内容、`retrieval` overlay、vault、Pack、version 与编译时间；兼容解析时核对 JSON/Markdown、配置、layout/profile、warnings 与 chunk options 一致；layout 必须 matched 且 hashes 完整；确认本步仅写 artifacts
 
 #### 流程控制
 

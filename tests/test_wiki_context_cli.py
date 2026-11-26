@@ -602,3 +602,60 @@ def test_page_contract_is_a_single_read_only_contract_compiler() -> None:
     assert "check_voting:" not in workflow
     assert workflow.count("    check: |") == 1
     assert ".cac/" not in workflow
+
+
+def test_context_resolver_defaults_retrieval_to_live(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    result = run_context_resolver(
+        tmp_path,
+        vault,
+        setup_mode="false",
+        requested_keys="WIKI_RETRIEVAL_MODE,WIKI_PACK_CHANNEL",
+    )
+
+    assert result.returncode == 0, result.stderr
+    context = json.loads(
+        (tmp_path / "artifacts-false" / "wiki-context.json").read_text(encoding="utf-8")
+    )
+    assert context["retrieval"] == {"mode": "live", "pack_channel": "release"}
+    assert context["requested_values"]["WIKI_RETRIEVAL_MODE"] == "live"
+    assert context["requested_values"]["WIKI_PACK_CHANNEL"] == "release"
+
+
+def test_context_resolver_accepts_pinned_retrieval_override(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    result = run_context_resolver(
+        tmp_path,
+        vault,
+        setup_mode="false",
+        requested_keys="WIKI_RETRIEVAL_MODE,WIKI_PACK_CHANNEL",
+        overrides={"WIKI_RETRIEVAL_MODE": "pinned", "WIKI_PACK_CHANNEL": "stable"},
+    )
+
+    assert result.returncode == 0, result.stderr
+    context = json.loads(
+        (tmp_path / "artifacts-false" / "wiki-context.json").read_text(encoding="utf-8")
+    )
+    assert context["retrieval"] == {"mode": "pinned", "pack_channel": "stable"}
+    assert context["requested_values"]["WIKI_RETRIEVAL_MODE"] == "pinned"
+    assert context["requested_values"]["WIKI_PACK_CHANNEL"] == "stable"
+
+
+def test_context_resolver_rejects_unknown_retrieval_mode(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    vault.mkdir()
+
+    result = run_context_resolver(
+        tmp_path,
+        vault,
+        setup_mode="false",
+        requested_keys="WIKI_RETRIEVAL_MODE",
+        overrides={"WIKI_RETRIEVAL_MODE": "both"},
+    )
+
+    assert result.returncode == 1
+    assert "WIKI_RETRIEVAL_MODE must be one of live, pinned" in result.stderr

@@ -130,6 +130,34 @@ library only. `pack materialize` writes a read-only page tree for grep, and
 across engines. A Content Pack is not a Knowledge Pack: the latter is the domain
 contract, the former is a release artifact derived from a vault.
 
+## Two retrieval paths
+
+Both paths coexist. Neither replaces the other, and neither is deprecated: choosing one is the
+operator's call, and the question being asked is the usual guide. The default is
+`WIKI_RETRIEVAL_MODE=live`; setting it to `pinned` makes the pinned path the default for
+`wiki-query` and `graph-wiki query`. See [Retrieval mode](configuration.md#retrieval-mode).
+
+| | Live path | Pinned path |
+|---|---|---|
+| Question | What does the wiki know now? | What does one released version contain, and can it be found? |
+| Source | the live vault (`OBSIDIAN_VAULT_PATH`) | an immutable Content Pack (`pack_id` or channel) |
+| Entry point | `wiki-query`; `graph-wiki query`, `context-pack`, `graph-query`, `graph-analyse` | `graph-wiki query --mode pinned`, `pack search`, `pack materialize` + grep, `pack diff` |
+| Output | a cited answer, candidates, `should_read`, graph path | ranked pages or chunks with `pack_id` and `index_id` |
+| Changes with the vault | yes | no — fixed until a new pack is built |
+| Index | index/frontmatter + grep, optional QMD | pack index sidecars (`sqlite`, `sqlite-simple`, `zvec`) |
+| Writes | one `QUERY` log entry | none |
+
+Use the live path when the question is about current knowledge, or when the answer needs citations,
+trust annotations, visibility filtering, or graph traversal. Use the pinned path when the result must
+be reproducible: release review, version diffing, retrieval benchmarks, or a snapshot handed to a
+downstream consumer.
+
+Do not present pinned results as current knowledge. Report the `pack_id`/version with them, and run
+`pack status` to detect drift between the channel pack and the live vault. QMD belongs to the live
+path only; it never participates in a pack index or `pack_id`. The release gate stays deterministic
+(`lint`, `quality`, `trust-check`, `pack verify`, `pack eval`); `wiki-query` is an agent workflow,
+not a gate.
+
 ## Vault structure
 
 This is the `default` Knowledge Pack layout. Other Packs provide different content roots; runtime
